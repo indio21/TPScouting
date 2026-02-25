@@ -151,17 +151,17 @@
 </div>
 
 <div class="card mt-4 shadow-sm">
-    <div class="card-header">Resumen y conclusi�n</div>
+    <div class="card-header">Resumen y conclusión</div>
     <div class="card-body">
         {% if comparison.target_position %}
-        <p class="text-muted">Pesos aplicados para la posici�n <strong>{{ display_position(comparison.target_position) }}</strong>.</p>
+        <p class="text-muted">Pesos aplicados para la posición <strong>{{ display_position(comparison.target_position) }}</strong>.</p>
         {% endif %}
         <p>
             <strong>Marcador:</strong>
             {{ comparison.score_one|round(1) }} vs {{ comparison.score_two|round(1) }}
         </p>
         <p class="mb-0">
-            <strong>Conclusi�n:</strong> {{ comparison.conclusion }}
+            <strong>Conclusión:</strong> {{ comparison.conclusion }}
         </p>
     </div>
 </div>

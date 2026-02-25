@@ -1443,7 +1443,7 @@ def edit_player(player_id):
         if not name:
             errors.append("El nombre es obligatorio.")
         if not national_id:
-            errors.append("El DNI debe contener solo n���meros.")
+            errors.append("El DNI debe contener solo números.")
         else:
             repeated = (
                 db.query(Player.id)
@@ -1453,7 +1453,7 @@ def edit_player(player_id):
             if repeated:
                 errors.append("El DNI ingresado pertenece a otro jugador.")
         if not is_valid_eval_age(age):
-            errors.append("La edad debe estar entre 12 y 18 a���os.")
+            errors.append("La edad debe estar entre 12 y 18 años.")
         attr_values: Dict[str, int] = {}
         for field in ATTRIBUTE_FIELDS:
             value = parse_int_field(request.form.get(field), getattr(player, field))
