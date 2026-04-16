@@ -31,6 +31,35 @@
     </div>
     <div class="col-lg-6">
         <div class="card shadow-sm h-100">
+            <div class="card-header">Calidad de la base operativa</div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Esta auditoria expone inconsistencias reales de la base demo y permite limpiarlas sin inventar datos faltantes.
+                </p>
+                <div class="small mb-3">
+                    <div><strong>Total de jugadores:</strong> {{ data_quality.players_total }}</div>
+                    <div><strong>Limite operativo:</strong> {{ eval_pool_max }}</div>
+                    <div><strong>Sin DNI/ID:</strong> {{ data_quality.missing_national_id }}</div>
+                    <div><strong>Edad invalida:</strong> {{ data_quality.invalid_age }}</div>
+                    <div><strong>Sin nombre:</strong> {{ data_quality.missing_name }}</div>
+                    <div><strong>Sin posicion:</strong> {{ data_quality.missing_position }}</div>
+                    <div><strong>Sin foto:</strong> {{ data_quality.missing_photo_url }}</div>
+                    <div><strong>Stats huerfanos:</strong> {{ data_quality.orphan_stats }}</div>
+                    <div><strong>Historial huerfano:</strong> {{ data_quality.orphan_attribute_history }}</div>
+                    <div><strong>Exceso sobre el limite:</strong> {{ data_quality.over_limit_players }}</div>
+                </div>
+                <form method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="action" value="cleanup_demo_data">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-shield-check me-1"></i> Auditar y limpiar base operativa
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-12">
+        <div class="card shadow-sm h-100">
             <div class="card-header">Logs de la ultima ejecucion</div>
             <div class="card-body">
                 {% if status_messages %}

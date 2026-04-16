@@ -19,8 +19,14 @@ python scouting_app/app.py
 ## 3) Healthcheck
 - Endpoint: `GET /health`
 - Esperado:
-  - HTTP 200 y `{"status":"ok"}` si hay conectividad a DB.
+  - HTTP 200 con `status=ok`, conectividad a DB y bloque `data_quality`.
   - HTTP 500 si falla conectividad.
+
+## 3.1) Auditoria y limpieza operativa
+- `Configuracion` incluye una accion para auditar y limpiar la base operativa.
+- La limpieza elimina registros legacy inconsistentes con las reglas actuales del MVP.
+- No inventa DNIs ni completa identificadores faltantes con datos ficticios.
+- Despues de ejecutarla, conviene validar de nuevo `GET /health`.
 
 ## 4) Bootstrap de administrador (si no existe)
 Este proyecto restringe `/settings` y `/register` a rol `administrador`.

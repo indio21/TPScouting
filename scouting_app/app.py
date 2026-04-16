@@ -274,6 +274,114 @@ def backfill_player_photo_urls(db_session) -> int:
     return updated
 
 
+def compute_operational_data_quality(db_session) -> Dict[str, int]:
+    """Resume consistencia basica de la base operativa."""
+    players_total = db_session.query(func.count(Player.id)).scalar() or 0
+    missing_national_id = (
+        db_session.query(func.count(Player.id))
+        .filter((Player.national_id == None) | (func.trim(Player.national_id) == ""))  # noqa: E711
+        .scalar()
+        or 0
+    )
+    invalid_age = (
+        db_session.query(func.count(Player.id))
+        .filter((Player.age < 12) | (Player.age > 18))
+        .scalar()
+        or 0
+    )
+    missing_name = (
+        db_session.query(func.count(Player.id))
+        .filter((Player.name == None) | (func.trim(Player.name) == ""))  # noqa: E711
+        .scalar()
+        or 0
+    )
+    missing_position = (
+        db_session.query(func.count(Player.id))
+        .filter((Player.position == None) | (func.trim(Player.position) == ""))  # noqa: E711
+        .scalar()
+        or 0
+    )
+    missing_photo_url = (
+        db_session.query(func.count(Player.id))
+        .filter((Player.photo_url == None) | (func.trim(Player.photo_url) == ""))  # noqa: E711
+        .scalar()
+        or 0
+    )
+    orphan_stats = (
+        db_session.query(func.count(PlayerStat.id))
+        .outerjoin(Player, Player.id == PlayerStat.player_id)
+        .filter(Player.id == None)  # noqa: E711
+        .scalar()
+        or 0
+    )
+    orphan_attribute_history = (
+        db_session.query(func.count(PlayerAttributeHistory.id))
+        .outerjoin(Player, Player.id == PlayerAttributeHistory.player_id)
+        .filter(Player.id == None)  # noqa: E711
+        .scalar()
+        or 0
+    )
+    over_limit_players = max(players_total - EVAL_POOL_MAX, 0)
+
+    return {
+        "players_total": int(players_total),
+        "missing_national_id": int(missing_national_id),
+        "invalid_age": int(invalid_age),
+        "missing_name": int(missing_name),
+        "missing_position": int(missing_position),
+        "missing_photo_url": int(missing_photo_url),
+        "orphan_stats": int(orphan_stats),
+        "orphan_attribute_history": int(orphan_attribute_history),
+        "over_limit_players": int(over_limit_players),
+    }
+
+
+def cleanup_operational_data(db_session) -> Dict[str, int]:
+    """Limpia inconsistencias legacy sin inventar datos faltantes."""
+    invalid_player_ids = [
+        player_id
+        for (player_id,) in db_session.query(Player.id)
+        .filter(
+            (Player.name == None)  # noqa: E711
+            | (func.trim(Player.name) == "")
+            | (Player.position == None)  # noqa: E711
+            | (func.trim(Player.position) == "")
+            | (Player.national_id == None)  # noqa: E711
+            | (func.trim(Player.national_id) == "")
+            | (Player.age < 12)
+            | (Player.age > 18)
+        )
+        .all()
+    ]
+
+    removed_invalid_players = len(invalid_player_ids)
+    if invalid_player_ids:
+        db_session.query(PlayerStat).filter(PlayerStat.player_id.in_(invalid_player_ids)).delete(synchronize_session=False)
+        db_session.query(PlayerAttributeHistory).filter(
+            PlayerAttributeHistory.player_id.in_(invalid_player_ids)
+        ).delete(synchronize_session=False)
+        db_session.query(Player).filter(Player.id.in_(invalid_player_ids)).delete(synchronize_session=False)
+
+    photo_updates = backfill_player_photo_urls(db_session)
+    history_updates = 0
+    history_sync_fn = globals().get("sync_attribute_history_baseline")
+    if callable(history_sync_fn):
+        history_updates = history_sync_fn(db_session)
+
+    trimmed = 0
+    if ENFORCE_EVAL_POOL_LIMIT:
+        trimmed = trim_operational_player_pool(db_session, EVAL_POOL_MAX)
+
+    quality_after = compute_operational_data_quality(db_session)
+    return {
+        "removed_invalid_players": int(removed_invalid_players),
+        "photo_updates": int(photo_updates),
+        "history_updates": int(history_updates),
+        "trimmed_players": int(trimmed),
+        **quality_after,
+    }
+
+
 def enforce_operational_pool_limit_on_startup():
     if not ENFORCE_EVAL_POOL_LIMIT:
         return
@@ -658,8 +766,7 @@ except FileNotFoundError:
     model = None
     print("Advertencia: modelo no encontrado.")
 
-@app.route("/health")
-def health():
+def legacy_health_endpoint():
     """Healthcheck básico: app viva + conectividad DB."""
     try:
         # Validación mínima de conectividad
@@ -670,6 +777,29 @@ def health():
         app.logger.exception("Healthcheck failed")
         return jsonify({"status": "error", "detail": str(e)}), 500
 
+@app.route("/health")
+def health():
+    """Healthcheck basico: app viva + conectividad DB + calidad operativa."""
+    db = Session()
+    try:
+        with engine.connect() as conn:
+            conn.exec_driver_sql("SELECT 1")
+        data_quality = compute_operational_data_quality(db)
+        return jsonify(
+            {
+                "status": "ok",
+                "database": "ok",
+                "data_quality": data_quality,
+                "limits": {
+                    "eval_pool_max": EVAL_POOL_MAX,
+                },
+            }
+        ), 200
+    except Exception as e:
+        app.logger.exception("Healthcheck failed")
+        return jsonify({"status": "error", "detail": str(e)}), 500
+    finally:
+        db.close()
 
 
 def prepare_input(player: Player) -> torch.Tensor:
@@ -1520,34 +1650,73 @@ def player_stats(player_id: int):
             db.close()
             flash("Listo: se actualizo la proyeccion con los ultimos datos.", "success")
             return redirect(url_for("predict_player", player_id=player_id))
-
-        try:
-            record_date_str = request.form.get("record_date")
-            record_date = datetime.strptime(record_date_str, "%Y-%m-%d").date() if record_date_str else date.today()
-        except ValueError:
-            record_date = date.today()
-
-        def to_int(field: str) -> int:
-            value = request.form.get(field)
-            return int(value) if value not in (None, "",) else 0
-
-        def to_float(field: str) -> Optional[float]:
-            value = request.form.get(field)
-            return float(value) if value not in (None, "",) else None
+        errors: List[str] = []
+        record_date = parse_date_field(request.form.get("record_date"), errors, "La fecha del registro")
+        matches_played = validate_non_negative_int_field(request.form.get("matches_played"), "Partidos jugados", errors)
+        goals = validate_non_negative_int_field(request.form.get("goals"), "Goles", errors)
+        assists = validate_non_negative_int_field(request.form.get("assists"), "Asistencias", errors)
+        minutes_played = validate_non_negative_int_field(request.form.get("minutes_played"), "Minutos jugados", errors)
+        yellow_cards = validate_non_negative_int_field(request.form.get("yellow_cards"), "Tarjetas amarillas", errors)
+        red_cards = validate_non_negative_int_field(request.form.get("red_cards"), "Tarjetas rojas", errors)
+        pass_accuracy = validate_optional_float_range(
+            request.form.get("pass_accuracy"),
+            "Precision de pase",
+            errors,
+            0,
+            100,
+        )
+        shot_accuracy = validate_optional_float_range(
+            request.form.get("shot_accuracy"),
+            "Precision de remate",
+            errors,
+            0,
+            100,
+        )
+        duels_won_pct = validate_optional_float_range(
+            request.form.get("duels_won_pct"),
+            "Duelos ganados",
+            errors,
+            0,
+            100,
+        )
+        final_score = validate_optional_float_range(
+            request.form.get("final_score"),
+            "Valoracion final",
+            errors,
+            1,
+            10,
+        )
+        if errors:
+            for message in errors:
+                flash(message, "danger")
+            stats = (
+                db.query(PlayerStat)
+                .filter(PlayerStat.player_id == player_id)
+                .order_by(PlayerStat.record_date.desc(), PlayerStat.id.desc())
+                .all()
+            )
+            summary = summarize_stats(list(reversed(stats)))
+            db.close()
+            return render_template(
+                "player_stats.html",
+                player=player,
+                stats=stats,
+                summary=summary,
+            )
 
         stat = PlayerStat(
             player_id=player_id,
             record_date=record_date,
-            matches_played=to_int("matches_played"),
-            goals=to_int("goals"),
-            assists=to_int("assists"),
-            minutes_played=to_int("minutes_played"),
-            yellow_cards=to_int("yellow_cards"),
-            red_cards=to_int("red_cards"),
-            pass_accuracy=to_float("pass_accuracy"),
-            shot_accuracy=to_float("shot_accuracy"),
-            duels_won_pct=to_float("duels_won_pct"),
-            final_score=to_float("final_score"),
+            matches_played=matches_played,
+            goals=goals,
+            assists=assists,
+            minutes_played=minutes_played,
+            yellow_cards=yellow_cards,
+            red_cards=red_cards,
+            pass_accuracy=pass_accuracy,
+            shot_accuracy=shot_accuracy,
+            duels_won_pct=duels_won_pct,
+            final_score=final_score,
             notes=request.form.get("notes") or None,
         )
         if stat.final_score is None:
@@ -1609,19 +1778,44 @@ def player_attributes(player_id: int):
             db.close()
             flash("Listo: se actualizo la proyeccion con los nuevos atributos.", "success")
             return redirect(url_for('predict_player', player_id=player_id))
-        try:
-            record_date_str = request.form.get("record_date")
-            record_date = datetime.strptime(record_date_str, "%Y-%m-%d").date() if record_date_str else date.today()
-        except ValueError:
-            record_date = date.today()
+        errors: List[str] = []
+        record_date = parse_date_field(request.form.get("record_date"), errors, "La fecha del historial")
 
         entry = PlayerAttributeHistory(player_id=player_id, record_date=record_date, notes=request.form.get("notes") or None)
+        has_any_value = False
         for field in ATTRIBUTE_FIELDS:
             raw = request.form.get(field)
-            value = int(raw) if raw not in (None, "") else None
+            value = parse_int_field(raw, default=-1) if raw not in (None, "") else None
+            if value is not None and not is_valid_attribute(value):
+                errors.append(f"{ATTRIBUTE_LABELS[field]} debe estar entre 0 y 20.")
+                value = None
             setattr(entry, field, value)
             if value is not None:
+                has_any_value = True
                 setattr(player, field, value)
+        if not has_any_value:
+            errors.append("Debes cargar al menos un atributo para guardar el historial.")
+        if errors:
+            for message in errors:
+                flash(message, "danger")
+            history = (
+                db.query(PlayerAttributeHistory)
+                .filter(PlayerAttributeHistory.player_id == player_id)
+                .order_by(PlayerAttributeHistory.record_date.desc(), PlayerAttributeHistory.id.desc())
+                .all()
+            )
+            ascending_history = list(reversed(history))
+            summary = summarize_attribute_history(ascending_history)
+            payload = attribute_chart_payload(ascending_history)
+            db.close()
+            return render_template(
+                "player_attributes.html",
+                player=player,
+                history=history,
+                summary=summary,
+                attribute_labels=ATTRIBUTE_LABELS,
+                payload=payload,
+            )
         db.add(entry)
         refresh_player_potential(player, db)
         db.commit()
@@ -2237,7 +2431,7 @@ def edit_coach(coach_id):
         _require_csrf()
 
     db = Session()
-    coach = db.query(Coach).get(coach_id)
+    coach = db.get(Coach, coach_id)
     if not coach:
         db.close()
         abort(404)
@@ -2259,7 +2453,7 @@ def delete_coach(coach_id):
     _require_csrf()
 
     db = Session()
-    coach = db.query(Coach).get(coach_id)
+    coach = db.get(Coach, coach_id)
     if not coach:
         db.close()
         abort(404)
@@ -2309,7 +2503,7 @@ def edit_director(director_id):
         _require_csrf()
 
     db = Session()
-    director = db.query(Director).get(director_id)
+    director = db.get(Director, director_id)
     if not director:
         db.close()
         abort(404)
@@ -2332,7 +2526,7 @@ def delete_director(director_id):
     _require_csrf()
 
     db = Session()
-    director = db.query(Director).get(director_id)
+    director = db.get(Director, director_id)
     if not director:
         db.close()
         abort(404)
@@ -2383,11 +2577,53 @@ def settings():
                     flash("Listo: la actualizacion general finalizo correctamente.", "success")
                 else:
                     flash("No se pudo completar la actualizacion. Revisa el detalle.", "danger")
+        elif action == "cleanup_demo_data":
+            db = Session()
+            try:
+                summary = cleanup_operational_data(db)
+                db.commit()
+                invalidate_dashboard_cache()
+                status_messages = [
+                    "Auditoria y limpieza de base operativa completadas.",
+                    f"Jugadores invalidos removidos: {summary['removed_invalid_players']}",
+                    f"Fotos completadas: {summary['photo_updates']}",
+                    f"Historial tecnico sincronizado: {summary['history_updates']}",
+                    f"Jugadores recortados por limite operativo: {summary['trimmed_players']}",
+                    (
+                        "Calidad actual -> "
+                        f"total={summary['players_total']}, "
+                        f"sin_dni={summary['missing_national_id']}, "
+                        f"edad_invalida={summary['invalid_age']}, "
+                        f"sin_nombre={summary['missing_name']}, "
+                        f"sin_posicion={summary['missing_position']}, "
+                        f"sin_foto={summary['missing_photo_url']}, "
+                        f"stats_huerfanos={summary['orphan_stats']}, "
+                        f"historial_huerfano={summary['orphan_attribute_history']}, "
+                        f"exceso_limite={summary['over_limit_players']}"
+                    ),
+                ]
+                if summary["removed_invalid_players"] or summary["trimmed_players"] or summary["photo_updates"]:
+                    flash("Listo: la base operativa quedo auditada y consistente para la demo.", "success")
+                else:
+                    flash("No se detectaron inconsistencias nuevas en la base operativa.", "info")
+            except Exception as exc:
+                db.rollback()
+                status_messages = [f"No se pudo completar la limpieza operativa: {exc}"]
+                flash("No se pudo completar la limpieza de la base operativa.", "danger")
+            finally:
+                db.close()
 
+    db = Session()
+    try:
+        data_quality = compute_operational_data_quality(db)
+    finally:
+        db.close()
     return render_template(
         "settings.html",
         status_messages=status_messages,
         modal_message=modal_message,
+        data_quality=data_quality,
+        eval_pool_max=EVAL_POOL_MAX,
     )
 
 
@@ -2404,6 +2640,57 @@ def parse_int_field(value: Optional[str], default: int = 0) -> int:
         return int(value)
     except (TypeError, ValueError):
         return default
+
+
+def parse_date_field(value: Optional[str], errors: List[str], label: str = "La fecha") -> date:
+    if not value:
+        return date.today()
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError:
+        errors.append(f"{label} debe tener formato YYYY-MM-DD.")
+        return date.today()
+
+
+def validate_non_negative_int_field(
+    value: Optional[str],
+    label: str,
+    errors: List[str],
+    allow_blank: bool = True,
+) -> int:
+    if value in (None, ""):
+        if allow_blank:
+            return 0
+        errors.append(f"{label} es obligatorio.")
+        return 0
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        errors.append(f"{label} debe ser un numero entero.")
+        return 0
+    if parsed < 0:
+        errors.append(f"{label} no puede ser negativo.")
+    return parsed
+
+
+def validate_optional_float_range(
+    value: Optional[str],
+    label: str,
+    errors: List[str],
+    min_value: float,
+    max_value: float,
+) -> Optional[float]:
+    if value in (None, ""):
+        return None
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        errors.append(f"{label} debe ser un numero valido.")
+        return None
+    if parsed < min_value or parsed > max_value:
+        errors.append(f"{label} debe estar entre {min_value:g} y {max_value:g}.")
+        return None
+    return parsed
 
 
 def normalize_position_choice(value: Optional[str]) -> str:

@@ -59,7 +59,12 @@ pytest -q tests --import-mode=importlib
 ## Healthcheck
 
 - Endpoint: `GET /health`
-- Esperado: `200` con JSON `{"status":"ok"}`
+- Esperado: `200` con JSON `status=ok`, conectividad DB y bloque `data_quality`
+
+## Mantenimiento operativo
+
+- `Configuracion` incluye una auditoria de calidad para la base operativa
+- La limpieza operativa elimina registros legacy inconsistentes (por ejemplo, jugadores sin identificador) sin inventar datos faltantes
 
 ## Deploy (Render)
 

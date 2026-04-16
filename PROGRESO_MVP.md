@@ -8,8 +8,8 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 
 - Rama local actual: `main`
 - Remoto configurado: `origin -> https://github.com/indio21/TPScouting.git`
-- Estado: cambios locales pendientes de commit y push
-- Importante: hasta esta fecha los cambios no fueron subidos a GitHub
+- Ultimo commit publicado: `bd8e4ef`
+- Estado actual: hay cambios locales nuevos despues de ese push
 
 ## Etapas Ya Trabajadas
 
@@ -67,10 +67,35 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Los comparadores quedaron mas livianos en calculo de proyeccion.
 - Se documento el comportamiento y limite del cache in-memory del dashboard en `RUNBOOK.md`.
 
+### 8. Consistencia final y limpieza de demo
+
+- Se agrego auditoria de calidad operativa en `GET /health`.
+- `Configuracion` ahora muestra metricas de consistencia y permite limpiar la base operativa.
+- La limpieza elimina registros legacy invalidos sin inventar identificadores faltantes.
+- Se ejecuto la limpieza real sobre la base demo incluida en el repo.
+- Resultado medido:
+- antes: `100` jugadores y `4` sin `national_id`
+- despues: `96` jugadores y `0` sin `national_id`
+
+### 9. Fortalecimiento de tests y cobertura funcional
+
+- Se ampliaron pruebas de registro, CSRF, alta/edicion/baja de jugadores, validaciones de historial y ABM de staff.
+- Se corrigieron validaciones faltantes en carga de stats y atributos para no aceptar valores fuera de rango.
+- Se limpiaron warnings de compatibilidad con SQLAlchemy 2.x en modelos y ABM de staff.
+
+### 10. Revision final integral del MVP
+
+- Se ejecuto una revision final apoyada en evidencia real y no solo en lectura de codigo.
+- Smoke real sobre la app/demo actual:
+- `GET /`, `GET /health`, `/players`, `/dashboard`, `/compare`, `/compare/multi`, `/coaches`, `/directors`, `/settings`
+- vistas de jugador: detalle, proyeccion, historial y atributos
+- Resultado: todas esas rutas respondieron `200` en la revision final.
+- Se dejo el detalle en `REVISION_FINAL_MVP.md`.
+
 ## Tests Ejecutados
 
 - La suite automatizada actual termina pasando en esta maquina.
-- Ultimo estado validado: `16 passed`
+- Ultimo estado validado: `27 passed`
 
 ## Puntos Mejorados De Forma Clara
 
@@ -81,25 +106,23 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Trazabilidad temporal basica
 - Reproducibilidad del pipeline
 - Mejora inicial de rendimiento en listado, dashboard y comparadores
+- Base demo consistente con las reglas activas del MVP
+- Healthcheck con visibilidad real de calidad de datos
+- Cobertura funcional mas fuerte sobre CRUD, permisos, CSRF e inputs invalidos
+- MVP revisado integralmente con evidencia de smoke y datos reales
 
 ## Puntos Que Siguen Parciales O Pendientes
 
 - Persistencia/despliegue final en Render
 - Revisión completa de CSRF y endurecimiento adicional
-- Limpieza de datos demo para defensa
 - Optimizaciones adicionales de rendimiento
-- Tests CRUD mas amplios, invalidos y cobertura mas fuerte
-- Revision final integral del MVP
 - Correccion del documento Word, que todavia no se empezo en esta fase
 
 ## Bloques Restantes
 
 Tomando como base la checklist operativa del MVP:
 
-- Quedan 3 bloques principales del MVP real por cerrar o fortalecer:
-- consistencia final y limpieza de datos/demo
-- fortalecimiento de tests y cobertura funcional
-- revision final integral del MVP con evidencia real
+- No quedan bloques principales del MVP real abiertos en esta fase.
 
 - Luego queda 1 bloque grande aparte:
 - correccion del documento Word para alinearlo con el MVP ya corregido
