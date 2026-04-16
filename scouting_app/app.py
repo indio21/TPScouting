@@ -479,8 +479,12 @@ def update_database_pipeline(limit: int = EVAL_POOL_MAX, sync_shortlist: bool = 
         "train_model.py",
         "--db-url",
         TRAINING_DB_URL,
+        "--model-out",
+        MODEL_PATH,
         "--preprocessor-out",
         PREPROCESSOR_PATH,
+        "--metadata-out",
+        TRAINING_METADATA_PATH,
         "--epochs",
         "30",
     ]
@@ -794,6 +798,7 @@ def load_runtime_artifacts(
 
 MODEL_PATH = os.path.join(BASE_DIR, "model.pt")
 PREPROCESSOR_PATH = os.path.join(BASE_DIR, "preprocessor.joblib")
+TRAINING_METADATA_PATH = os.path.join(BASE_DIR, "training_metadata.json")
 try:
     model, preprocessor = load_runtime_artifacts(MODEL_PATH, PREPROCESSOR_PATH)
 except FileNotFoundError:
@@ -888,7 +893,7 @@ def batch_project_players(
 
     avg_score_map = avg_score_map or {}
     with torch.no_grad():
-        probs_tensor = model(players_to_model_tensor(players))
+        probs_tensor = torch.sigmoid(model(players_to_model_tensor(players)))
     base_probs = np.asarray(probs_tensor.detach().cpu().numpy()).reshape(-1).tolist()
 
     projections: Dict[int, Dict[str, object]] = {}

@@ -1,0 +1,316 @@
+{
+  "timestamp": "2026-04-16T23:27:30.345647",
+  "seed": 42,
+  "config": {
+    "epochs_requested": 30,
+    "epochs_trained": 20,
+    "learning_rate": 0.001,
+    "patience": 8,
+    "age_min": 12,
+    "age_max": 18,
+    "loss": "BCEWithLogitsLoss",
+    "pos_weight": 3.8426150121065374,
+    "test_size": 0.15,
+    "validation_size_on_train_pool": 0.17647058823529413
+  },
+  "dataset": {
+    "train_size": 14000,
+    "validation_size": 3000,
+    "test_size": 3000,
+    "train_positive_rate": 0.2065,
+    "validation_positive_rate": 0.2067,
+    "test_positive_rate": 0.2067
+  },
+  "pytorch": {
+    "best_epoch": 12,
+    "selected_threshold": 0.525,
+    "validation": {
+      "threshold": 0.525,
+      "accuracy": 0.7213333333333334,
+      "roc_auc": 0.8078235971808079,
+      "pr_auc": 0.543584475447905,
+      "f1": 0.5276836158192091,
+      "precision": 0.40608695652173915,
+      "recall": 0.7532258064516129,
+      "confusion_matrix": [
+        [
+          1697,
+          683
+        ],
+        [
+          153,
+          467
+        ]
+      ]
+    },
+    "test": {
+      "threshold": 0.525,
+      "accuracy": 0.7176666666666667,
+      "roc_auc": 0.796193074003795,
+      "pr_auc": 0.5192272740886228,
+      "f1": 0.5217391304347826,
+      "precision": 0.40139009556907035,
+      "recall": 0.7451612903225806,
+      "confusion_matrix": [
+        [
+          1691,
+          689
+        ],
+        [
+          158,
+          462
+        ]
+      ]
+    },
+    "history": [
+      {
+        "epoch": 1,
+        "loss": 1.0965555906295776,
+        "val_pr_auc": 0.4240842254735075,
+        "val_f1": 0.3452314556609035,
+        "threshold": 0.475
+      },
+      {
+        "epoch": 2,
+        "loss": 1.0948644876480103,
+        "val_pr_auc": 0.4633533252522601,
+        "val_f1": 0.3425414364640884,
+        "threshold": 0.1
+      },
+      {
+        "epoch": 3,
+        "loss": 1.0932549238204956,
+        "val_pr_auc": 0.49198691088707514,
+        "val_f1": 0.46536412078152756,
+        "threshold": 0.5
+      },
+      {
+        "epoch": 4,
+        "loss": 1.0917316675186157,
+        "val_pr_auc": 0.5101991507429562,
+        "val_f1": 0.4773109243697479,
+        "threshold": 0.5
+      },
+      {
+        "epoch": 5,
+        "loss": 1.0902814865112305,
+        "val_pr_auc": 0.5212747353093472,
+        "val_f1": 0.45179975175837817,
+        "threshold": 0.5
+      },
+      {
+        "epoch": 6,
+        "loss": 1.088910460472107,
+        "val_pr_auc": 0.5287478371817644,
+        "val_f1": 0.40347826086956523,
+        "threshold": 0.5
+      },
+      {
+        "epoch": 7,
+        "loss": 1.0876080989837646,
+        "val_pr_auc": 0.5344802346529212,
+        "val_f1": 0.3868496648579636,
+        "threshold": 0.5
+      },
+      {
+        "epoch": 8,
+        "loss": 1.0863572359085083,
+        "val_pr_auc": 0.5377960589005071,
+        "val_f1": 0.41228070175438597,
+        "threshold": 0.525
+      },
+      {
+        "epoch": 9,
+        "loss": 1.0851354598999023,
+        "val_pr_auc": 0.5401296524440793,
+        "val_f1": 0.5127753303964758,
+        "threshold": 0.525
+      },
+      {
+        "epoch": 10,
+        "loss": 1.0839238166809082,
+        "val_pr_auc": 0.5416295960541433,
+        "val_f1": 0.5363372093023255,
+        "threshold": 0.525
+      },
+      {
+        "epoch": 11,
+        "loss": 1.082689642906189,
+        "val_pr_auc": 0.5428202348385225,
+        "val_f1": 0.5350157728706625,
+        "threshold": 0.525
+      },
+      {
+        "epoch": 12,
+        "loss": 1.081430435180664,
+        "val_pr_auc": 0.543584475447905,
+        "val_f1": 0.5276836158192091,
+        "threshold": 0.525
+      },
+      {
+        "epoch": 13,
+        "loss": 1.080145239830017,
+        "val_pr_auc": 0.543140279773405,
+        "val_f1": 0.5151832460732985,
+        "threshold": 0.525
+      },
+      {
+        "epoch": 14,
+        "loss": 1.0788224935531616,
+        "val_pr_auc": 0.5415575258466931,
+        "val_f1": 0.5072681704260652,
+        "threshold": 0.525
+      },
+      {
+        "epoch": 15,
+        "loss": 1.0774812698364258,
+        "val_pr_auc": 0.5400707914045606,
+        "val_f1": 0.4992757122163206,
+        "threshold": 0.525
+      },
+      {
+        "epoch": 16,
+        "loss": 1.0761116743087769,
+        "val_pr_auc": 0.5379872527781182,
+        "val_f1": 0.49692380501656414,
+        "threshold": 0.525
+      },
+      {
+        "epoch": 17,
+        "loss": 1.074708104133606,
+        "val_pr_auc": 0.5355541209078096,
+        "val_f1": 0.49507735583684953,
+        "threshold": 0.525
+      },
+      {
+        "epoch": 18,
+        "loss": 1.0732554197311401,
+        "val_pr_auc": 0.5332400576872882,
+        "val_f1": 0.49044289044289047,
+        "threshold": 0.525
+      },
+      {
+        "epoch": 19,
+        "loss": 1.0717387199401855,
+        "val_pr_auc": 0.5306596442893536,
+        "val_f1": 0.491359177954227,
+        "threshold": 0.525
+      },
+      {
+        "epoch": 20,
+        "loss": 1.0701607465744019,
+        "val_pr_auc": 0.5282121534255696,
+        "val_f1": 0.4896810506566604,
+        "threshold": 0.525
+      }
+    ]
+  },
+  "baselines": {
+    "logistic_regression_balanced": {
+      "selected_threshold": 0.65,
+      "validation": {
+        "threshold": 0.65,
+        "accuracy": 0.814,
+        "roc_auc": 0.8420188397939821,
+        "pr_auc": 0.604840740998059,
+        "f1": 0.586053412462908,
+        "precision": 0.5425824175824175,
+        "recall": 0.6370967741935484,
+        "confusion_matrix": [
+          [
+            2047,
+            333
+          ],
+          [
+            225,
+            395
+          ]
+        ]
+      },
+      "test": {
+        "threshold": 0.65,
+        "accuracy": 0.8143333333333334,
+        "roc_auc": 0.8452324478178367,
+        "pr_auc": 0.6019428888143082,
+        "f1": 0.5744843391902216,
+        "precision": 0.5457184325108854,
+        "recall": 0.6064516129032258,
+        "confusion_matrix": [
+          [
+            2067,
+            313
+          ],
+          [
+            244,
+            376
+          ]
+        ]
+      }
+    },
+    "avg_skill_score": {
+      "selected_threshold": 0.5750000000000001,
+      "validation": {
+        "threshold": 0.5750000000000001,
+        "accuracy": 0.7943333333333333,
+        "roc_auc": 0.8105035239902413,
+        "pr_auc": 0.5477248613502547,
+        "f1": 0.5322213798332069,
+        "precision": 0.5021459227467812,
+        "recall": 0.5661290322580645,
+        "confusion_matrix": [
+          [
+            2032,
+            348
+          ],
+          [
+            269,
+            351
+          ]
+        ]
+      },
+      "test": {
+        "threshold": 0.5750000000000001,
+        "accuracy": 0.801,
+        "roc_auc": 0.8133643941447546,
+        "pr_auc": 0.5520602564894738,
+        "f1": 0.5332290852228303,
+        "precision": 0.5174506828528073,
+        "recall": 0.55,
+        "confusion_matrix": [
+          [
+            2062,
+            318
+          ],
+          [
+            279,
+            341
+          ]
+        ]
+      }
+    }
+  },
+  "dataset_summary": {
+    "raw_rows": 20000,
+    "filtered_rows": 20000,
+    "age_range_raw": {
+      "min": 12,
+      "max": 18
+    },
+    "age_range_filtered": {
+      "min": 12,
+      "max": 18
+    },
+    "class_distribution": {
+      "positive": 4131,
+      "negative": 15869,
+      "positive_rate": 0.2066
+    },
+    "position_distribution": {
+      "Defensa": 4040,
+      "Delantero": 3950,
+      "Lateral": 3959,
+      "Mediocampista": 3991,
+      "Portero": 4060
+    }
+  }
+}

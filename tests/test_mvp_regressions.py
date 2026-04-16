@@ -1,4 +1,5 @@
 import importlib
+import json
 from types import SimpleNamespace
 
 from werkzeug.security import generate_password_hash
@@ -556,9 +557,106 @@ def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir
         session.add_all(
             [
                 models_module.Player(
-                    name="Train A",
-                    national_id="48899001",
-                    age=16,
+                    name=f"Train {idx}",
+                    national_id=f"488990{idx:02d}",
+                    age=age,
+                    position=position,
+                    club="Club Train",
+                    country="Argentina",
+                    photo_url="",
+                    pace=pace,
+                    shooting=shooting,
+                    passing=passing,
+                    dribbling=dribbling,
+                    defending=defending,
+                    physical=physical,
+                    vision=vision,
+                    tackling=tackling,
+                    determination=determination,
+                    technique=technique,
+                    potential_label=potential,
+                )
+                for idx, (
+                    age,
+                    position,
+                    pace,
+                    shooting,
+                    passing,
+                    dribbling,
+                    defending,
+                    physical,
+                    vision,
+                    tackling,
+                    determination,
+                    technique,
+                    potential,
+                ) in enumerate(
+                    [
+                        (16, "Defensa", 10, 8, 11, 9, 14, 12, 10, 13, 12, 9, False),
+                        (17, "Mediocampista", 12, 10, 14, 13, 10, 11, 14, 9, 15, 13, True),
+                        (15, "Delantero", 15, 16, 10, 15, 6, 12, 10, 5, 16, 14, True),
+                        (16, "Lateral", 11, 8, 10, 11, 12, 11, 9, 12, 11, 9, False),
+                        (14, "Portero", 6, 3, 8, 4, 14, 15, 8, 15, 12, 9, False),
+                        (18, "Defensa", 11, 7, 10, 8, 15, 13, 9, 14, 13, 10, False),
+                        (13, "Delantero", 16, 17, 11, 16, 4, 11, 10, 3, 17, 15, True),
+                        (17, "Mediocampista", 13, 9, 15, 14, 9, 11, 15, 8, 16, 14, True),
+                        (15, "Lateral", 14, 8, 12, 13, 13, 12, 11, 13, 14, 11, False),
+                        (20, "Delantero", 17, 18, 12, 17, 4, 13, 11, 3, 17, 16, True),
+                    ],
+                    start=1,
+                )
+            ]
+        )
+        session.commit()
+    finally:
+        session.close()
+
+    model_path = tmp_path / "model.pt"
+    preprocessor_path = tmp_path / "preprocessor.joblib"
+    metadata_path = tmp_path / "training_metadata.json"
+    train_module.main(
+        db_url,
+        str(model_path),
+        str(preprocessor_path),
+        str(metadata_path),
+        epochs=4,
+        lr=1e-3,
+        patience=2,
+    )
+
+    assert model_path.exists()
+    assert preprocessor_path.exists()
+    assert metadata_path.exists()
+
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    assert metadata["dataset_summary"]["age_range_filtered"] == {"min": 13, "max": 18}
+    assert metadata["dataset"]["validation_size"] > 0
+    assert 0.0 <= metadata["pytorch"]["selected_threshold"] <= 1.0
+
+
+def test_load_data_filters_training_range(tmp_path, scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    train_module = importlib.import_module("train_model")
+    models_module = importlib.import_module("models")
+    db_utils_module = importlib.import_module("db_utils")
+
+    db_path = tmp_path / "train_filter.db"
+    db_url = f"sqlite:///{db_path.as_posix()}"
+    normalized_db_url = db_utils_module.normalize_db_url(db_url, base_dir=str(scouting_app_dir))
+    engine = db_utils_module.create_app_engine(normalized_db_url)
+    models_module.Base.metadata.create_all(engine)
+    db_utils_module.ensure_player_columns(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    try:
+        session.add_all(
+            [
+                models_module.Player(
+                    name="Juvenil",
+                    national_id="59999001",
+                    age=17,
                     position="Defensa",
                     club="Club Train",
                     country="Argentina",
@@ -576,35 +674,15 @@ def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir
                     potential_label=False,
                 ),
                 models_module.Player(
-                    name="Train B",
-                    national_id="48899002",
-                    age=17,
-                    position="Mediocampista",
-                    club="Club Train",
-                    country="Argentina",
-                    photo_url="",
-                    pace=12,
-                    shooting=10,
-                    passing=14,
-                    dribbling=13,
-                    defending=10,
-                    physical=11,
-                    vision=14,
-                    tackling=9,
-                    determination=15,
-                    technique=13,
-                    potential_label=True,
-                ),
-                models_module.Player(
-                    name="Train C",
-                    national_id="48899003",
-                    age=15,
+                    name="Mayor",
+                    national_id="59999002",
+                    age=21,
                     position="Delantero",
                     club="Club Train",
                     country="Argentina",
                     photo_url="",
-                    pace=15,
-                    shooting=16,
+                    pace=16,
+                    shooting=17,
                     passing=10,
                     dribbling=15,
                     defending=6,
@@ -615,35 +693,43 @@ def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir
                     technique=14,
                     potential_label=True,
                 ),
-                models_module.Player(
-                    name="Train D",
-                    national_id="48899004",
-                    age=16,
-                    position="Lateral",
-                    club="Club Train",
-                    country="Argentina",
-                    photo_url="",
-                    pace=11,
-                    shooting=8,
-                    passing=10,
-                    dribbling=11,
-                    defending=12,
-                    physical=11,
-                    vision=9,
-                    tackling=12,
-                    determination=11,
-                    technique=9,
-                    potential_label=False,
-                ),
             ]
         )
         session.commit()
     finally:
         session.close()
 
-    model_path = tmp_path / "model.pt"
-    preprocessor_path = tmp_path / "preprocessor.joblib"
-    train_module.main(db_url, str(model_path), str(preprocessor_path), epochs=1, lr=1e-3)
+    df, y, summary = train_module.load_data(db_url)
 
-    assert model_path.exists()
-    assert preprocessor_path.exists()
+    assert len(df) == 1
+    assert int(df.iloc[0]["age"]) == 17
+    assert len(y) == 1
+    assert summary["raw_rows"] == 2
+    assert summary["filtered_rows"] == 1
+
+
+def test_label_probability_favors_younger_and_position_fit(scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+    generate_module = importlib.import_module("generate_data")
+
+    attrs = {
+        "pace": 14,
+        "shooting": 8,
+        "passing": 12,
+        "dribbling": 13,
+        "defending": 15,
+        "physical": 12,
+        "vision": 11,
+        "tackling": 14,
+        "determination": 16,
+        "technique": 12,
+    }
+
+    younger_prob, _ = generate_module.label_probability("Defensa", 13, attrs)
+    older_prob, _ = generate_module.label_probability("Defensa", 18, attrs)
+    aligned_prob, _ = generate_module.label_probability("Defensa", 15, attrs)
+    misaligned_prob, _ = generate_module.label_probability("Delantero", 15, attrs)
+
+    assert younger_prob > older_prob
+    assert aligned_prob > misaligned_prob

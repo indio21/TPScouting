@@ -6,10 +6,11 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 
 ## Estado Git
 
-- Rama local actual: `main`
+- Rama local actual: `training`
 - Remoto configurado: `origin -> https://github.com/indio21/TPScouting.git`
-- Ultimo commit publicado: `bd8e4ef`
-- Estado actual: hay cambios locales nuevos despues de ese push
+- Ultimo commit publicado en `main`: `bd8e4ef`
+- Ultimo commit local de la rama `training`: `8dea5ac`
+- Estado actual: hay cambios locales nuevos en `training` aun no publicados
 
 ## Etapas Ya Trabajadas
 
@@ -103,10 +104,28 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - La app ya no usa normalizacion manual para inferencia: reutiliza el mismo preprocesador persistido que usa entrenamiento.
 - Se reentreno el modelo para alinear pesos y preprocesamiento.
 
+### 12. Endurecimiento del entrenamiento y documentacion tecnica
+
+- `train_model.py` ahora usa `BCEWithLogitsLoss`, logits, `pos_weight`, split `train / validation / test`, threshold seleccionado por validacion y early stopping.
+- El dataset sintetico de entrenamiento quedo alineado por defecto al rango real del producto: `12-18`.
+- La etiqueta sintetica `potential_label` dejo de depender casi solo del promedio simple y ahora combina score ponderado por posicion, ajuste etario y ruido controlado.
+- Se formalizo `LogisticRegression(class_weight="balanced")` como baseline obligatorio en la comparacion.
+- Se agrega `scouting_app/training_metadata.json` para persistir:
+- threshold elegido
+- metricas de validacion y test
+- tamanos de split
+- configuracion y seed
+- Se genero documentacion tecnica reproducible en:
+- `docs/model_training_evidence.md`
+- `docs/model_training_evidence.docx`
+- `docs/model_training_plan.md`
+- `docs/model_training_plan.docx`
+- Se agrego `docs/generate_training_docs.py` para regenerar ambos documentos sin depender de `pandoc`.
+
 ## Tests Ejecutados
 
 - La suite automatizada actual termina pasando en esta maquina.
-- Ultimo estado validado: `29 passed`
+- Ultimo estado validado: `31 passed`
 
 ## Puntos Mejorados De Forma Clara
 
@@ -122,6 +141,8 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Cobertura funcional mas fuerte sobre CRUD, permisos, CSRF e inputs invalidos
 - MVP revisado integralmente con evidencia de smoke y datos reales
 - Preprocesamiento real y persistido con pandas + scikit-learn, sin desalineacion entre entrenamiento e inferencia
+- Entrenamiento PyTorch endurecido y alineado al alcance 12-18
+- Evidencia tecnica y plan de entrenamiento guardados en Markdown y Word
 
 ## Puntos Que Siguen Parciales O Pendientes
 
