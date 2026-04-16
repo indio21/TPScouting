@@ -11,7 +11,7 @@ Trabajo final orientado al scouting de futbol juvenil, con una app web para:
 ## Stack
 
 - Python + Flask
-- SQLAlchemy + SQLite
+- SQLAlchemy + SQLite/PostgreSQL
 - PyTorch + scikit-learn (pipeline y metricas)
 - Bootstrap + Chart.js
 
@@ -24,10 +24,12 @@ Trabajo final orientado al scouting de futbol juvenil, con una app web para:
 
 ## Bases de datos del MVP
 
-El proyecto usa dos bases separadas:
+El proyecto usa dos bases separadas. En local pueden ser SQLite y en despliegue pueden ser PostgreSQL:
 
 - `scouting_app/players_updated_v2.db`: base operativa (maximo 100 jugadores evaluables)
 - `scouting_app/players_training.db`: base de entrenamiento (dataset sintetico para el modelo)
+
+En PostgreSQL, la app acepta URLs `postgresql://...` y `postgres://...`; internamente las normaliza para SQLAlchemy con `psycopg`.
 
 ## Ejecucion local
 
@@ -67,6 +69,8 @@ El repositorio incluye `render.yaml` con:
 - `TRAINING_DB_URL` (base de entrenamiento)
 - `EVAL_POOL_MAX=100`
 - variables de seguridad y logging
+
+El blueprint actual deja preparado el deploy con dos bases PostgreSQL administradas por Render: una operativa y una de entrenamiento.
 
 ## Alcance del MVP
 

@@ -50,8 +50,10 @@
                 <a class="btn btn-outline-primary" href="#historial-atributos">Evolucion tecnica</a>
                 <a class="btn btn-outline-primary" href="#historial-rendimiento">Historial de rendimiento</a>
                 <a class="btn btn-outline-primary" href="#perfil-psicologico">Perfil psicologico</a>
+                {% if can_edit_player_data %}
                 <a class="btn btn-outline-success" href="{{ url_for('player_attributes', player_id=player.id) }}">Actualizar atributos</a>
                 <a class="btn btn-outline-success" href="{{ url_for('player_stats', player_id=player.id) }}">Agregar rendimiento</a>
+                {% endif %}
                 <a class="btn btn-success" href="{{ url_for('predict_player', player_id=player.id) }}">Ver proyeccion</a>
             </div>
         </div>
@@ -130,7 +132,9 @@
             <small class="text-muted">Registra mejoras o retrocesos en los atributos clave para mantener la proyeccion actualizada.</small>
         </div>
         <div class="btn-group">
+            {% if can_edit_player_data %}
             <a class="btn btn-outline-success btn-sm" href="{{ url_for('player_attributes', player_id=player.id) }}">Agregar registro</a>
+            {% endif %}
             <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('predict_player', player_id=player.id) }}">Recalcular potencial</a>
         </div>
     </div>
@@ -211,7 +215,9 @@
             <small class="text-muted">Datos de partidos, cargas y observaciones para contextualizar la proyeccion.</small>
         </div>
         <div class="btn-group">
+            {% if can_edit_player_data %}
             <a class="btn btn-outline-success btn-sm" href="{{ url_for('player_stats', player_id=player.id) }}">Agregar registro</a>
+            {% endif %}
             <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('predict_player', player_id=player.id) }}">Recalcular potencial</a>
         </div>
     </div>
@@ -385,12 +391,14 @@
 </section>
 
 <div class="mt-4 d-flex flex-wrap gap-2">
+    {% if can_manage_players %}
     <a href="{{ url_for('edit_player', player_id=player.id) }}" class="btn btn-warning">Editar ficha</a>
     <form action="{{ url_for('delete_player', player_id=player.id) }}" method="post"
           onsubmit="return confirm('Seguro que deseas eliminar este jugador?');">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <button type="submit" class="btn btn-danger">Eliminar</button>
     </form>
+    {% endif %}
     <a href="{{ url_for('index') }}" class="btn btn-secondary">Volver al listado</a>
 </div>
 {% endblock %}

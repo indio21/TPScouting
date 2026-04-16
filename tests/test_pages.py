@@ -32,3 +32,12 @@ def test_settings_requires_admin_after_hotfix(client, app_module, db):
     _login(client, "u3", "p3")
     resp = client.get("/settings")
     assert resp.status_code == 403
+
+
+def test_compare_pages_ok_after_login(client, app_module, db):
+    _create_user(db, app_module.User, "u4", "p4", role="scout")
+    _login(client, "u4", "p4")
+    resp_compare = client.get("/compare")
+    resp_compare_multi = client.get("/compare/multi")
+    assert resp_compare.status_code == 200
+    assert resp_compare_multi.status_code == 200

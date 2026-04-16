@@ -17,8 +17,8 @@ import os
 import sys
 
 from werkzeug.security import generate_password_hash
-from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from db_utils import normalize_db_url, create_app_engine
 
 # Importa los modelos desde scouting_app/models.py.
 # Este script puede ejecutarse desde raíz o desde scouting_app/:
@@ -30,19 +30,33 @@ if HERE not in sys.path:
 from models import Base, User  # noqa: E402
 
 
+def is_strong_password(password: str) -> bool:
+    if len(password or "") < 8:
+        return False
+    has_letter = any(char.isalpha() for char in password)
+    has_digit = any(char.isdigit() for char in password)
+    return has_letter and has_digit
+
+
 def main() -> int:
-    app_db_url = os.environ.get("APP_DB_URL", "sqlite:///players_updated_v2.db")
+    app_db_url = normalize_db_url(
+        os.environ.get("APP_DB_URL", "sqlite:///players_updated_v2.db"),
+        base_dir=HERE,
+    )
     admin_username = os.environ.get("ADMIN_USERNAME", "").strip()
     admin_password = os.environ.get("ADMIN_PASSWORD", "").strip()
 
     if not admin_username or not admin_password:
         print("ERROR: Debes setear ADMIN_USERNAME y ADMIN_PASSWORD (env vars).")
         return 2
+    if len(admin_username) < 3:
+        print("ERROR: ADMIN_USERNAME debe tener al menos 3 caracteres.")
+        return 2
+    if not is_strong_password(admin_password):
+        print("ERROR: ADMIN_PASSWORD debe tener al menos 8 caracteres e incluir letras y numeros.")
+        return 2
 
-    engine = create_engine(
-        app_db_url,
-        connect_args={"check_same_thread": False} if app_db_url.startswith("sqlite") else {},
-    )
+    engine = create_app_engine(app_db_url)
     Base.metadata.create_all(engine)
 
     Session = sessionmaker(bind=engine)

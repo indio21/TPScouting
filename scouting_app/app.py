@@ -10,15 +10,15 @@ from datetime import datetime, date, timedelta
 from statistics import mean
 from types import SimpleNamespace
 from flask import Flask, render_template, redirect, url_for, request, session, flash, abort, jsonify
-from sqlalchemy import create_engine, func, desc, text
-from sqlalchemy import event
-from sqlalchemy.orm import sessionmaker, joinedload
+from sqlalchemy import func, desc
+from sqlalchemy.orm import sessionmaker, load_only
 import numpy as np
 import torch
 from models import Base, Player, Coach, Director, User, PlayerStat, PlayerAttributeHistory
 from train_model import PlayerNet, normalize_features
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
+from db_utils import normalize_db_url, create_app_engine, ensure_player_columns
 from player_logic import (
     ATTRIBUTE_FIELDS,
     ATTRIBUTE_LABELS,
@@ -56,10 +56,14 @@ logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO))
 # --- Cache in-memory con TTL (MVP) ---
 _CACHE: dict = {}
 _CACHE_TTL_SECONDS = int(os.environ.get("CACHE_TTL_SECONDS", "60"))
+_LOGIN_ATTEMPTS: Dict[str, List[float]] = {}
+_LOGIN_RATE_LIMIT_WINDOW_SECONDS = int(os.environ.get("LOGIN_RATE_LIMIT_WINDOW_SECONDS", "900"))
+_LOGIN_RATE_LIMIT_MAX_ATTEMPTS = int(os.environ.get("LOGIN_RATE_LIMIT_MAX_ATTEMPTS", "5"))
 
 
 # --- Guardrails pipeline (evita doble ejecución concurrente) ---
 _PIPELINE_LOCK = threading.Lock()
+_LOGIN_ATTEMPT_LOCK = threading.Lock()
 
 
 def _cache_get(key: str):
@@ -76,7 +80,57 @@ def _cache_set(key: str, value):
     _CACHE[key] = (time.time() + _CACHE_TTL_SECONDS, value)
 
 
-app.secret_key = os.environ.get("APP_SECRET_KEY", "reemplazar-esta-clave")
+def _cache_invalidate_prefix(prefix: str) -> None:
+    keys = [key for key in _CACHE.keys() if key.startswith(prefix)]
+    for key in keys:
+        _CACHE.pop(key, None)
+
+
+def invalidate_dashboard_cache() -> None:
+    _cache_invalidate_prefix("dashboard:")
+
+
+def client_ip() -> str:
+    forwarded_for = (request.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
+    return forwarded_for or request.remote_addr or "unknown"
+
+
+def login_attempt_key(username: Optional[str]) -> str:
+    normalized_username = (username or "").strip().lower() or "-"
+    return f"{client_ip()}:{normalized_username}"
+
+
+def _prune_login_attempts(now_ts: Optional[float] = None) -> None:
+    now_ts = now_ts if now_ts is not None else time.time()
+    cutoff = now_ts - _LOGIN_RATE_LIMIT_WINDOW_SECONDS
+    expired_keys = []
+    for key, attempts in _LOGIN_ATTEMPTS.items():
+        fresh_attempts = [attempt for attempt in attempts if attempt >= cutoff]
+        if fresh_attempts:
+            _LOGIN_ATTEMPTS[key] = fresh_attempts
+        else:
+            expired_keys.append(key)
+    for key in expired_keys:
+        _LOGIN_ATTEMPTS.pop(key, None)
+
+
+def is_login_rate_limited(username: Optional[str]) -> bool:
+    with _LOGIN_ATTEMPT_LOCK:
+        _prune_login_attempts()
+        return len(_LOGIN_ATTEMPTS.get(login_attempt_key(username), [])) >= _LOGIN_RATE_LIMIT_MAX_ATTEMPTS
+
+
+def register_failed_login(username: Optional[str]) -> None:
+    with _LOGIN_ATTEMPT_LOCK:
+        _prune_login_attempts()
+        key = login_attempt_key(username)
+        attempts = _LOGIN_ATTEMPTS.setdefault(key, [])
+        attempts.append(time.time())
+
+
+def clear_failed_logins(username: Optional[str]) -> None:
+    with _LOGIN_ATTEMPT_LOCK:
+        _LOGIN_ATTEMPTS.pop(login_attempt_key(username), None)
 
 
 # --- Secret key obligatoria en producción ---
@@ -84,6 +138,12 @@ _env2 = (os.environ.get("FLASK_ENV") or os.environ.get("ENV") or "").lower()
 _secret = os.environ.get("APP_SECRET_KEY", "")
 if _env2 in ("production", "prod") and (not _secret or _secret == "reemplazar-esta-clave"):
     raise RuntimeError("APP_SECRET_KEY must be set in production")
+if _secret and _secret != "reemplazar-esta-clave":
+    app.secret_key = _secret
+else:
+    app.secret_key = secrets.token_urlsafe(32)
+    if _env2 not in ("production", "prod"):
+        app.logger.warning("APP_SECRET_KEY no configurada. Se genero una clave efimera para esta ejecucion.")
 
 
 # --- Cookies de sesión (hardening mínimo) ---
@@ -112,19 +172,17 @@ def _require_csrf():
     if not token or token != session.get("csrf_token"):
         abort(400)
 
-def _resolve_sqlite_url(url: str) -> str:
-    # sqlite:///file.db  -> relativo (se resuelve dentro de scouting_app/)
-    # sqlite:////abs/path/file.db -> absoluto (no se toca)
-    if url.startswith("sqlite:///") and not url.startswith("sqlite:////"):
-        rel = url.replace("sqlite:///", "", 1)
-        return "sqlite:///" + os.path.join(BASE_DIR, rel).replace("\\", "/")
-    return url
-
-APP_DB_URL = _resolve_sqlite_url(os.environ.get("APP_DB_URL", "sqlite:///players_updated_v2.db"))
+APP_DB_URL = normalize_db_url(
+    os.environ.get("APP_DB_URL", "sqlite:///players_updated_v2.db"),
+    base_dir=BASE_DIR,
+)
 if APP_DB_URL.rsplit("/", 1)[-1] == "players.db":
     app.logger.warning("APP_DB_URL apunta a players.db (legacy). Se recomienda players_updated_v2.db. Evidencia: scouting_app/players.db")
 
-TRAINING_DB_URL = _resolve_sqlite_url(os.environ.get("TRAINING_DB_URL", "sqlite:///players_training.db"))
+TRAINING_DB_URL = normalize_db_url(
+    os.environ.get("TRAINING_DB_URL", "sqlite:///players_training.db"),
+    base_dir=BASE_DIR,
+)
 try:
     EVAL_POOL_MAX = max(1, int(os.environ.get("EVAL_POOL_MAX", "100")))
 except ValueError:
@@ -138,32 +196,10 @@ ENFORCE_EVAL_POOL_LIMIT = (os.environ.get("ENFORCE_EVAL_POOL_LIMIT", "1").strip(
     "1", "true", "yes", "y", "si", "s", "on"
 })
 
-engine = create_engine(APP_DB_URL, connect_args={"check_same_thread": False} if APP_DB_URL.startswith("sqlite") else {})
-if APP_DB_URL.startswith("sqlite"):
-    @event.listens_for(engine, "connect")
-    def _set_sqlite_pragma(dbapi_connection, connection_record):
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON;")
-        cursor.execute("PRAGMA journal_mode=WAL;")
-        cursor.execute("PRAGMA synchronous=NORMAL;")
-        cursor.execute("PRAGMA busy_timeout=5000;")
-        cursor.close()
-
+engine = create_app_engine(APP_DB_URL)
 Session = sessionmaker(bind=engine, expire_on_commit=False)
 Base.metadata.create_all(engine)
-
-
-def ensure_player_schema():
-    """Agrega columnas nuevas si la base ya existia."""
-    with engine.connect() as conn:
-        columns = [row[1] for row in conn.execute(text("PRAGMA table_info(players)"))]
-        if "national_id" not in columns:
-            conn.execute(text("ALTER TABLE players ADD COLUMN national_id TEXT"))
-        if "photo_url" not in columns:
-            conn.execute(text("ALTER TABLE players ADD COLUMN photo_url TEXT"))
-
-
-ensure_player_schema()
+ensure_player_columns(engine)
 
 
 def trim_operational_player_pool(db_session, max_players: int = EVAL_POOL_MAX) -> int:
@@ -293,9 +329,10 @@ def run_subprocess(command: List[str], description: str) -> Tuple[bool, str]:
 def ensure_training_dataset(min_players: int = 1) -> Tuple[bool, List[str]]:
     """Verifica que la BD de entrenamiento tenga datos; genera si esta vacia."""
     logs: List[str] = []
-    training_engine = create_engine(TRAINING_DB_URL)
+    training_engine = create_app_engine(TRAINING_DB_URL)
     TrainingSession = sessionmaker(bind=training_engine)
     Base.metadata.create_all(training_engine)
+    ensure_player_columns(training_engine)
     session = TrainingSession()
     try:
         count = session.query(func.count(Player.id)).scalar() or 0
@@ -338,7 +375,7 @@ def update_database_pipeline(limit: int = EVAL_POOL_MAX, sync_shortlist: bool = 
         return False, overall_logs
 
     if sync_shortlist:
-        ensure_player_schema()
+        ensure_player_columns(engine)
         sync_cmd = [
             sys.executable,
             "sync_shortlist.py",
@@ -373,6 +410,15 @@ def update_database_pipeline(limit: int = EVAL_POOL_MAX, sync_shortlist: bool = 
     finally:
         db.close()
 
+    try:
+        global model
+        model = load_model(MODEL_PATH)
+        invalidate_dashboard_cache()
+        overall_logs.append("Modelo recargado en memoria y cache del dashboard invalidado.")
+    except Exception as exc:
+        overall_logs.append(f"No se pudo recargar el modelo en memoria despues del entrenamiento: {exc}")
+        return False, overall_logs
+
     return True, overall_logs
 
 # ----------------------------------------------------
@@ -401,6 +447,11 @@ def init_admin_user():
 
     if len(username) < 3 or len(password) < 6:
         app.logger.warning("Credenciales de bootstrap invalidas. No se crea usuario admin inicial.")
+        return
+    if not is_strong_password(password):
+        app.logger.warning(
+            "La contraseña de bootstrap no cumple el minimo de seguridad (8+ caracteres, letra y numero)."
+        )
         return
 
     db = Session()
@@ -466,15 +517,82 @@ def navbar_url_helpers():
 
 @app.context_processor
 def auth_flags():
+    role = current_role()
     return {
         "is_authenticated": bool(session.get("user_id")),
         "current_username": session.get("username", "admin"),
+        "current_role": role,
+        "current_role_label": role_display_label(role),
+        "is_admin": role == "administrador",
+        "can_edit_player_data": can_edit_player_data(),
+        "can_manage_players": can_manage_players(),
+        "can_manage_staff": can_manage_staff(),
+        "can_manage_users": can_manage_users(),
     }
 
 
 def display_position_label(value: Optional[str]) -> str:
     normalized = normalized_position(value)
     return "Arquero" if normalized == "Portero" else normalized
+
+
+def is_strong_password(password: str) -> bool:
+    if len(password or "") < 8:
+        return False
+    has_letter = any(char.isalpha() for char in password)
+    has_digit = any(char.isdigit() for char in password)
+    return has_letter and has_digit
+
+
+ROLE_ADMIN = "administrador"
+ROLE_SCOUT = "scout"
+ROLE_DIRECTOR = "director"
+ROLE_ALIASES = {
+    "admin": ROLE_ADMIN,
+    "administrador": ROLE_ADMIN,
+    "scout": ROLE_SCOUT,
+    "ojeador": ROLE_SCOUT,
+    "director": ROLE_DIRECTOR,
+}
+
+
+def normalize_role(role: Optional[str]) -> str:
+    raw = (role or "").strip().lower()
+    return ROLE_ALIASES.get(raw, ROLE_SCOUT)
+
+
+def current_role() -> str:
+    return normalize_role(session.get("role"))
+
+
+def role_display_label(role: Optional[str]) -> str:
+    normalized = normalize_role(role)
+    return {
+        ROLE_ADMIN: "Administrador",
+        ROLE_SCOUT: "Scout",
+        ROLE_DIRECTOR: "Director",
+    }.get(normalized, "Scout")
+
+
+def has_any_role(*roles: str) -> bool:
+    expected = {normalize_role(role) for role in roles}
+    return current_role() in expected
+
+
+def can_edit_player_data() -> bool:
+    return bool(session.get("user_id")) and has_any_role(ROLE_ADMIN, ROLE_SCOUT)
+
+
+def can_manage_players() -> bool:
+    return can_edit_player_data()
+
+
+def can_manage_staff() -> bool:
+    return bool(session.get("user_id")) and has_any_role(ROLE_ADMIN)
+
+
+def can_manage_users() -> bool:
+    return bool(session.get("user_id")) and has_any_role(ROLE_ADMIN)
 
 
 @app.context_processor
@@ -489,6 +607,23 @@ def login_required(view_func: Callable) -> Callable:
             return redirect(url_for('login', next=request.url))
         return view_func(*args, **kwargs)
     return wrapper
+
+
+def roles_required(*roles: str) -> Callable:
+    normalized_roles = {normalize_role(role) for role in roles}
+
+    def decorator(view_func: Callable) -> Callable:
+        @wraps(view_func)
+        def wrapper(*args, **kwargs):
+            if not session.get('user_id'):
+                return redirect(url_for('login', next=request.url))
+            if current_role() not in normalized_roles:
+                abort(403)
+            return view_func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 # ----------------------------------------------------
 # Modelo
@@ -583,6 +718,40 @@ def player_feature_vector(player: Player) -> List[float]:
     values.extend(getattr(player, field) for field in ATTRIBUTE_FIELDS)
     values.extend(position_vector(player.position))
     return values
+
+
+def batch_project_players(
+    players: List[Player],
+    avg_score_map: Optional[Dict[int, Optional[float]]] = None,
+) -> Dict[int, Dict[str, object]]:
+    if not players or model is None:
+        return {}
+
+    avg_score_map = avg_score_map or {}
+    features = np.array([player_feature_vector(player) for player in players], dtype=np.float32)
+    features_norm = normalize_features(features)
+    with torch.no_grad():
+        probs_tensor = model(torch.tensor(features_norm))
+    base_probs = np.asarray(probs_tensor.detach().cpu().numpy()).reshape(-1).tolist()
+
+    projections: Dict[int, Dict[str, object]] = {}
+    for idx, player in enumerate(players):
+        base_prob = float(base_probs[idx])
+        attr_map = player_attribute_map(player)
+        best_position, best_score = recommend_position_from_attrs(attr_map)
+        fit_score = weighted_score_from_attrs(attr_map, player.position)
+        stats_summary = {"avg_final_score": avg_score_map.get(player.id)}
+        combined = combine_probability(base_prob, stats_summary, fit_score=fit_score)
+        projections[player.id] = {
+            "base_prob": base_prob,
+            "combined_prob": combined,
+            "category": categorize_probability(combined),
+            "stats_summary": stats_summary,
+            "fit_score": fit_score,
+            "recommended_position": best_position,
+            "recommended_score": best_score,
+        }
+    return projections
 
 
 def player_fit_score(player: Player, target_position: Optional[str] = None) -> float:
@@ -798,11 +967,21 @@ def attribute_chart_payload(history: List[PlayerAttributeHistory]) -> Dict[str, 
     return {"labels": labels, "series": series}
 
 
-def categorize_probability(probability: float) -> str:
+def potential_thresholds() -> Tuple[float, float]:
     high = float(os.environ.get("POTENTIAL_HIGH_THRESHOLD", "0.60"))
     medium = float(os.environ.get("POTENTIAL_MEDIUM_THRESHOLD", "0.35"))
     if medium >= high:
         medium = max(0.0, high - 0.05)
+    return medium, high
+
+
+def is_high_potential_probability(probability: float) -> bool:
+    _, high = potential_thresholds()
+    return probability >= high
+
+
+def categorize_probability(probability: float) -> str:
+    medium, high = potential_thresholds()
 
     if probability >= high:
         return "Alto potencial"
@@ -816,30 +995,18 @@ def compute_projection(player: Player, stats: Optional[List[PlayerStat]] = None,
         stats_list = fetch_player_stats(player.id, db_session=db_session)
     else:
         stats_list = stats
-    stats_summary = summarize_stats(stats_list)
-    input_tensor = prepare_input(player)
-    with torch.no_grad():
-        base_prob = model(input_tensor).item()
-    attr_map = player_attribute_map(player)
-    best_position, best_score = recommend_position_from_attrs(attr_map)
-    fit_score = weighted_score_from_attrs(attr_map, player.position)
-    combined = combine_probability(base_prob, stats_summary, fit_score=fit_score)
-    return {
-        "base_prob": base_prob,
-        "combined_prob": combined,
-        "category": categorize_probability(combined),
-        "stats_summary": stats_summary,
-        "history": stats_list,
-        "fit_score": fit_score,
-        "recommended_position": best_position,
-        "recommended_score": best_score,
-    }
+    avg_score = summarize_stats(stats_list).get("avg_final_score")
+    projection = batch_project_players([player], {player.id: avg_score}).get(player.id)
+    if not projection:
+        return None
+    projection["history"] = stats_list
+    return projection
 
 
 def refresh_player_potential(player: Player, db_session = None) -> Optional[Dict[str, object]]:
     projection = compute_projection(player, db_session=db_session)
     if projection:
-        player.potential_label = projection["combined_prob"] >= 0.7
+        player.potential_label = is_high_potential_probability(projection["combined_prob"])
     return projection
 
 # ----------------------------------------------------
@@ -852,14 +1019,24 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        if is_login_rate_limited(username):
+            return (
+                render_template(
+                    'login.html',
+                    error='Se bloquearon temporalmente los intentos de acceso. Espera unos minutos antes de reintentar.',
+                ),
+                429,
+            )
         db = Session()
         user = db.query(User).filter(User.username == username).first()
         db.close()
         if user and check_password_hash(user.password_hash, password):
+            clear_failed_logins(username)
             session['user_id'] = user.id
             session['username'] = user.username
-            session['role'] = user.role
+            session['role'] = normalize_role(user.role)
             return redirect(request.args.get('next') or url_for('index'))
+        register_failed_login(username)
         return render_template('login.html', error='Usuario o contraseña inválidos')
     return render_template('login.html')
 
@@ -872,19 +1049,23 @@ def logout():
 # ----------------------------------------------------
 # REGISTRO
 @app.route('/register', methods=['GET', 'POST'])
-@login_required
+@roles_required(ROLE_ADMIN)
 def register():
     if request.method == "POST":
         _require_csrf()
-
-    if session.get('role') != 'administrador':
-        return "No autorizado", 403
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        role = request.form.get('role')
+        role = normalize_role(request.form.get('role'))
         if not username or not password or not role:
             return render_template('register.html', error='Todos los campos son obligatorios')
+        if not is_strong_password(password):
+            return render_template(
+                'register.html',
+                error='La contraseña debe tener al menos 8 caracteres e incluir letras y numeros',
+            )
+        if role not in {ROLE_ADMIN, ROLE_SCOUT, ROLE_DIRECTOR}:
+            return render_template('register.html', error='Rol inválido')
         db = Session()
         if db.query(User).filter(User.username == username).first():
             db.close()
@@ -947,7 +1128,28 @@ def dashboard():
     avg_labels = [ATTRIBUTE_LABELS[field] for field in ATTRIBUTE_FIELDS]
     avg_values = [round(float(value), 2) if value is not None else 0 for value in avg_attrs]
 
-    players = db.query(Player).all()
+    players = (
+        db.query(Player)
+        .options(
+            load_only(
+                Player.id,
+                Player.name,
+                Player.age,
+                Player.position,
+                Player.pace,
+                Player.shooting,
+                Player.passing,
+                Player.dribbling,
+                Player.defending,
+                Player.physical,
+                Player.vision,
+                Player.tackling,
+                Player.determination,
+                Player.technique,
+            )
+        )
+        .all()
+    )
     player_avg_rows = db.query(
         PlayerStat.player_id, func.avg(PlayerStat.final_score)
     ).group_by(PlayerStat.player_id).all()
@@ -956,29 +1158,24 @@ def dashboard():
         for player_id, avg_score in player_avg_rows
     }
     top_potential = []
+    category_counts = {'Alto potencial': 0, 'Potencial medio': 0, 'Bajo potencial': 0, 'Sin datos': 0}
     if players and model is not None:
-        features = np.array([
-            player_feature_vector(player)
-            for player in players
-        ], dtype=np.float32)
-        features_norm = normalize_features(features)
-        with torch.no_grad():
-            probs_tensor = model(torch.tensor(features_norm))
-        base_probs = probs_tensor.squeeze().numpy().tolist()
-        for idx, player in enumerate(players):
-            base_prob = float(base_probs[idx])
-            stats_summary = {"avg_final_score": avg_score_map.get(player.id)}
-            attr_map = player_attribute_map(player)
-            fit_score = weighted_score_from_attrs(attr_map, player.position)
-            combined = combine_probability(base_prob, stats_summary, fit_score=fit_score)
+        projections = batch_project_players(players, avg_score_map)
+        for player in players:
+            projection = projections.get(player.id)
+            if not projection:
+                continue
             top_potential.append({
                 "id": player.id,
                 "name": player.name,
-                "probability": combined,
-                "category": categorize_probability(combined),
+                "probability": projection["combined_prob"],
+                "category": projection["category"],
             })
+            category_counts[projection["category"]] += 1
         top_potential.sort(key=lambda item: item["probability"], reverse=True)
         top_potential = top_potential[:10]
+    else:
+        category_counts['Sin datos'] = total_players
 
     stats_in_range = (db.query(PlayerStat)
                       .filter(PlayerStat.record_date >= start_date,
@@ -1023,21 +1220,6 @@ def dashboard():
         })
     top_evolution.sort(key=lambda item: item["delta"], reverse=True)
     top_evolution = top_evolution[:10]
-
-    score_rows = player_avg_rows
-    category_counts = {'Alto potencial': 0, 'Potencial medio': 0, 'Bajo potencial': 0, 'Sin datos': 0}
-    players_with_stats = set()
-    for player_id, avg_score in score_rows:
-        players_with_stats.add(player_id)
-        if avg_score is None:
-            continue
-        if avg_score >= 7.5:
-            category_counts['Alto potencial'] += 1
-        elif avg_score >= 5:
-            category_counts['Potencial medio'] += 1
-        else:
-            category_counts['Bajo potencial'] += 1
-    category_counts['Sin datos'] = max(total_players - len(players_with_stats), 0)
     final_score_avg = db.query(func.avg(PlayerStat.final_score)).filter(PlayerStat.final_score != None).scalar()
     final_score_avg = round(float(final_score_avg), 2) if final_score_avg is not None else None
     db.close()
@@ -1076,7 +1258,28 @@ def index():
     page = request.args.get('page', 1, type=int)
     per_page = 50
     db = Session()
-    query = db.query(Player).options(joinedload(Player.stats))
+    player_list_columns = [
+        Player.id,
+        Player.name,
+        Player.national_id,
+        Player.age,
+        Player.position,
+        Player.club,
+        Player.country,
+        Player.photo_url,
+        Player.pace,
+        Player.shooting,
+        Player.passing,
+        Player.dribbling,
+        Player.defending,
+        Player.physical,
+        Player.vision,
+        Player.tackling,
+        Player.determination,
+        Player.technique,
+        Player.potential_label,
+    ]
+    query = db.query(Player).options(load_only(*player_list_columns))
     pos_list = [r[0] for r in db.query(Player.position).distinct().all()]
     club_list = [r[0] for r in db.query(Player.club).distinct().all() if r[0]]
     country_list = [r[0] for r in db.query(Player.country).distinct().all() if r[0]]
@@ -1088,8 +1291,6 @@ def index():
         query = query.filter(Player.club == club_filter)
     if country_filter:
         query = query.filter(Player.country == country_filter)
-    if top_potential:
-        query = query.filter(Player.potential_label.is_(True))
     if order_attr and hasattr(Player, order_attr):
         query = query.order_by(desc(getattr(Player, order_attr)))
     total = query.count()
@@ -1099,12 +1300,23 @@ def index():
         # Para el filtro de alto potencial, ordenar por potencial real (mayor->menor)
         # y paginar luego del ordenamiento para que sea consistente entre páginas.
         players = query.all()
+    player_ids = [player.id for player in players]
+    avg_score_map: Dict[int, Optional[float]] = {}
+    if player_ids:
+        player_avg_rows = (
+            db.query(PlayerStat.player_id, func.avg(PlayerStat.final_score))
+            .filter(PlayerStat.player_id.in_(player_ids))
+            .group_by(PlayerStat.player_id)
+            .all()
+        )
+        avg_score_map = {
+            player_id: (float(avg_score) if avg_score is not None else None)
+            for player_id, avg_score in player_avg_rows
+        }
+    projections = batch_project_players(players, avg_score_map)
     player_rows = []
     for player in players:
-        projection = compute_projection(player, db_session=db)
-        attr_map = player_attribute_map(player)
-        best_position, best_score = recommend_position_from_attrs(attr_map)
-        fit_score = weighted_score_from_attrs(attr_map, player.position)
+        projection = projections.get(player.id)
         if projection:
             combined_pct = projection["combined_prob"] * 100
             row = {
@@ -1117,11 +1329,14 @@ def index():
                 "category": projection["category"],
                 "probability": f"{combined_pct:.1f}%",
                 "prob_value": combined_pct,
-                "fit_score": projection.get("fit_score", fit_score),
-                "best_position": projection.get("recommended_position", best_position),
-                "best_score": projection.get("recommended_score", best_score),
+                "fit_score": projection["fit_score"],
+                "best_position": projection["recommended_position"],
+                "best_score": projection["recommended_score"],
             }
         else:
+            attr_map = player_attribute_map(player)
+            best_position, best_score = recommend_position_from_attrs(attr_map)
+            fit_score = weighted_score_from_attrs(attr_map, player.position)
             row = {
                 "player": player,
                 "photo_url": player.photo_url or default_player_photo_url(
@@ -1139,6 +1354,10 @@ def index():
         player_rows.append(row)
 
     if top_potential:
+        player_rows = [
+            item for item in player_rows
+            if item["prob_value"] is not None and is_high_potential_probability(item["prob_value"] / 100.0)
+        ]
         player_rows.sort(
             key=lambda item: (item["prob_value"] is not None, item["prob_value"] or -1.0),
             reverse=True,
@@ -1168,7 +1387,9 @@ def player_detail(player_id: int):
     if not player:
         db.close()
         abort(404)
-    history_synced = sync_player_attribute_history(player, db, note="Sincronizacion automatica al abrir ficha")
+    history_synced = False
+    if can_edit_player_data():
+        history_synced = sync_player_attribute_history(player, db, note="Sincronizacion automatica al abrir ficha")
     if history_synced:
         db.commit()
     stats = fetch_player_stats(player_id, db_session=db)
@@ -1281,6 +1502,8 @@ def player_detail(player_id: int):
 def player_stats(player_id: int):
     if request.method == "POST":
         _require_csrf()
+        if not can_edit_player_data():
+            abort(403)
 
     db = Session()
     player = db.query(Player).filter(Player.id == player_id).first()
@@ -1293,6 +1516,7 @@ def player_stats(player_id: int):
         if action == "recalculate":
             refresh_player_potential(player, db)
             db.commit()
+            invalidate_dashboard_cache()
             db.close()
             flash("Listo: se actualizo la proyeccion con los ultimos datos.", "success")
             return redirect(url_for("predict_player", player_id=player_id))
@@ -1342,6 +1566,7 @@ def player_stats(player_id: int):
         db.commit()
         refresh_player_potential(player, db)
         db.commit()
+        invalidate_dashboard_cache()
         db.close()
         flash("Listo: se agrego el registro al historial del jugador.", "success")
         return redirect(url_for("player_stats", player_id=player_id))
@@ -1366,6 +1591,8 @@ def player_stats(player_id: int):
 def player_attributes(player_id: int):
     if request.method == "POST":
         _require_csrf()
+        if not can_edit_player_data():
+            abort(403)
 
     db = Session()
     player = db.query(Player).filter(Player.id == player_id).first()
@@ -1378,6 +1605,7 @@ def player_attributes(player_id: int):
         if action == "recalculate":
             refresh_player_potential(player, db)
             db.commit()
+            invalidate_dashboard_cache()
             db.close()
             flash("Listo: se actualizo la proyeccion con los nuevos atributos.", "success")
             return redirect(url_for('predict_player', player_id=player_id))
@@ -1397,6 +1625,7 @@ def player_attributes(player_id: int):
         db.add(entry)
         refresh_player_potential(player, db)
         db.commit()
+        invalidate_dashboard_cache()
         db.close()
         flash("Listo: se guardo el historial de atributos.", "success")
         return redirect(url_for("player_attributes", player_id=player_id))
@@ -1421,7 +1650,7 @@ def player_attributes(player_id: int):
 # ----------------------------------------------------
 # EDITAR JUGADOR
 @app.route('/edit_player/<int:player_id>', methods=['GET', 'POST'])
-@login_required
+@roles_required(ROLE_ADMIN, ROLE_SCOUT)
 def edit_player(player_id):
     if request.method == "POST":
         _require_csrf()
@@ -1482,6 +1711,7 @@ def edit_player(player_id):
         sync_player_attribute_history(player, db, note="Actualizacion de ficha")
         refresh_player_potential(player, db)
         db.commit()
+        invalidate_dashboard_cache()
         db.close()
         flash("Listo: se actualizo la ficha del jugador.", "success")
         return redirect(url_for('player_detail', player_id=player_id))
@@ -1491,7 +1721,7 @@ def edit_player(player_id):
 # ----------------------------------------------------
 # ELIMINAR JUGADOR
 @app.route('/delete_player/<int:player_id>', methods=['POST'])
-@login_required
+@roles_required(ROLE_ADMIN, ROLE_SCOUT)
 def delete_player(player_id):
     _require_csrf()
 
@@ -1502,6 +1732,7 @@ def delete_player(player_id):
         abort(404)
     db.delete(player)
     db.commit()
+    invalidate_dashboard_cache()
     db.close()
     flash("Listo: se elimino el jugador del seguimiento.", "success")
     return redirect(url_for('index'))
@@ -1517,14 +1748,20 @@ def predict_player(player_id: int):
     if not player:
         db.close()
         abort(404)
-    projection = refresh_player_potential(player, db)
+    if can_edit_player_data():
+        projection = refresh_player_potential(player, db)
+    else:
+        projection = compute_projection(player, db_session=db)
     player_view = SimpleNamespace(**player.to_dict())
     player_view.photo_url = player.photo_url or default_player_photo_url(
         name=player.name,
         national_id=player.national_id,
         fallback=str(player.id),
     )
-    player_view.potential_label = player.potential_label
+    player_view.potential_label = (
+        is_high_potential_probability(projection["combined_prob"])
+        if projection else player.potential_label
+    )
     suggestions = compute_suggestions(player_view)
     attr_map = player_attribute_map(player)
     best_position, best_position_score = recommend_position_from_attrs(attr_map)
@@ -1543,7 +1780,11 @@ def predict_player(player_id: int):
         stats_history = projection["history"]
     history_payload = stats_chart_payload(stats_history)
     attribute_payload = attribute_chart_payload(fetch_attribute_history(player_id))
-    db.commit()
+    if can_edit_player_data():
+        db.commit()
+        invalidate_dashboard_cache()
+    else:
+        db.rollback()
     db.close()
 
     return render_template(
@@ -1616,14 +1857,14 @@ def compare_players():
 
                 summary_one = summarize_stats(stats_one)
                 summary_two = summarize_stats(stats_two)
+                avg_score_map = {
+                    player_one.id: summary_one.get("avg_final_score"),
+                    player_two.id: summary_two.get("avg_final_score"),
+                }
 
-                # Proyección solo para estos dos
-                projection_one = compute_projection(
-                    player_one, stats=stats_one, db_session=db
-                )
-                projection_two = compute_projection(
-                    player_two, stats=stats_two, db_session=db
-                )
+                projections = batch_project_players([player_one, player_two], avg_score_map)
+                projection_one = projections.get(player_one.id)
+                projection_two = projections.get(player_two.id)
 
                 prob_one = projection_one["combined_prob"] if projection_one else 0.0
                 prob_two = projection_two["combined_prob"] if projection_two else 0.0
@@ -1764,9 +2005,41 @@ def compare_multi():
     ]
     ranking_by_position: Dict[str, List[Dict[str, object]]] = {tab["key"]: [] for tab in position_tabs}
 
-    all_players_for_ranking = db.query(Player).all()
+    all_players_for_ranking = (
+        db.query(Player)
+        .options(
+            load_only(
+                Player.id,
+                Player.name,
+                Player.age,
+                Player.position,
+                Player.club,
+                Player.pace,
+                Player.shooting,
+                Player.passing,
+                Player.dribbling,
+                Player.defending,
+                Player.physical,
+                Player.vision,
+                Player.tackling,
+                Player.determination,
+                Player.technique,
+            )
+        )
+        .all()
+    )
+    ranking_avg_rows = (
+        db.query(PlayerStat.player_id, func.avg(PlayerStat.final_score))
+        .group_by(PlayerStat.player_id)
+        .all()
+    )
+    ranking_avg_score_map = {
+        player_id: (float(avg_score) if avg_score is not None else None)
+        for player_id, avg_score in ranking_avg_rows
+    }
+    ranking_projections = batch_project_players(all_players_for_ranking, ranking_avg_score_map)
     for player in all_players_for_ranking:
-        projection = compute_projection(player, db_session=db)
+        projection = ranking_projections.get(player.id)
         if not projection:
             continue
         normalized_pos = normalized_position(player.position)
@@ -1825,6 +2098,7 @@ def compare_multi():
                     player_id: (float(avg) if avg is not None else None)
                     for player_id, avg in score_rows
                 }
+                selected_projections = batch_project_players(selected_players, avg_score_map)
 
                 # Atributos a graficar (eran los del radar)
                 labels = [ATTRIBUTE_LABELS[field] for field in ATTRIBUTE_FIELDS]
@@ -1857,6 +2131,7 @@ def compare_multi():
                     attr_map = player_attribute_map(player)
                     attribute_sum = weighted_score_from_attrs(attr_map, base_position or player.position)
                     avg_score = avg_score_map.get(player.id)
+                    projection = selected_projections.get(player.id)
                     total = attribute_sum + (avg_score or 0)
 
                     # Mapa atributo -> valor (con los labels “bonitos”)
@@ -1870,6 +2145,7 @@ def compare_multi():
                             "position": player.position,
                             "attributes_map": attributes_map,
                             "total": round(total, 2),
+                            "probability": round(float(projection["combined_prob"]) * 100, 1) if projection else None,
                         }
                     )
 
@@ -1934,7 +2210,7 @@ def list_coaches():
     return render_template("coaches.html", coaches=coaches)
 
 @app.route("/coaches/new", methods=["GET", "POST"])
-@login_required
+@roles_required(ROLE_ADMIN)
 def new_coach():
     if request.method == "POST":
         _require_csrf()
@@ -1955,7 +2231,7 @@ def new_coach():
     return render_template("coach_form.html", coach=None)
 
 @app.route("/coaches/edit/<int:coach_id>", methods=["GET", "POST"])
-@login_required
+@roles_required(ROLE_ADMIN)
 def edit_coach(coach_id):
     if request.method == "POST":
         _require_csrf()
@@ -1978,7 +2254,7 @@ def edit_coach(coach_id):
     return render_template("coach_form.html", coach=coach)
 
 @app.route("/coaches/delete/<int:coach_id>", methods=["POST"])
-@login_required
+@roles_required(ROLE_ADMIN)
 def delete_coach(coach_id):
     _require_csrf()
 
@@ -2005,7 +2281,7 @@ def list_directors():
 
 
 @app.route("/directors/new", methods=["GET", "POST"])
-@login_required
+@roles_required(ROLE_ADMIN)
 def new_director():
     if request.method == "POST":
         _require_csrf()
@@ -2027,7 +2303,7 @@ def new_director():
 
 
 @app.route("/directors/edit/<int:director_id>", methods=["GET", "POST"])
-@login_required
+@roles_required(ROLE_ADMIN)
 def edit_director(director_id):
     if request.method == "POST":
         _require_csrf()
@@ -2051,7 +2327,7 @@ def edit_director(director_id):
 
 
 @app.route("/directors/delete/<int:director_id>", methods=["POST"])
-@login_required
+@roles_required(ROLE_ADMIN)
 def delete_director(director_id):
     _require_csrf()
 
@@ -2067,15 +2343,11 @@ def delete_director(director_id):
 
 
 @app.route("/settings", methods=["GET", "POST"])
-@login_required
+@roles_required(ROLE_ADMIN)
 def settings():
     # CSRF mínimo para POST
     if request.method == "POST":
         _require_csrf()
-
-    # Admin-only
-    if session.get("role") != "administrador":
-        abort(403)
 
     status_messages: List[str] = []
     modal_message: Optional[str] = None
@@ -2139,7 +2411,7 @@ def normalize_position_choice(value: Optional[str]) -> str:
 
 
 @app.route("/players/manage", methods=["GET", "POST"])
-@login_required
+@roles_required(ROLE_ADMIN, ROLE_SCOUT)
 def manage_players():
     if request.method == "POST":
         _require_csrf()
@@ -2199,7 +2471,9 @@ def manage_players():
                     db.add(player)
                     db.flush()
                     sync_player_attribute_history(player, db, note="Alta de jugador")
+                    refresh_player_potential(player, db)
                     db.commit()
+                    invalidate_dashboard_cache()
                     created.append(player.name)
                     flash(f"Listo: se agrego a {player.name} al seguimiento.", "success")
                     return redirect(url_for("manage_players"))
@@ -2273,12 +2547,15 @@ def manage_players():
                         db.add(player)
                         db.flush()
                         sync_player_attribute_history(player, db, note="Alta masiva de jugador")
+                        refresh_player_potential(player, db)
                         created.append(player.name)
                     if created and not errors:
                         db.commit()
+                        invalidate_dashboard_cache()
                         flash(f"Listo: se agregaron {len(created)} jugadores.", "success")
                     elif created and errors:
                         db.commit()
+                        invalidate_dashboard_cache()
                         flash(f"Se agregaron {len(created)} jugadores, pero quedaron advertencias para revisar.", "warning")
                     else:
                         db.rollback()

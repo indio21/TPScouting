@@ -7,9 +7,11 @@
         <h2 class="mb-1">Dashboard de scouting</h2>
         <p class="text-muted mb-0">Visor general con datos agregados que se actualizan cuando cargas atributos o estadisticas.</p>
     </div>
+    {% if can_manage_players %}
     <div class="mt-3 mt-lg-0 d-grid gap-2 d-lg-block">
         <a class="btn btn-outline-success" href="{{ url_for('manage_players') }}">Agregar jugadores</a>
     </div>
+    {% endif %}
 </div>
 
 <div class="row g-3 mb-4">

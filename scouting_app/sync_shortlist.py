@@ -1,22 +1,14 @@
 """Sincroniza un subconjunto de jugadores desde la base de entrenamiento."""
 
 import argparse
+import os
 from typing import List
 
-from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from models import Base, Player
+from db_utils import normalize_db_url, create_app_engine, ensure_player_columns
 from player_logic import ATTRIBUTE_FIELDS, normalized_position, default_player_photo_url
-
-
-def ensure_player_columns(engine) -> None:
-    with engine.connect() as conn:
-        columns = [row[1] for row in conn.execute(text("PRAGMA table_info(players)"))]
-        if "national_id" not in columns:
-            conn.execute(text("ALTER TABLE players ADD COLUMN national_id TEXT"))
-        if "photo_url" not in columns:
-            conn.execute(text("ALTER TABLE players ADD COLUMN photo_url TEXT"))
 
 
 def copy_player_data(src_player: Player, dst_player: Player) -> None:
@@ -37,8 +29,9 @@ def copy_player_data(src_player: Player, dst_player: Player) -> None:
 
 
 def sync_shortlist(src_db: str, dst_db: str, limit: int, min_age: int, max_age: int) -> None:
-    src_engine = create_engine(src_db)
-    dst_engine = create_engine(dst_db)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    src_engine = create_app_engine(normalize_db_url(src_db, base_dir=base_dir))
+    dst_engine = create_app_engine(normalize_db_url(dst_db, base_dir=base_dir))
     Base.metadata.create_all(src_engine)
     Base.metadata.create_all(dst_engine)
     ensure_player_columns(src_engine)

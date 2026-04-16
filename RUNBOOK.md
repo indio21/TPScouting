@@ -88,3 +88,15 @@ Acciones:
 ### 8.3 /health devuelve 500
 - Verificar que el path del `.db` exista y sea accesible.
 - Verificar env vars `APP_DB_URL` y permisos en filesystem.
+
+### 8.4 PostgreSQL en despliegue
+- La app ya soporta `APP_DB_URL` y `TRAINING_DB_URL` apuntando a PostgreSQL.
+- En Render, conviene usar las URLs internas de las bases administradas por la plataforma.
+- Si se despliega con dos bases separadas, validar conectividad a ambas antes de correr entrenamiento o sincronizacion.
+- En PostgreSQL, backup y restore deben hacerse con herramientas del motor (`pg_dump`, snapshots del proveedor o backups administrados), no copiando archivos `.db`.
+
+### 8.5 Cache en memoria del dashboard
+- El dashboard usa cache in-memory con TTL (`CACHE_TTL_SECONDS`, por default 60s).
+- El cache se invalida cuando se cargan o editan jugadores, atributos, historial o cuando corre el pipeline.
+- En despliegues con mas de una instancia o proceso, el cache no se comparte entre workers.
+- Para este MVP se recomienda mantener una sola instancia de aplicacion si se quiere consistencia inmediata del dashboard.

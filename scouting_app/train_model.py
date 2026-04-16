@@ -20,10 +20,10 @@ import torch.nn as nn
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, average_precision_score, f1_score, precision_score, recall_score, confusion_matrix
-from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from models import Base, Player
+from db_utils import normalize_db_url, create_app_engine, ensure_player_columns
 from player_logic import position_vector, MODEL_MIN_AGE, MODEL_MAX_AGE
 
 SEED = int(os.environ.get("SEED", "42"))
@@ -52,19 +52,10 @@ class PlayerNet(nn.Module):
     def forward(self, x):
         return self.net(x)
 
-
-def ensure_player_columns(engine) -> None:
-    with engine.connect() as conn:
-        columns = [row[1] for row in conn.execute(text("PRAGMA table_info(players)"))]
-        if "national_id" not in columns:
-            conn.execute(text("ALTER TABLE players ADD COLUMN national_id TEXT"))
-        if "photo_url" not in columns:
-            conn.execute(text("ALTER TABLE players ADD COLUMN photo_url TEXT"))
-
-
 def load_data(db_url: str):
     """Carga los jugadores desde la base de datos y devuelve matrices X, y."""
-    engine = create_engine(db_url)
+    normalized_db_url = normalize_db_url(db_url, base_dir=os.path.dirname(os.path.abspath(__file__)))
+    engine = create_app_engine(normalized_db_url)
     Base.metadata.create_all(engine)
     ensure_player_columns(engine)
     Session = sessionmaker(bind=engine)
@@ -107,8 +98,10 @@ def normalize_features(X: np.ndarray) -> np.ndarray:
 def train_model(X: np.ndarray, y: np.ndarray, epochs: int = 10, lr: float = 1e-3):
     """Entrena la red neuronal y devuelve el modelo entrenado."""
     X_norm = normalize_features(X)
+    unique_classes, class_counts = np.unique(y, return_counts=True)
+    stratify = y if len(unique_classes) > 1 and class_counts.min() >= 2 else None
     X_train, X_test, y_train, y_test = train_test_split(
-        X_norm, y, test_size=0.2, random_state=42
+        X_norm, y, test_size=0.2, random_state=SEED, stratify=stratify
     )
     X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
     y_train_tensor = torch.tensor(y_train, dtype=torch.float32).view(-1, 1)
@@ -146,22 +139,25 @@ def train_model(X: np.ndarray, y: np.ndarray, epochs: int = 10, lr: float = 1e-3
     
     try:
         roc_auc = roc_auc_score(y_true, y_prob)
-    except Exception:
+    except Exception as exc:
         roc_auc = None
-    
+        print(f"Advertencia: no se pudo calcular ROC-AUC: {exc}")
+
     try:
         pr_auc = average_precision_score(y_true, y_prob)
-    except Exception:
+    except Exception as exc:
         pr_auc = None
-    
+        print(f"Advertencia: no se pudo calcular PR-AUC: {exc}")
+
     try:
         f1 = f1_score(y_true, y_pred)
         precision = precision_score(y_true, y_pred, zero_division=0)
         recall = recall_score(y_true, y_pred, zero_division=0)
         cm = confusion_matrix(y_true, y_pred).tolist()
-    except Exception:
+    except Exception as exc:
         f1 = precision = recall = None
         cm = None
+        print(f"Advertencia: no se pudieron calcular métricas de clasificación: {exc}")
     
     if roc_auc is not None:
         print(f"ROC-AUC: {roc_auc:.4f}")
@@ -190,8 +186,8 @@ def train_model(X: np.ndarray, y: np.ndarray, epochs: int = 10, lr: float = 1e-3
             "model_path": os.path.join(os.path.dirname(__file__), "model.pt"),
         }
         log_experiment(row)
-    except Exception:
-        pass
+    except Exception as exc:
+        print(f"Advertencia: no se pudo registrar la corrida del experimento: {exc}")
     
     return model
 

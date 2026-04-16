@@ -13,14 +13,16 @@ Ejemplo de uso:
 """
 
 import argparse
+import os
 import random
-from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from models import Base, Player
+from db_utils import normalize_db_url, create_app_engine, ensure_player_columns
 from player_logic import normalized_position, default_player_photo_url
 
 used_identifiers = set()
+DEFAULT_SEED = int(os.environ.get("SEED", "42"))
 
 
 def next_identifier() -> str:
@@ -29,15 +31,6 @@ def next_identifier() -> str:
         if value not in used_identifiers:
             used_identifiers.add(value)
             return str(value)
-
-
-def ensure_player_columns(engine) -> None:
-    with engine.connect() as conn:
-        columns = [row[1] for row in conn.execute(text("PRAGMA table_info(players)"))]
-        if "national_id" not in columns:
-            conn.execute(text("ALTER TABLE players ADD COLUMN national_id TEXT"))
-        if "photo_url" not in columns:
-            conn.execute(text("ALTER TABLE players ADD COLUMN photo_url TEXT"))
 
 def generate_player() -> Player:
     """Genera un jugador con atributos aleatorios."""
@@ -107,9 +100,12 @@ def generate_player() -> Player:
     )
 
 
-def main(num_players: int, db_url: str) -> None:
+def main(num_players: int, db_url: str, seed: int = DEFAULT_SEED) -> None:
     """Genera `num_players` jugadores y los guarda en la base de datos."""
-    engine = create_engine(db_url)
+    random.seed(seed)
+    used_identifiers.clear()
+    normalized_db_url = normalize_db_url(db_url, base_dir=os.path.dirname(os.path.abspath(__file__)))
+    engine = create_app_engine(normalized_db_url)
     Base.metadata.create_all(engine)
     ensure_player_columns(engine)
     Session = sessionmaker(bind=engine)
@@ -120,12 +116,13 @@ def main(num_players: int, db_url: str) -> None:
         players.append(generate_player())
     session.bulk_save_objects(players)
     session.commit()
-    print(f"Se generaron {num_players} jugadores en la base de datos: {db_url}")
+    print(f"Se generaron {num_players} jugadores en la base de datos: {normalized_db_url} (seed={seed})")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Genera jugadores aleatorios")
     parser.add_argument("--num-players", type=int, default=1000, help="Número de jugadores a crear")
     parser.add_argument("--db-url", type=str, default="sqlite:///players.db", help="URL de la base de datos")
+    parser.add_argument("--seed", type=int, default=DEFAULT_SEED, help="Semilla para reproducción de datos")
     args = parser.parse_args()
-    main(args.num_players, args.db_url)
+    main(args.num_players, args.db_url, seed=args.seed)

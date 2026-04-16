@@ -6,7 +6,9 @@ creación rápida de prototipos; en un entorno real se recomienda
 normalizar aún más los datos y añadir restricciones de integridad.
 """
 
-from sqlalchemy import Column, Integer, String, Float, Boolean, Date, ForeignKey, Text
+from datetime import datetime
+
+from sqlalchemy import Column, Integer, String, Float, Boolean, Date, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -14,7 +16,12 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 
-class Player(Base):
+class TimestampMixin:
+    created_at = Column(DateTime, nullable=True, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=True, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Player(TimestampMixin, Base):
     """Tabla que representa a un jugador.
 
     Incluye datos personales básicos y una serie de atributos técnicos
@@ -80,7 +87,7 @@ class Player(Base):
 # atributos (correo electrónico, teléfono, etc.), pero para el manual de
 # usuario definimos campos esenciales.
 
-class Coach(Base):
+class Coach(TimestampMixin, Base):
     """Representa a un miembro del cuerpo técnico.
 
     Incluye información básica como nombre, rol (entrenador de porteros,
@@ -107,7 +114,7 @@ class Coach(Base):
         }
 
 
-class Director(Base):
+class Director(TimestampMixin, Base):
     """Representa a un dirigente o miembro de la directiva del club.
 
     A diferencia de los entrenadores, aquí usamos un campo cargo (por
@@ -137,7 +144,7 @@ class Director(Base):
 # ---------------------------------------------------------------------------
 # Modelo de usuario para autenticación
 
-class User(Base):
+class User(TimestampMixin, Base):
     """Representa un usuario del sistema.
 
     Contiene un nombre de usuario único y un hash de contraseña.  En esta
@@ -150,7 +157,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
-    role = Column(String, nullable=False, default="ojeador")  # roles: administrador, ojeador, director
+    role = Column(String, nullable=False, default="scout")  # roles: administrador, scout/ojeador, director
 
     def to_dict(self) -> dict:
         return {
@@ -159,7 +166,7 @@ class User(Base):
         }
 
 
-class PlayerStat(Base):
+class PlayerStat(TimestampMixin, Base):
     """Evolucion historica de rendimiento y observaciones."""
 
     __tablename__ = "player_stats"
@@ -200,7 +207,7 @@ class PlayerStat(Base):
         }
 
 
-class PlayerAttributeHistory(Base):
+class PlayerAttributeHistory(TimestampMixin, Base):
     """Historial de atributos técnicos/mentales para seguir progresión."""
 
     __tablename__ = "player_attribute_history"

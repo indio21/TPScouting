@@ -34,6 +34,14 @@
       <ul class="navbar-nav ms-auto align-items-center">
 
         {% if is_authenticated %}
+          {% if can_manage_players %}
+          <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2" href="{{ url_for('manage_players') }}">
+              <i class="bi bi-person-plus"></i> Gestion jugadores
+            </a>
+          </li>
+          {% endif %}
+
           <!-- Comparadores -->
           <li class="nav-item">
             <a class="nav-link d-flex align-items-center gap-2" href="{{ first_url('compare_players','compare','compare_index') }}">
@@ -46,11 +54,13 @@
             </a>
           </li>
 
+          {% if can_manage_users %}
           <li class="nav-item">
             <a class="nav-link d-flex align-items-center gap-2" href="{{ first_url('settings') }}">
               <i class="bi bi-gear"></i> Configuracion
             </a>
           </li>
+          {% endif %}
 
           <li class="nav-sep" aria-hidden="true"></li>
 
@@ -86,6 +96,16 @@
               <i class="bi bi-person-circle"></i> {{ current_username }}
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+              <li>
+                <span class="dropdown-item-text text-muted small text-uppercase">{{ current_role_label }}</span>
+              </li>
+              {% if can_manage_users %}
+              <li>
+                <a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('register') }}">
+                  <i class="bi bi-person-add"></i> Registrar usuario
+                </a>
+              </li>
+              {% endif %}
               <li>
                 <a class="dropdown-item d-flex align-items-center gap-2" href="#">
                   <i class="bi bi-person"></i> Perfil

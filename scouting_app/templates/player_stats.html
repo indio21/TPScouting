@@ -15,8 +15,9 @@
 <div class="row g-4">
     <div class="col-lg-5">
         <div class="card h-100">
-            <div class="card-header">Nuevo registro</div>
+            <div class="card-header">{% if can_edit_player_data %}Nuevo registro{% else %}Carga bloqueada para este rol{% endif %}</div>
             <div class="card-body">
+                {% if can_edit_player_data %}
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <input type="hidden" name="action" value="add">
@@ -78,6 +79,9 @@
                         <button class="btn btn-success" type="submit">Guardar registro</button>
                     </div>
                 </form>
+                {% else %}
+                <p class="text-muted mb-0">El rol director puede consultar el historial, pero no cargar ni recalcular registros.</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -85,11 +89,13 @@
         <div class="card h-100">
             <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <span>Historial completo</span>
+                {% if can_edit_player_data %}
                 <form method="post" class="d-inline">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <input type="hidden" name="action" value="recalculate">
                     <button class="btn btn-outline-primary btn-sm" type="submit">Recalcular potencial con historial</button>
                 </form>
+                {% endif %}
             </div>
             <div class="card-body">
                 {% if stats %}
@@ -149,7 +155,7 @@
 
 <div class="mt-4 d-flex flex-wrap gap-2">
     <a class="btn btn-secondary" href="{{ url_for('player_detail', player_id=player.id) }}">Volver a la ficha</a>
-    <a class="btn btn-outline-success" href="{{ url_for('player_attributes', player_id=player.id) }}">Gestionar atributos</a>
+    <a class="btn btn-outline-success" href="{{ url_for('player_attributes', player_id=player.id) }}">{% if can_edit_player_data %}Gestionar atributos{% else %}Ver atributos{% endif %}</a>
     <a class="btn btn-outline-primary" href="{{ url_for('predict_player', player_id=player.id) }}">Ir a proyeccion</a>
 </div>
 {% endblock %}

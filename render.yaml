@@ -1,3 +1,9 @@
+databases:
+  - name: scouting-mvp-app-db
+    plan: free
+  - name: scouting-mvp-training-db
+    plan: free
+
 services:
   - type: web
     name: scouting-mvp
@@ -14,9 +20,13 @@ services:
       - key: APP_SECRET_KEY
         generateValue: true
       - key: APP_DB_URL
-        value: sqlite:///players_updated_v2.db
+        fromDatabase:
+          name: scouting-mvp-app-db
+          property: connectionString
       - key: TRAINING_DB_URL
-        value: sqlite:///players_training.db
+        fromDatabase:
+          name: scouting-mvp-training-db
+          property: connectionString
       - key: EVAL_POOL_MAX
         value: "100"
       - key: ENFORCE_EVAL_POOL_LIMIT

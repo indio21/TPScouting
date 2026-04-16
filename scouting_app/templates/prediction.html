@@ -16,8 +16,10 @@
             </div>
             <div class="btn-group flex-wrap">
                 <a class="btn btn-outline-primary btn-sm" href="{{ url_for('player_detail', player_id=player.id) }}">Ver ficha</a>
+                {% if can_edit_player_data %}
                 <a class="btn btn-outline-success btn-sm" href="{{ url_for('player_attributes', player_id=player.id) }}">Actualizar atributos</a>
                 <a class="btn btn-outline-success btn-sm" href="{{ url_for('player_stats', player_id=player.id) }}">Actualizar historial</a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -140,8 +142,10 @@
 
 <div class="mt-4 d-flex flex-wrap gap-2">
     <a class="btn btn-secondary" href="{{ url_for('player_detail', player_id=player.id) }}">Volver</a>
+    {% if can_edit_player_data %}
     <a class="btn btn-outline-success" href="{{ url_for('player_attributes', player_id=player.id) }}">Cargar atributos</a>
     <a class="btn btn-outline-success" href="{{ url_for('player_stats', player_id=player.id) }}">Cargar nuevo registro</a>
+    {% endif %}
 </div>
 {% endblock %}
 
