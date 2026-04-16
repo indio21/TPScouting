@@ -1,6 +1,8 @@
+import importlib
 from types import SimpleNamespace
 
 from werkzeug.security import generate_password_hash
+from sqlalchemy.orm import sessionmaker
 
 
 def _create_user(db, User, username, password, role="scout"):
@@ -521,3 +523,127 @@ def test_admin_can_create_and_delete_coach(client, app_module, db):
 
     assert delete_response.status_code in (301, 302)
     assert db.query(app_module.Coach).filter_by(id=coach.id).count() == 0
+
+
+def test_prepare_input_matches_batch_transformation(app_module, db):
+    player = _create_player(app_module, db, name="Tensor Uno", national_id="46677889")
+    second_player = _create_player(app_module, db, name="Tensor Dos", national_id="47788990", position="Delantero")
+
+    single_tensor = app_module.prepare_input(player).detach().cpu().numpy()
+    batch_tensor = app_module.players_to_model_tensor([player, second_player]).detach().cpu().numpy()
+
+    assert single_tensor.shape[1] == batch_tensor.shape[1]
+    assert single_tensor[0].tolist() == batch_tensor[0].tolist()
+
+
+def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    train_module = importlib.import_module("train_model")
+    models_module = importlib.import_module("models")
+    db_utils_module = importlib.import_module("db_utils")
+
+    db_path = tmp_path / "train_pipeline.db"
+    db_url = f"sqlite:///{db_path.as_posix()}"
+    normalized_db_url = db_utils_module.normalize_db_url(db_url, base_dir=str(scouting_app_dir))
+    engine = db_utils_module.create_app_engine(normalized_db_url)
+    models_module.Base.metadata.create_all(engine)
+    db_utils_module.ensure_player_columns(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    try:
+        session.add_all(
+            [
+                models_module.Player(
+                    name="Train A",
+                    national_id="48899001",
+                    age=16,
+                    position="Defensa",
+                    club="Club Train",
+                    country="Argentina",
+                    photo_url="",
+                    pace=10,
+                    shooting=8,
+                    passing=11,
+                    dribbling=9,
+                    defending=14,
+                    physical=12,
+                    vision=10,
+                    tackling=13,
+                    determination=12,
+                    technique=9,
+                    potential_label=False,
+                ),
+                models_module.Player(
+                    name="Train B",
+                    national_id="48899002",
+                    age=17,
+                    position="Mediocampista",
+                    club="Club Train",
+                    country="Argentina",
+                    photo_url="",
+                    pace=12,
+                    shooting=10,
+                    passing=14,
+                    dribbling=13,
+                    defending=10,
+                    physical=11,
+                    vision=14,
+                    tackling=9,
+                    determination=15,
+                    technique=13,
+                    potential_label=True,
+                ),
+                models_module.Player(
+                    name="Train C",
+                    national_id="48899003",
+                    age=15,
+                    position="Delantero",
+                    club="Club Train",
+                    country="Argentina",
+                    photo_url="",
+                    pace=15,
+                    shooting=16,
+                    passing=10,
+                    dribbling=15,
+                    defending=6,
+                    physical=12,
+                    vision=10,
+                    tackling=5,
+                    determination=16,
+                    technique=14,
+                    potential_label=True,
+                ),
+                models_module.Player(
+                    name="Train D",
+                    national_id="48899004",
+                    age=16,
+                    position="Lateral",
+                    club="Club Train",
+                    country="Argentina",
+                    photo_url="",
+                    pace=11,
+                    shooting=8,
+                    passing=10,
+                    dribbling=11,
+                    defending=12,
+                    physical=11,
+                    vision=9,
+                    tackling=12,
+                    determination=11,
+                    technique=9,
+                    potential_label=False,
+                ),
+            ]
+        )
+        session.commit()
+    finally:
+        session.close()
+
+    model_path = tmp_path / "model.pt"
+    preprocessor_path = tmp_path / "preprocessor.joblib"
+    train_module.main(db_url, str(model_path), str(preprocessor_path), epochs=1, lr=1e-3)
+
+    assert model_path.exists()
+    assert preprocessor_path.exists()

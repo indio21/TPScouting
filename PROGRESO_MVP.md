@@ -92,10 +92,21 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Resultado: todas esas rutas respondieron `200` en la revision final.
 - Se dejo el detalle en `REVISION_FINAL_MVP.md`.
 
+### 11. Preprocesamiento real con pandas y scikit-learn
+
+- Se agrego `scouting_app/preprocessing.py` como capa compartida entre entrenamiento e inferencia.
+- El dataset de entrenamiento ahora se construye con `pandas` leyendo `players` hacia `DataFrame`.
+- El preprocesamiento ahora usa `scikit-learn` con:
+- `SimpleImputer(strategy="median")` + `MinMaxScaler()` para columnas numericas
+- `SimpleImputer(strategy="most_frequent")` + `OneHotEncoder(handle_unknown="ignore")` para `position`
+- El preprocesador se persiste en `scouting_app/preprocessor.joblib`.
+- La app ya no usa normalizacion manual para inferencia: reutiliza el mismo preprocesador persistido que usa entrenamiento.
+- Se reentreno el modelo para alinear pesos y preprocesamiento.
+
 ## Tests Ejecutados
 
 - La suite automatizada actual termina pasando en esta maquina.
-- Ultimo estado validado: `27 passed`
+- Ultimo estado validado: `29 passed`
 
 ## Puntos Mejorados De Forma Clara
 
@@ -110,6 +121,7 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Healthcheck con visibilidad real de calidad de datos
 - Cobertura funcional mas fuerte sobre CRUD, permisos, CSRF e inputs invalidos
 - MVP revisado integralmente con evidencia de smoke y datos reales
+- Preprocesamiento real y persistido con pandas + scikit-learn, sin desalineacion entre entrenamiento e inferencia
 
 ## Puntos Que Siguen Parciales O Pendientes
 

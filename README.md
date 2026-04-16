@@ -12,6 +12,7 @@ Trabajo final orientado al scouting de futbol juvenil, con una app web para:
 
 - Python + Flask
 - SQLAlchemy + SQLite/PostgreSQL
+- pandas + scikit-learn para preprocesamiento
 - PyTorch + scikit-learn (pipeline y metricas)
 - Bootstrap + Chart.js
 

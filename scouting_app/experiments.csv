@@ -1,0 +1,4 @@
+timestamp,seed,epochs,lr,model_path,preprocessor_path,accuracy,roc_auc,pr_auc,f1,precision,recall,train_size,test_size
+2026-04-16T22:45:04.905069,42,30,0.001,scouting_app\model.pt,scouting_app\preprocessor.joblib,0.8479999899864197,0.21231288209098806,0.09153112324887892,0.0,0.0,0.0,16000,4000
+2026-04-16T22:45:51.176450,42,1,0.001,C:\Users\Usuario\AppData\Local\Temp\pytest-of-Usuario\pytest-13\test_training_main_persists_pr0\model.pt,C:\Users\Usuario\AppData\Local\Temp\pytest-of-Usuario\pytest-13\test_training_main_persists_pr0\preprocessor.joblib,0.0,nan,1.0,0.0,0.0,0.0,3,1
+2026-04-16T22:46:21.479829,42,1,0.001,C:\Users\Usuario\AppData\Local\Temp\pytest-of-Usuario\pytest-14\test_training_main_persists_pr0\model.pt,C:\Users\Usuario\AppData\Local\Temp\pytest-of-Usuario\pytest-14\test_training_main_persists_pr0\preprocessor.joblib,0.0,,,0.0,0.0,0.0,3,1

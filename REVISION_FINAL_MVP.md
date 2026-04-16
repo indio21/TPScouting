@@ -17,7 +17,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 
 ### 1. Suite automatizada
 
-- Estado final validado: `27 passed`
+- Estado final validado: `29 passed`
 - Cobertura reforzada sobre:
 - autenticacion
 - permisos por rol
@@ -27,6 +27,8 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - historial de rendimiento
 - historial de atributos
 - ABM de staff
+- persistencia del preprocesador del modelo
+- consistencia entre transformacion individual y batch
 
 ### 2. Smoke funcional sobre la app real del repo
 
@@ -76,6 +78,9 @@ La limpieza no invento DNIs faltantes. En su lugar elimino registros legacy inco
 - validacion de historial de atributos para impedir rangos fuera de `0-20`
 - rechazo de guardado vacio en historial de atributos
 - limpieza de warnings relevantes de SQLAlchemy 2.x
+- dataset de entrenamiento construido con `pandas`
+- preprocesamiento real con `SimpleImputer`, `MinMaxScaler` y `OneHotEncoder`
+- `preprocessor.joblib` compartido entre entrenamiento e inferencia
 
 ## Riesgos O Pendientes Reales
 

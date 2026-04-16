@@ -15,16 +15,21 @@ from sqlalchemy.orm import sessionmaker, load_only
 import numpy as np
 import torch
 from models import Base, Player, Coach, Director, User, PlayerStat, PlayerAttributeHistory
-from train_model import PlayerNet, normalize_features
+from train_model import PlayerNet
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from db_utils import normalize_db_url, create_app_engine, ensure_player_columns
+from preprocessing import (
+    dataframe_from_players,
+    load_preprocessor as load_saved_preprocessor,
+    preprocessor_input_dim,
+    transform_features,
+)
 from player_logic import (
     ATTRIBUTE_FIELDS,
     ATTRIBUTE_LABELS,
     POSITION_CHOICES,
     normalized_position,
-    position_vector,
     position_weights,
     recommend_position_from_attrs,
     weighted_score_from_attrs,
@@ -474,6 +479,8 @@ def update_database_pipeline(limit: int = EVAL_POOL_MAX, sync_shortlist: bool = 
         "train_model.py",
         "--db-url",
         TRAINING_DB_URL,
+        "--preprocessor-out",
+        PREPROCESSOR_PATH,
         "--epochs",
         "30",
     ]
@@ -519,12 +526,12 @@ def update_database_pipeline(limit: int = EVAL_POOL_MAX, sync_shortlist: bool = 
         db.close()
 
     try:
-        global model
-        model = load_model(MODEL_PATH)
+        global model, preprocessor
+        model, preprocessor = load_runtime_artifacts(MODEL_PATH, PREPROCESSOR_PATH, allow_retrain=False)
         invalidate_dashboard_cache()
-        overall_logs.append("Modelo recargado en memoria y cache del dashboard invalidado.")
+        overall_logs.append("Modelo y preprocesador recargados en memoria; cache del dashboard invalidado.")
     except Exception as exc:
-        overall_logs.append(f"No se pudo recargar el modelo en memoria despues del entrenamiento: {exc}")
+        overall_logs.append(f"No se pudieron recargar los artefactos del modelo despues del entrenamiento: {exc}")
         return False, overall_logs
 
     return True, overall_logs
@@ -735,36 +742,64 @@ def roles_required(*roles: str) -> Callable:
 
 # ----------------------------------------------------
 # Modelo
-def load_model(model_path: str) -> PlayerNet:
-    input_dim = 1 + len(ATTRIBUTE_FIELDS) + len(POSITION_CHOICES)
+def load_model_state(model_path: str, input_dim: int) -> PlayerNet:
     model = PlayerNet(input_dim=input_dim)
     try:
         state_dict = torch.load(model_path, map_location=torch.device('cpu'), weights_only=True)
     except TypeError:
         state_dict = torch.load(model_path, map_location=torch.device('cpu'))
-    try:
-        model.load_state_dict(state_dict)
-    except RuntimeError as exc:
-        print("Advertencia: modelo incompatible con la arquitectura actual. Intentando reentrenar automaticamente.")
-        print(exc)
+    model.load_state_dict(state_dict)
+    model.eval()
+    return model
+
+
+def load_runtime_artifacts(
+    model_path: str,
+    preprocessor_path: str,
+    allow_retrain: bool = True,
+) -> Tuple[Optional[PlayerNet], Optional[object]]:
+    def retrain_or_raise(message: str, original_exc: Optional[Exception] = None):
+        if not allow_retrain:
+            if original_exc is not None:
+                raise original_exc
+            raise FileNotFoundError(message)
+        print(message)
         success, logs = update_database_pipeline()
         for log in logs:
             print(log)
         if not success:
-            raise RuntimeError("No se pudo reentrenar el modelo automaticamente. Ejecute train_model.py manualmente.") from exc
-        try:
-            state_dict = torch.load(model_path, map_location=torch.device('cpu'))
-            model.load_state_dict(state_dict)
-        except Exception as exc2:
-            raise RuntimeError("No se pudo cargar el modelo incluso despues de reentrenar.") from exc2
-    model.eval()
-    return model
+            raise RuntimeError(
+                "No se pudo reentrenar el modelo automaticamente. Ejecute train_model.py manualmente."
+            ) from original_exc
+
+    if not os.path.exists(model_path):
+        retrain_or_raise("Advertencia: modelo no encontrado. Intentando reentrenar automaticamente.")
+    if not os.path.exists(preprocessor_path):
+        retrain_or_raise("Advertencia: preprocesador no encontrado. Intentando reentrenar automaticamente.")
+
+    preprocessor = load_saved_preprocessor(preprocessor_path)
+    input_dim = preprocessor_input_dim(preprocessor)
+    try:
+        model = load_model_state(model_path, input_dim)
+    except RuntimeError as exc:
+        retrain_or_raise(
+            "Advertencia: modelo incompatible con el preprocesador actual. Intentando reentrenar automaticamente.",
+            original_exc=exc,
+        )
+        preprocessor = load_saved_preprocessor(preprocessor_path)
+        input_dim = preprocessor_input_dim(preprocessor)
+        model = load_model_state(model_path, input_dim)
+    return model, preprocessor
+
+
 MODEL_PATH = os.path.join(BASE_DIR, "model.pt")
+PREPROCESSOR_PATH = os.path.join(BASE_DIR, "preprocessor.joblib")
 try:
-    model = load_model(MODEL_PATH)
+    model, preprocessor = load_runtime_artifacts(MODEL_PATH, PREPROCESSOR_PATH)
 except FileNotFoundError:
     model = None
-    print("Advertencia: modelo no encontrado.")
+    preprocessor = None
+    print("Advertencia: modelo o preprocesador no encontrados.")
 
 def legacy_health_endpoint():
     """Healthcheck básico: app viva + conectividad DB."""
@@ -803,14 +838,7 @@ def health():
 
 
 def prepare_input(player: Player) -> torch.Tensor:
-    features = [
-        player.age, player.pace, player.shooting, player.passing, player.dribbling,
-        player.defending, player.physical, player.vision, player.tackling,
-        player.determination, player.technique
-    ]
-    features.extend(position_vector(player.position))
-    X = normalize_features(torch.tensor([features], dtype=torch.float32).numpy())
-    return torch.tensor(X, dtype=torch.float32)
+    return players_to_model_tensor([player])
 
 def compute_suggestions(player: Player, threshold=14, top_n=3) -> List[Tuple[str, int]]:
     attrs = {
@@ -843,25 +871,24 @@ def player_attribute_map(player: Player) -> Dict[str, int]:
     return {field: getattr(player, field) for field in ATTRIBUTE_FIELDS}
 
 
-def player_feature_vector(player: Player) -> List[float]:
-    values = [player.age]
-    values.extend(getattr(player, field) for field in ATTRIBUTE_FIELDS)
-    values.extend(position_vector(player.position))
-    return values
+def players_to_model_tensor(players: List[Player]) -> torch.Tensor:
+    if preprocessor is None:
+        raise RuntimeError("No hay preprocesador cargado para inferencia.")
+    features_df = dataframe_from_players(players)
+    features_array = transform_features(features_df, preprocessor)
+    return torch.tensor(features_array, dtype=torch.float32)
 
 
 def batch_project_players(
     players: List[Player],
     avg_score_map: Optional[Dict[int, Optional[float]]] = None,
 ) -> Dict[int, Dict[str, object]]:
-    if not players or model is None:
+    if not players or model is None or preprocessor is None:
         return {}
 
     avg_score_map = avg_score_map or {}
-    features = np.array([player_feature_vector(player) for player in players], dtype=np.float32)
-    features_norm = normalize_features(features)
     with torch.no_grad():
-        probs_tensor = model(torch.tensor(features_norm))
+        probs_tensor = model(players_to_model_tensor(players))
     base_probs = np.asarray(probs_tensor.detach().cpu().numpy()).reshape(-1).tolist()
 
     projections: Dict[int, Dict[str, object]] = {}
