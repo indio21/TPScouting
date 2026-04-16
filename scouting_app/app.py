@@ -10,9 +10,10 @@ from datetime import datetime, date, timedelta
 from statistics import mean
 from types import SimpleNamespace
 from flask import Flask, render_template, redirect, url_for, request, session, flash, abort, jsonify
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, select
 from sqlalchemy.orm import sessionmaker, load_only
 import numpy as np
+import pandas as pd
 import torch
 from models import Base, Player, Coach, Director, User, PlayerStat, PlayerAttributeHistory
 from train_model import PlayerNet
@@ -20,7 +21,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from db_utils import normalize_db_url, create_app_engine, ensure_player_columns
 from preprocessing import (
+    aggregate_stats_dataframe,
     dataframe_from_players,
+    historical_feature_defaults,
     load_preprocessor as load_saved_preprocessor,
     preprocessor_input_dim,
     transform_features,
@@ -876,10 +879,38 @@ def player_attribute_map(player: Player) -> Dict[str, int]:
     return {field: getattr(player, field) for field in ATTRIBUTE_FIELDS}
 
 
-def players_to_model_tensor(players: List[Player]) -> torch.Tensor:
+def fetch_player_stat_feature_map(player_ids: List[int]) -> Dict[int, Dict[str, Optional[float]]]:
+    if not player_ids:
+        return {}
+    query = (
+        select(
+            PlayerStat.player_id,
+            PlayerStat.record_date,
+            PlayerStat.pass_accuracy,
+            PlayerStat.final_score,
+        )
+        .where(PlayerStat.player_id.in_(player_ids))
+    )
+    with engine.connect() as connection:
+        stats_df = pd.read_sql(query, connection)
+    aggregated_df = aggregate_stats_dataframe(stats_df)
+    if aggregated_df.empty:
+        return {}
+    feature_map: Dict[int, Dict[str, Optional[float]]] = {}
+    for row in aggregated_df.to_dict(orient="records"):
+        player_id = int(row["player_id"])
+        feature_map[player_id] = historical_feature_defaults(row)
+    return feature_map
+
+
+def players_to_model_tensor(
+    players: List[Player],
+    stats_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
+) -> torch.Tensor:
     if preprocessor is None:
         raise RuntimeError("No hay preprocesador cargado para inferencia.")
-    features_df = dataframe_from_players(players)
+    stats_feature_map = stats_feature_map or fetch_player_stat_feature_map([player.id for player in players if player.id])
+    features_df = dataframe_from_players(players, stats_feature_map=stats_feature_map)
     features_array = transform_features(features_df, preprocessor)
     return torch.tensor(features_array, dtype=torch.float32)
 
@@ -887,13 +918,15 @@ def players_to_model_tensor(players: List[Player]) -> torch.Tensor:
 def batch_project_players(
     players: List[Player],
     avg_score_map: Optional[Dict[int, Optional[float]]] = None,
+    stats_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
 ) -> Dict[int, Dict[str, object]]:
     if not players or model is None or preprocessor is None:
         return {}
 
     avg_score_map = avg_score_map or {}
+    stats_feature_map = stats_feature_map or fetch_player_stat_feature_map([player.id for player in players if player.id])
     with torch.no_grad():
-        probs_tensor = torch.sigmoid(model(players_to_model_tensor(players)))
+        probs_tensor = torch.sigmoid(model(players_to_model_tensor(players, stats_feature_map=stats_feature_map)))
     base_probs = np.asarray(probs_tensor.detach().cpu().numpy()).reshape(-1).tolist()
 
     projections: Dict[int, Dict[str, object]] = {}
@@ -902,7 +935,11 @@ def batch_project_players(
         attr_map = player_attribute_map(player)
         best_position, best_score = recommend_position_from_attrs(attr_map)
         fit_score = weighted_score_from_attrs(attr_map, player.position)
-        stats_summary = {"avg_final_score": avg_score_map.get(player.id)}
+        player_stats_features = stats_feature_map.get(player.id, {})
+        avg_final_score = avg_score_map.get(player.id)
+        if avg_final_score is None:
+            avg_final_score = player_stats_features.get("avg_final_score_hist")
+        stats_summary = {"avg_final_score": avg_final_score}
         combined = combine_probability(base_prob, stats_summary, fit_score=fit_score)
         projections[player.id] = {
             "base_prob": base_prob,
@@ -956,6 +993,7 @@ def summarize_stats(stats: List[PlayerStat]) -> Dict[str, Optional[float]]:
             "avg_shot_accuracy": None,
             "avg_duels": None,
             "avg_final_score": None,
+            "latest_final_score": None,
             "latest_date": None,
         }
 
@@ -973,6 +1011,7 @@ def summarize_stats(stats: List[PlayerStat]) -> Dict[str, Optional[float]]:
         "avg_shot_accuracy": avg([s.shot_accuracy for s in stats]),
         "avg_duels": avg([s.duels_won_pct for s in stats]),
         "avg_final_score": avg([s.final_score for s in stats if s.final_score is not None]),
+        "latest_final_score": stats[-1].final_score,
         "latest_date": stats[-1].record_date.isoformat(),
     }
 
@@ -1157,8 +1196,19 @@ def compute_projection(player: Player, stats: Optional[List[PlayerStat]] = None,
         stats_list = fetch_player_stats(player.id, db_session=db_session)
     else:
         stats_list = stats
-    avg_score = summarize_stats(stats_list).get("avg_final_score")
-    projection = batch_project_players([player], {player.id: avg_score}).get(player.id)
+    summary = summarize_stats(stats_list)
+    avg_score = summary.get("avg_final_score")
+    stats_feature_map = {
+        player.id: historical_feature_defaults(
+            {
+                "stats_entry_count": summary.get("entries"),
+                "avg_final_score_hist": avg_score,
+                "avg_pass_accuracy_hist": summary.get("avg_pass_accuracy"),
+                "latest_final_score_hist": summary.get("latest_final_score"),
+            }
+        )
+    }
+    projection = batch_project_players([player], {player.id: avg_score}, stats_feature_map=stats_feature_map).get(player.id)
     if not projection:
         return None
     projection["history"] = stats_list

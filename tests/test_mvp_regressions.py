@@ -1,5 +1,6 @@
 import importlib
 import json
+from datetime import date
 from types import SimpleNamespace
 
 from werkzeug.security import generate_password_hash
@@ -537,6 +538,41 @@ def test_prepare_input_matches_batch_transformation(app_module, db):
     assert single_tensor[0].tolist() == batch_tensor[0].tolist()
 
 
+def test_prepare_input_includes_historical_features(app_module, db):
+    player = _create_player(app_module, db, name="Hist Uno", national_id="49900112")
+    db.add_all(
+        [
+            app_module.PlayerStat(
+                player_id=player.id,
+                record_date=date(2026, 4, 1),
+                matches_played=1,
+                minutes_played=90,
+                pass_accuracy=72.0,
+                final_score=6.5,
+            ),
+            app_module.PlayerStat(
+                player_id=player.id,
+                record_date=date(2026, 4, 8),
+                matches_played=1,
+                minutes_played=90,
+                pass_accuracy=78.0,
+                final_score=7.0,
+            ),
+        ]
+    )
+    db.commit()
+
+    feature_map = app_module.fetch_player_stat_feature_map([player.id])
+    assert feature_map[player.id]["stats_entry_count"] == 2
+    assert round(float(feature_map[player.id]["avg_final_score_hist"]), 2) == 6.75
+    assert round(float(feature_map[player.id]["avg_pass_accuracy_hist"]), 2) == 75.0
+    assert round(float(feature_map[player.id]["latest_final_score_hist"]), 2) == 7.0
+
+    single_tensor = app_module.prepare_input(player).detach().cpu().numpy()
+    batch_tensor = app_module.players_to_model_tensor([player], stats_feature_map=feature_map).detach().cpu().numpy()
+    assert single_tensor[0].tolist() == batch_tensor[0].tolist()
+
+
 def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir, monkeypatch):
     monkeypatch.syspath_prepend(str(scouting_app_dir))
     monkeypatch.chdir(str(scouting_app_dir))
@@ -554,57 +590,85 @@ def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir
     Session = sessionmaker(bind=engine)
     session = Session()
     try:
+        players = [
+            models_module.Player(
+                name=f"Train {idx}",
+                national_id=f"488990{idx:02d}",
+                age=age,
+                position=position,
+                club="Club Train",
+                country="Argentina",
+                photo_url="",
+                pace=pace,
+                shooting=shooting,
+                passing=passing,
+                dribbling=dribbling,
+                defending=defending,
+                physical=physical,
+                vision=vision,
+                tackling=tackling,
+                determination=determination,
+                technique=technique,
+                potential_label=potential,
+            )
+            for idx, (
+                age,
+                position,
+                pace,
+                shooting,
+                passing,
+                dribbling,
+                defending,
+                physical,
+                vision,
+                tackling,
+                determination,
+                technique,
+                potential,
+            ) in enumerate(
+                [
+                    (16, "Defensa", 10, 8, 11, 9, 14, 12, 10, 13, 12, 9, False),
+                    (17, "Mediocampista", 12, 10, 14, 13, 10, 11, 14, 9, 15, 13, True),
+                    (15, "Delantero", 15, 16, 10, 15, 6, 12, 10, 5, 16, 14, True),
+                    (16, "Lateral", 11, 8, 10, 11, 12, 11, 9, 12, 11, 9, False),
+                    (14, "Portero", 6, 3, 8, 4, 14, 15, 8, 15, 12, 9, False),
+                    (18, "Defensa", 11, 7, 10, 8, 15, 13, 9, 14, 13, 10, False),
+                    (13, "Delantero", 16, 17, 11, 16, 4, 11, 10, 3, 17, 15, True),
+                    (17, "Mediocampista", 13, 9, 15, 14, 9, 11, 15, 8, 16, 14, True),
+                    (15, "Lateral", 14, 8, 12, 13, 13, 12, 11, 13, 14, 11, False),
+                    (18, "Delantero", 17, 18, 12, 17, 4, 13, 11, 3, 17, 16, True),
+                ],
+                start=1,
+            )
+        ]
+        session.add_all(players)
+        session.flush()
         session.add_all(
             [
-                models_module.Player(
-                    name=f"Train {idx}",
-                    national_id=f"488990{idx:02d}",
-                    age=age,
-                    position=position,
-                    club="Club Train",
-                    country="Argentina",
-                    photo_url="",
-                    pace=pace,
-                    shooting=shooting,
-                    passing=passing,
-                    dribbling=dribbling,
-                    defending=defending,
-                    physical=physical,
-                    vision=vision,
-                    tackling=tackling,
-                    determination=determination,
-                    technique=technique,
-                    potential_label=potential,
-                )
-                for idx, (
-                    age,
-                    position,
-                    pace,
-                    shooting,
-                    passing,
-                    dribbling,
-                    defending,
-                    physical,
-                    vision,
-                    tackling,
-                    determination,
-                    technique,
-                    potential,
-                ) in enumerate(
-                    [
-                        (16, "Defensa", 10, 8, 11, 9, 14, 12, 10, 13, 12, 9, False),
-                        (17, "Mediocampista", 12, 10, 14, 13, 10, 11, 14, 9, 15, 13, True),
-                        (15, "Delantero", 15, 16, 10, 15, 6, 12, 10, 5, 16, 14, True),
-                        (16, "Lateral", 11, 8, 10, 11, 12, 11, 9, 12, 11, 9, False),
-                        (14, "Portero", 6, 3, 8, 4, 14, 15, 8, 15, 12, 9, False),
-                        (18, "Defensa", 11, 7, 10, 8, 15, 13, 9, 14, 13, 10, False),
-                        (13, "Delantero", 16, 17, 11, 16, 4, 11, 10, 3, 17, 15, True),
-                        (17, "Mediocampista", 13, 9, 15, 14, 9, 11, 15, 8, 16, 14, True),
-                        (15, "Lateral", 14, 8, 12, 13, 13, 12, 11, 13, 14, 11, False),
-                        (20, "Delantero", 17, 18, 12, 17, 4, 13, 11, 3, 17, 16, True),
-                    ],
-                    start=1,
-                )
+                models_module.PlayerStat(
+                    player_id=players[0].id,
+                    record_date=date(2026, 4, 1),
+                    matches_played=1,
+                    minutes_played=90,
+                    pass_accuracy=68.0,
+                    final_score=6.2,
+                ),
+                models_module.PlayerStat(
+                    player_id=players[1].id,
+                    record_date=date(2026, 4, 3),
+                    matches_played=1,
+                    minutes_played=90,
+                    pass_accuracy=82.0,
+                    final_score=7.8,
+                ),
+                models_module.PlayerStat(
+                    player_id=players[2].id,
+                    record_date=date(2026, 4, 5),
+                    matches_played=1,
+                    minutes_played=90,
+                    pass_accuracy=74.0,
+                    final_score=8.1,
+                ),
             ]
         )
         session.commit()
@@ -632,6 +696,78 @@ def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir
     assert metadata["dataset_summary"]["age_range_filtered"] == {"min": 13, "max": 18}
     assert metadata["dataset"]["validation_size"] > 0
     assert 0.0 <= metadata["pytorch"]["selected_threshold"] <= 1.0
+
+
+def test_training_dataframe_merges_historical_features(tmp_path, scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    preprocessing_module = importlib.import_module("preprocessing")
+    models_module = importlib.import_module("models")
+    db_utils_module = importlib.import_module("db_utils")
+
+    db_path = tmp_path / "train_stats_features.db"
+    db_url = f"sqlite:///{db_path.as_posix()}"
+    normalized_db_url = db_utils_module.normalize_db_url(db_url, base_dir=str(scouting_app_dir))
+    engine = db_utils_module.create_app_engine(normalized_db_url)
+    models_module.Base.metadata.create_all(engine)
+    db_utils_module.ensure_player_columns(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    try:
+        player = models_module.Player(
+            name="Train Stats",
+            national_id="59999100",
+            age=16,
+            position="Mediocampista",
+            club="Club Train",
+            country="Argentina",
+            photo_url="",
+            pace=12,
+            shooting=10,
+            passing=14,
+            dribbling=13,
+            defending=10,
+            physical=11,
+            vision=14,
+            tackling=9,
+            determination=15,
+            technique=13,
+            potential_label=True,
+        )
+        session.add(player)
+        session.flush()
+        session.add_all(
+            [
+                models_module.PlayerStat(
+                    player_id=player.id,
+                    record_date=date(2026, 3, 1),
+                    matches_played=1,
+                    minutes_played=90,
+                    pass_accuracy=70.0,
+                    final_score=6.0,
+                ),
+                models_module.PlayerStat(
+                    player_id=player.id,
+                    record_date=date(2026, 4, 1),
+                    matches_played=1,
+                    minutes_played=90,
+                    pass_accuracy=80.0,
+                    final_score=8.0,
+                ),
+            ]
+        )
+        session.commit()
+    finally:
+        session.close()
+
+    df = preprocessing_module.training_dataframe_from_engine(engine)
+    row = df.iloc[0]
+
+    assert int(row["stats_entry_count"]) == 2
+    assert round(float(row["avg_final_score_hist"]), 2) == 7.0
+    assert round(float(row["avg_pass_accuracy_hist"]), 2) == 75.0
+    assert round(float(row["latest_final_score_hist"]), 2) == 8.0
 
 
 def test_load_data_filters_training_range(tmp_path, scouting_app_dir, monkeypatch):

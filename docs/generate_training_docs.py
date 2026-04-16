@@ -112,6 +112,12 @@ def build_evidence_markdown(metadata: dict) -> str:
 - La generacion sintetica de `potential_label` ahora usa score ponderado por posicion, ajuste etario, componente mental y ruido controlado.
 - Se formalizo `LogisticRegression(class_weight="balanced")` como baseline obligatorio de comparacion.
 - Se guarda metadata completa de entrenamiento en `training_metadata.json`.
+- Se agregaron features historicas agregadas al pipeline:
+- cantidad de registros por jugador
+- promedio historico de `final_score`
+- promedio historico de `pass_accuracy`
+- ultimo `final_score` registrado
+- La generacion sintetica ahora crea `PlayerStat` para que esas features existan tambien en la base de entrenamiento.
 
 ## Resultado actual del entrenamiento mejorado
 - Fecha de corrida registrada: `{metadata["timestamp"]}`
@@ -134,24 +140,26 @@ def build_evidence_markdown(metadata: dict) -> str:
 ## Hallazgos verificados
 - El nuevo preprocesamiento compartido con `pandas` y `scikit-learn` quedo implementado y funcionando tanto en entrenamiento como en inferencia.
 - La MLP actual ya no colapsa a todo negativo: paso de F1 0.0000 a F1 {format_metric(pytorch_test["f1"])} y de PR-AUC 0.0915 a PR-AUC {format_metric(pytorch_test["pr_auc"])}.
-- La alineacion del dataset a 12-18 y la nueva configuracion de entrenamiento mejoraron fuerte la calidad respecto al diagnostico previo.
+- La alineacion del dataset a 12-18, el entrenamiento endurecido y las features historicas agregadas mejoraron fuerte la calidad respecto al diagnostico previo.
 - Aun asi, el baseline `LogisticRegression(class_weight="balanced")` sigue superando a la MLP en ROC-AUC, PR-AUC y F1.
+- El baseline simple por promedio de atributos ya no explica bien el target frente al nuevo pipeline, lo que indica que la etiqueta sintetica quedo menos trivial que antes.
 - La senal del dataset existe, pero la red PyTorch todavia no demuestra una ventaja clara sobre el baseline lineal balanceado.
 
 ## Limites que todavia no estan resueltos
-- Todavia no se agregaron features historicas agregadas con `pandas`.
 - No se implemento calibracion de probabilidades.
 - La evidencia actual sigue basada en datos sinteticos; no hay una validacion externa con datos reales.
 - La MLP mejoro, pero todavia no justifica por rendimiento reemplazar al baseline lineal como referencia formal.
 
 ## Pruebas ejecutadas
-- `pytest -q`: 31 tests aprobados.
+- `pytest -q`: 33 tests aprobados.
 - Cobertura nueva o reforzada:
 - persistencia del `preprocessor.joblib`
 - consistencia entre inferencia individual y batch
 - split `train / validation / test` y metadata de threshold
 - filtro de entrenamiento acotado a 12-18
 - sensibilidad de la etiqueta sintetica a edad y posicion
+- merge de features historicas en el dataset de entrenamiento
+- inclusion de features historicas en la inferencia de la app
 - smoke del pipeline completo de entrenamiento
 
 ## Procedimiento reproducible
@@ -206,18 +214,20 @@ def build_plan_markdown(metadata: dict) -> str:
 - Se persisten threshold, metricas, tamanos de split, seed y configuracion.
 - La evidencia tecnica puede regenerarse desde los artefactos del repo.
 
+### Etapa 6 completada: crecimiento con features historicas
+- Se agregaron features historicas agregadas con `pandas`.
+- Se sintetizo historial de `PlayerStat` en la base de entrenamiento.
+- Resultado: PyTorch mejoro hasta F1 {format_metric(pytorch_test["f1"])} y PR-AUC {format_metric(pytorch_test["pr_auc"])}.
+- Aun asi, el baseline lineal balanceado sigue siendo superior.
+
 ## Siguiente iteracion recomendada
-### Etapa 6 opcional: crecimiento del modelo
-- Agregar features historicas agregadas con `pandas`:
-- cantidad de registros
-- promedio de `final_score`
-- promedio de precision de pase
-- ultimo rendimiento disponible
+### Etapa 7 opcional: calibracion y cierre metodologico
 - Evaluar calibracion de probabilidades si se necesita que la probabilidad base sea mas interpretable.
+- Revisar si conviene simplificar arquitectura de la MLP o ajustar regularizacion.
 - Volver a comparar PyTorch contra el baseline lineal bajo el mismo split.
 
 ## Criterios de aceptacion para la siguiente iteracion
-- Las nuevas features historicas deben mejorar al menos una de estas metricas de PyTorch en test sin degradar claramente las demas:
+- La siguiente iteracion debe mejorar o estabilizar al menos una de estas metricas de PyTorch en test sin degradar claramente las demas:
 - PR-AUC
 - F1 positiva
 - Recall positiva
@@ -231,6 +241,7 @@ def build_plan_markdown(metadata: dict) -> str:
 - Tests del threshold seleccionado y su persistencia.
 - Tests de entrenamiento limitado a 12-18.
 - Tests de generacion sintetica sensibles a edad y posicion.
+- Tests de merge de features historicas.
 - Smoke del pipeline completo con artefactos reales.
 
 ## Decisiones fijas

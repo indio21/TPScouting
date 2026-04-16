@@ -7,6 +7,7 @@ con una logica ponderada por posicion, ajuste etario y ruido controlado.
 from __future__ import annotations
 
 import argparse
+from datetime import date, timedelta
 import math
 import os
 import random
@@ -14,7 +15,7 @@ import random
 from sqlalchemy.orm import sessionmaker
 
 from db_utils import create_app_engine, ensure_player_columns, normalize_db_url
-from models import Base, Player
+from models import Base, Player, PlayerStat
 from player_logic import (
     EVAL_MAX_AGE,
     EVAL_MIN_AGE,
@@ -132,6 +133,66 @@ def generate_player(min_age: int = EVAL_MIN_AGE, max_age: int = EVAL_MAX_AGE) ->
     )
 
 
+def clamp(value: float, lower: float, upper: float) -> float:
+    return max(lower, min(upper, value))
+
+
+def synthetic_player_stats(player: Player) -> list[PlayerStat]:
+    entry_count = random.choices([0, 1, 2, 3, 4], weights=[0.12, 0.26, 0.28, 0.22, 0.12], k=1)[0]
+    if entry_count == 0:
+        return []
+
+    attrs = {
+        field: float(getattr(player, field) or 0)
+        for field in ATTRIBUTE_FIELDS
+    }
+    fit_score = weighted_score_from_attrs(attrs, player.position)
+    base_final = clamp((fit_score / 20.0) * 6.2 + (1.4 if player.potential_label else 0.2), 1.0, 9.8)
+    base_pass = clamp((attrs["passing"] * 0.45) + (attrs["vision"] * 0.30) + (attrs["technique"] * 0.25), 2.0, 19.5)
+    base_duels = clamp((attrs["defending"] * 0.45) + (attrs["physical"] * 0.30) + (attrs["tackling"] * 0.25), 2.0, 19.5)
+    base_shot = clamp((attrs["shooting"] * 0.60) + (attrs["technique"] * 0.25) + (attrs["vision"] * 0.15), 2.0, 19.5)
+
+    today = date.today()
+    stats: list[PlayerStat] = []
+    for idx in range(entry_count):
+        progress = (idx + 1) / max(entry_count, 1)
+        trend = (progress - 0.5) * (0.5 if player.potential_label else 0.2)
+        final_score = clamp(base_final + trend + random.gauss(0.0, 0.45), 1.0, 10.0)
+        pass_accuracy = clamp(base_pass * 5 + random.gauss(0.0, 5.5), 35.0, 96.0)
+        duels_won_pct = clamp(base_duels * 5 + random.gauss(0.0, 6.0), 30.0, 94.0)
+        shot_accuracy = clamp(base_shot * 5 + random.gauss(0.0, 7.0), 20.0, 92.0)
+        matches_played = random.randint(1, 4)
+        minutes_played = matches_played * random.randint(55, 90)
+        goals = 0
+        assists = 0
+        if player.position == "Delantero":
+            goals = random.randint(0, max(0, matches_played))
+            assists = random.randint(0, max(0, matches_played - goals))
+        elif player.position == "Mediocampista":
+            goals = random.randint(0, 2)
+            assists = random.randint(0, 3)
+        elif player.position == "Lateral":
+            assists = random.randint(0, 2)
+
+        stats.append(
+            PlayerStat(
+                record_date=today - timedelta(days=(entry_count - idx) * 28),
+                matches_played=matches_played,
+                goals=goals,
+                assists=assists,
+                minutes_played=minutes_played,
+                yellow_cards=random.randint(0, 2),
+                red_cards=1 if random.random() < 0.02 else 0,
+                pass_accuracy=round(pass_accuracy, 2),
+                shot_accuracy=round(shot_accuracy, 2),
+                duels_won_pct=round(duels_won_pct, 2),
+                final_score=round(final_score, 2),
+                notes="Dato sintetico de entrenamiento",
+            )
+        )
+    return stats
+
+
 def main(
     num_players: int,
     db_url: str,
@@ -148,10 +209,24 @@ def main(
     ensure_player_columns(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
-
-    players = [generate_player(min_age=min_age, max_age=max_age) for _ in range(num_players)]
-    session.bulk_save_objects(players)
-    session.commit()
+    batch_size = 500
+    created = 0
+    while created < num_players:
+        remaining = num_players - created
+        current_batch = min(batch_size, remaining)
+        players_batch = [generate_player(min_age=min_age, max_age=max_age) for _ in range(current_batch)]
+        session.add_all(players_batch)
+        session.flush()
+        stats_batch: list[PlayerStat] = []
+        for player in players_batch:
+            generated_stats = synthetic_player_stats(player)
+            for stat in generated_stats:
+                stat.player_id = player.id
+            stats_batch.extend(generated_stats)
+        if stats_batch:
+            session.add_all(stats_batch)
+        session.commit()
+        created += current_batch
     print(
         f"Se generaron {num_players} jugadores en la base de datos: {normalized_db_url} "
         f"(seed={seed}, edades={min_age}-{max_age})"

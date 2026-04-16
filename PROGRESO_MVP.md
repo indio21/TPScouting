@@ -122,10 +122,25 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - `docs/model_training_plan.docx`
 - Se agrego `docs/generate_training_docs.py` para regenerar ambos documentos sin depender de `pandoc`.
 
+### 13. Features historicas agregadas en entrenamiento e inferencia
+
+- Se agregaron features historicas agregadas al pipeline del modelo:
+- cantidad de registros por jugador
+- promedio historico de `final_score`
+- promedio historico de `pass_accuracy`
+- ultimo `final_score` registrado
+- `preprocessing.py` ahora mergea esas features con `pandas` tanto para entrenamiento como para inferencia.
+- `generate_data.py` ahora sintetiza `PlayerStat` en la base de entrenamiento para que esas señales existan de verdad.
+- La inferencia de la app usa esas features historicas antes de pasar por el preprocesador persistido.
+- Resultado medido en la corrida real actual:
+- PyTorch: `ROC-AUC 0.9130`, `PR-AUC 0.7887`, `F1 0.6905`
+- Baseline `LogisticRegression(class_weight="balanced")`: `ROC-AUC 0.9621`, `PR-AUC 0.9175`, `F1 0.8536`
+- Conclusion honesta: PyTorch mejoro bastante, pero el baseline lineal balanceado sigue siendo superior.
+
 ## Tests Ejecutados
 
 - La suite automatizada actual termina pasando en esta maquina.
-- Ultimo estado validado: `31 passed`
+- Ultimo estado validado: `33 passed`
 
 ## Puntos Mejorados De Forma Clara
 
@@ -143,6 +158,7 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Preprocesamiento real y persistido con pandas + scikit-learn, sin desalineacion entre entrenamiento e inferencia
 - Entrenamiento PyTorch endurecido y alineado al alcance 12-18
 - Evidencia tecnica y plan de entrenamiento guardados en Markdown y Word
+- Features historicas agregadas funcionando en entrenamiento e inferencia
 
 ## Puntos Que Siguen Parciales O Pendientes
 

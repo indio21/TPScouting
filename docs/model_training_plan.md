@@ -14,7 +14,7 @@
 - Split `train / validation / test`.
 - Seleccion de threshold por validacion.
 - Early stopping sobre `PR-AUC` con desempate por `F1`.
-- Resultado: PyTorch dejo de colapsar y alcanzo F1 0.5217 en test.
+- Resultado: PyTorch dejo de colapsar y alcanzo F1 0.6905 en test.
 
 ### Etapa 2 completada: alinear dataset al alcance real 12-18
 - Generacion sintetica por defecto restringida a 12-18.
@@ -31,24 +31,26 @@
 - Baseline obligatorio: `LogisticRegression(class_weight="balanced")`.
 - Comparacion bajo el mismo split y el mismo preprocesamiento.
 - Persistencia de metadata en `training_metadata.json`.
-- Estado actual: el baseline sigue mejor que PyTorch en test con F1 0.5745 vs 0.5217.
+- Estado actual: el baseline sigue mejor que PyTorch en test con F1 0.8536 vs 0.6905.
 
 ### Etapa 5 completada en nivel MVP
 - Se persisten threshold, metricas, tamanos de split, seed y configuracion.
 - La evidencia tecnica puede regenerarse desde los artefactos del repo.
 
+### Etapa 6 completada: crecimiento con features historicas
+- Se agregaron features historicas agregadas con `pandas`.
+- Se sintetizo historial de `PlayerStat` en la base de entrenamiento.
+- Resultado: PyTorch mejoro hasta F1 0.6905 y PR-AUC 0.7887.
+- Aun asi, el baseline lineal balanceado sigue siendo superior.
+
 ## Siguiente iteracion recomendada
-### Etapa 6 opcional: crecimiento del modelo
-- Agregar features historicas agregadas con `pandas`:
-- cantidad de registros
-- promedio de `final_score`
-- promedio de precision de pase
-- ultimo rendimiento disponible
+### Etapa 7 opcional: calibracion y cierre metodologico
 - Evaluar calibracion de probabilidades si se necesita que la probabilidad base sea mas interpretable.
+- Revisar si conviene simplificar arquitectura de la MLP o ajustar regularizacion.
 - Volver a comparar PyTorch contra el baseline lineal bajo el mismo split.
 
 ## Criterios de aceptacion para la siguiente iteracion
-- Las nuevas features historicas deben mejorar al menos una de estas metricas de PyTorch en test sin degradar claramente las demas:
+- La siguiente iteracion debe mejorar o estabilizar al menos una de estas metricas de PyTorch en test sin degradar claramente las demas:
 - PR-AUC
 - F1 positiva
 - Recall positiva
@@ -62,6 +64,7 @@
 - Tests del threshold seleccionado y su persistencia.
 - Tests de entrenamiento limitado a 12-18.
 - Tests de generacion sintetica sensibles a edad y posicion.
+- Tests de merge de features historicas.
 - Smoke del pipeline completo con artefactos reales.
 
 ## Decisiones fijas
