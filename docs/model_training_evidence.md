@@ -39,37 +39,49 @@
 - volatilidad del progreso
 - gap entre la ficha actual y la trayectoria reciente
 - La generacion sintetica ahora crea entre 6 y 12 snapshots tecnicos por jugador y deriva `PlayerStat` desde esa evolucion.
+- Se agrego contexto minimo de partido con `Match` y `PlayerMatchParticipation`.
+- El pipeline ahora agrega senales de partido como:
+- cantidad de participaciones
+- minutos medios
+- tasa de titularidad
+- nivel medio del rival
+- porcentaje de partidos en posicion natural
+- Se agregaron `ScoutReport` sinteticos y el pipeline agrega:
+- cantidad de reportes
+- medias de toma de decisiones, lectura tactica, perfil mental y adaptabilidad
+- ultima proyeccion observada por scout
 
 ## Resultado actual del entrenamiento mejorado
-- Fecha de corrida registrada: `2026-04-17T23:06:50.198032`
+- Fecha de corrida registrada: `2026-04-17T23:30:13.218252`
 - Dataset actual: 20000 jugadores dentro del rango 12-18.
-- Distribucion actual de clases: 3988 positivos y 16012 negativos.
-- Tasa positiva actual: 19.94%.
+- Distribucion actual de clases: 4091 positivos y 15909 negativos.
+- Tasa positiva actual: 20.46%.
 - Split efectivo: train 14000, validation 3000, test 3000.
-- `pos_weight` utilizado: 4.0143.
+- `pos_weight` utilizado: 3.8900.
 - Early stopping: mejor epoca 30 y threshold elegido 0.550.
 
 ## Metricas del modelo PyTorch actual
-- Validacion: accuracy 0.8283, ROC-AUC 0.8390, PR-AUC 0.5955, F1 0.5712, precision 0.5688, recall 0.5736.
-- Test: accuracy 0.8360, ROC-AUC 0.8468, PR-AUC 0.6153, F1 0.5751, precision 0.5946, recall 0.5569.
-- Matriz de confusion PyTorch en test: [[2175, 227], [265, 333]].
+- Validacion: accuracy 0.8517, ROC-AUC 0.8798, PR-AUC 0.6854, F1 0.6331, precision 0.6411, recall 0.6254.
+- Test: accuracy 0.8380, ROC-AUC 0.8628, PR-AUC 0.6508, F1 0.6042, precision 0.6042, recall 0.6042.
+- Matriz de confusion PyTorch en test: [[2143, 243], [243, 371]].
 
 ## Baselines actuales bajo el mismo split y preprocesamiento
-- `LogisticRegression(class_weight="balanced")`: accuracy 0.8687, ROC-AUC 0.9052, PR-AUC 0.7360, F1 0.6878, precision 0.6536, recall 0.7258.
-- Baseline simple por promedio de atributos: accuracy 0.8010, ROC-AUC 0.8206, PR-AUC 0.5483, F1 0.5383.
+- `LogisticRegression(class_weight="balanced")`: accuracy 0.8600, ROC-AUC 0.8996, PR-AUC 0.7373, F1 0.6769, precision 0.6414, recall 0.7166.
+- Baseline simple por promedio de atributos: accuracy 0.7777, ROC-AUC 0.8278, PR-AUC 0.5840, F1 0.5592.
 
 ## Hallazgos verificados
 - El nuevo preprocesamiento compartido con `pandas` y `scikit-learn` quedo implementado y funcionando tanto en entrenamiento como en inferencia.
-- La MLP actual ya no colapsa a todo negativo: paso de F1 0.0000 a F1 0.5751 y de PR-AUC 0.0915 a PR-AUC 0.6153.
+- La MLP actual ya no colapsa a todo negativo: paso de F1 0.0000 a F1 0.6042 y de PR-AUC 0.0915 a PR-AUC 0.6508.
 - El entrenamiento ya no usa solo foto fija: aprende con rendimiento historico y con evolucion tecnica de `PlayerAttributeHistory`.
+- El entrenamiento ahora tambien incorpora contexto de partido y senal cualitativa sintetica del scout.
 - La alineacion del dataset a 12-18, el entrenamiento endurecido y las features longitudinales mejoraron fuerte la defendibilidad metodologica respecto al diagnostico previo.
 - Aun asi, el baseline `LogisticRegression(class_weight="balanced")` sigue superando a la MLP en ROC-AUC, PR-AUC y F1.
 - El baseline simple por promedio de atributos ya no explica bien el target frente al nuevo pipeline, lo que indica que la etiqueta sintetica quedo menos trivial que antes.
 - La senal del dataset existe, pero la red PyTorch todavia no demuestra una ventaja clara sobre el baseline lineal balanceado.
 
 ## Limites que todavia no estan resueltos
-- Todavia falta contexto de partido explicito (`Match` y participacion del jugador por partido).
-- Todavia no hay reportes cualitativos de scout en la base de entrenamiento.
+- Los partidos sinteticos todavia no representan encuentros compartidos entre varios jugadores del mismo plantel.
+- Los `ScoutReport` actuales siguen siendo sinteticos, no manuales ni cargados por usuarios reales.
 - El target sigue siendo `potential_label` binario y no una meta temporal de progresion.
 - No se implemento calibracion de probabilidades.
 - La evidencia actual sigue basada en datos sinteticos; no hay una validacion externa con datos reales.

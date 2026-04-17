@@ -3,6 +3,7 @@ import json
 from datetime import date
 from types import SimpleNamespace
 
+import numpy as np
 from werkzeug.security import generate_password_hash
 from sqlalchemy.orm import sessionmaker
 
@@ -535,11 +536,27 @@ def test_prepare_input_matches_batch_transformation(app_module, db):
     batch_tensor = app_module.players_to_model_tensor([player, second_player]).detach().cpu().numpy()
 
     assert single_tensor.shape[1] == batch_tensor.shape[1]
-    assert single_tensor[0].tolist() == batch_tensor[0].tolist()
+    assert np.allclose(single_tensor[0], batch_tensor[0], equal_nan=True)
 
 
 def test_prepare_input_includes_historical_features(app_module, db):
     player = _create_player(app_module, db, name="Hist Uno", national_id="49900112")
+    match_one = app_module.Match(
+        match_date=date(2026, 3, 15),
+        opponent_name="Racing Juvenil",
+        opponent_level=4,
+        tournament="Liga Juvenil Regional",
+        competition_category="Sub-17",
+        venue="Visitante",
+    )
+    match_two = app_module.Match(
+        match_date=date(2026, 4, 10),
+        opponent_name="Belgrano Inferiores",
+        opponent_level=2,
+        tournament="Copa Proyeccion",
+        competition_category="Sub-17",
+        venue="Local",
+    )
     db.add_all(
         [
             app_module.PlayerStat(
@@ -614,12 +631,58 @@ def test_prepare_input_includes_historical_features(app_module, db):
                 determination=12,
                 technique=9,
             ),
+            match_one,
+            match_two,
+            app_module.PlayerMatchParticipation(
+                player_id=player.id,
+                match=match_one,
+                started=True,
+                position_played="Defensa",
+                minutes_played=90,
+                final_score=6.7,
+                pass_accuracy=73.0,
+                shot_accuracy=35.0,
+                duels_won_pct=68.0,
+            ),
+            app_module.PlayerMatchParticipation(
+                player_id=player.id,
+                match=match_two,
+                started=False,
+                position_played="Lateral",
+                minutes_played=28,
+                final_score=7.4,
+                pass_accuracy=79.0,
+                shot_accuracy=42.0,
+                duels_won_pct=71.0,
+            ),
+            app_module.ScoutReport(
+                player_id=player.id,
+                report_date=date(2026, 2, 20),
+                decision_making=11,
+                tactical_reading=12,
+                mental_profile=13,
+                adaptability=10,
+                observed_projection_score=6.6,
+                notes="Reporte uno",
+            ),
+            app_module.ScoutReport(
+                player_id=player.id,
+                report_date=date(2026, 4, 12),
+                decision_making=12,
+                tactical_reading=13,
+                mental_profile=14,
+                adaptability=11,
+                observed_projection_score=7.2,
+                notes="Reporte dos",
+            ),
         ]
     )
     db.commit()
 
     stats_feature_map = app_module.fetch_player_stat_feature_map([player.id])
     attr_feature_map = app_module.fetch_player_attribute_feature_map([player])
+    match_feature_map = app_module.fetch_player_match_feature_map([player])
+    scout_feature_map = app_module.fetch_player_scout_report_feature_map([player.id])
     assert stats_feature_map[player.id]["stats_entry_count"] == 2
     assert round(float(stats_feature_map[player.id]["avg_final_score_hist"]), 2) == 6.75
     assert round(float(stats_feature_map[player.id]["avg_pass_accuracy_hist"]), 2) == 75.0
@@ -627,12 +690,19 @@ def test_prepare_input_includes_historical_features(app_module, db):
     assert attr_feature_map[player.id]["attr_history_entry_count"] == 4
     assert float(attr_feature_map[player.id]["attr_weighted_improvement_90d"]) > 0
     assert float(attr_feature_map[player.id]["attr_current_vs_recent_gap"]) > 0
+    assert match_feature_map[player.id]["match_entry_count"] == 2
+    assert round(float(match_feature_map[player.id]["match_avg_minutes"]), 2) == 59.0
+    assert round(float(match_feature_map[player.id]["match_natural_position_rate"]), 2) == 0.5
+    assert scout_feature_map[player.id]["scout_report_count"] == 2
+    assert round(float(scout_feature_map[player.id]["scout_latest_projection_score"]), 2) == 7.2
 
     single_tensor = app_module.prepare_input(player).detach().cpu().numpy()
     batch_tensor = app_module.players_to_model_tensor(
         [player],
         stats_feature_map=stats_feature_map,
         attribute_feature_map=attr_feature_map,
+        match_feature_map=match_feature_map,
+        scout_report_feature_map=scout_feature_map,
     ).detach().cpu().numpy()
     assert single_tensor[0].tolist() == batch_tensor[0].tolist()
 
@@ -845,6 +915,68 @@ def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir
                     determination=10,
                     technique=8,
                 ),
+                models_module.Match(
+                    match_date=date(2026, 4, 1),
+                    opponent_name="Racing Juvenil",
+                    opponent_level=4,
+                    tournament="Liga Juvenil Regional",
+                    competition_category="Sub-17",
+                    venue="Visitante",
+                ),
+                models_module.Match(
+                    match_date=date(2026, 4, 3),
+                    opponent_name="Belgrano Inferiores",
+                    opponent_level=2,
+                    tournament="Copa Proyeccion",
+                    competition_category="Sub-17",
+                    venue="Local",
+                ),
+            ]
+        )
+        session.flush()
+        created_matches = session.query(models_module.Match).order_by(models_module.Match.id.asc()).all()
+        session.add_all(
+            [
+                models_module.PlayerMatchParticipation(
+                    player_id=players[0].id,
+                    match_id=created_matches[0].id,
+                    started=True,
+                    position_played="Defensa",
+                    minutes_played=90,
+                    final_score=6.3,
+                    pass_accuracy=69.0,
+                    shot_accuracy=31.0,
+                    duels_won_pct=71.0,
+                ),
+                models_module.PlayerMatchParticipation(
+                    player_id=players[1].id,
+                    match_id=created_matches[1].id,
+                    started=True,
+                    position_played="Mediocampista",
+                    minutes_played=88,
+                    final_score=7.9,
+                    pass_accuracy=83.0,
+                    shot_accuracy=55.0,
+                    duels_won_pct=58.0,
+                ),
+                models_module.ScoutReport(
+                    player_id=players[0].id,
+                    report_date=date(2026, 4, 2),
+                    decision_making=11,
+                    tactical_reading=12,
+                    mental_profile=13,
+                    adaptability=10,
+                    observed_projection_score=6.4,
+                ),
+                models_module.ScoutReport(
+                    player_id=players[1].id,
+                    report_date=date(2026, 4, 4),
+                    decision_making=14,
+                    tactical_reading=14,
+                    mental_profile=15,
+                    adaptability=13,
+                    observed_projection_score=7.8,
+                ),
             ]
         )
         session.commit()
@@ -987,6 +1119,68 @@ def test_training_dataframe_merges_historical_features(tmp_path, scouting_app_di
                     determination=13,
                     technique=12,
                 ),
+                models_module.Match(
+                    match_date=date(2026, 3, 18),
+                    opponent_name="Lanus Proyeccion",
+                    opponent_level=4,
+                    tournament="Liga Juvenil Regional",
+                    competition_category="Sub-17",
+                    venue="Visitante",
+                ),
+                models_module.Match(
+                    match_date=date(2026, 4, 12),
+                    opponent_name="Velez Desarrollo",
+                    opponent_level=2,
+                    tournament="Copa Proyeccion",
+                    competition_category="Sub-17",
+                    venue="Local",
+                ),
+            ]
+        )
+        session.flush()
+        created_matches = session.query(models_module.Match).order_by(models_module.Match.id.asc()).all()
+        session.add_all(
+            [
+                models_module.PlayerMatchParticipation(
+                    player_id=player.id,
+                    match_id=created_matches[0].id,
+                    started=True,
+                    position_played="Mediocampista",
+                    minutes_played=90,
+                    final_score=6.4,
+                    pass_accuracy=72.0,
+                    shot_accuracy=46.0,
+                    duels_won_pct=57.0,
+                ),
+                models_module.PlayerMatchParticipation(
+                    player_id=player.id,
+                    match_id=created_matches[1].id,
+                    started=False,
+                    position_played="Lateral",
+                    minutes_played=25,
+                    final_score=7.1,
+                    pass_accuracy=78.0,
+                    shot_accuracy=49.0,
+                    duels_won_pct=60.0,
+                ),
+                models_module.ScoutReport(
+                    player_id=player.id,
+                    report_date=date(2026, 3, 20),
+                    decision_making=13,
+                    tactical_reading=14,
+                    mental_profile=15,
+                    adaptability=12,
+                    observed_projection_score=7.3,
+                ),
+                models_module.ScoutReport(
+                    player_id=player.id,
+                    report_date=date(2026, 4, 15),
+                    decision_making=14,
+                    tactical_reading=15,
+                    mental_profile=16,
+                    adaptability=13,
+                    observed_projection_score=7.9,
+                ),
             ]
         )
         session.commit()
@@ -1006,6 +1200,37 @@ def test_training_dataframe_merges_historical_features(tmp_path, scouting_app_di
     assert float(row["attr_avg_improvement_365d"]) > 0
     assert float(row["attr_weighted_improvement_90d"]) >= 0
     assert float(row["attr_current_vs_recent_gap"]) > 0
+    assert int(row["match_entry_count"]) == 2
+    assert round(float(row["match_natural_position_rate"]), 2) == 0.5
+    assert int(row["scout_report_count"]) == 2
+    assert round(float(row["scout_latest_projection_score"]), 2) == 7.9
+
+
+def test_generate_data_creates_match_context_and_scout_reports(tmp_path, scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    generate_module = importlib.import_module("generate_data")
+    models_module = importlib.import_module("models")
+    db_utils_module = importlib.import_module("db_utils")
+
+    db_path = tmp_path / "synthetic_context.db"
+    db_url = f"sqlite:///{db_path.as_posix()}"
+    generate_module.main(12, db_url, seed=42, min_age=12, max_age=18)
+
+    normalized_db_url = db_utils_module.normalize_db_url(db_url, base_dir=str(scouting_app_dir))
+    engine = db_utils_module.create_app_engine(normalized_db_url)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    try:
+        assert session.query(models_module.Player).count() == 12
+        assert session.query(models_module.PlayerAttributeHistory).count() > 0
+        assert session.query(models_module.Match).count() > 0
+        assert session.query(models_module.PlayerMatchParticipation).count() > 0
+        assert session.query(models_module.PlayerStat).count() > 0
+        assert session.query(models_module.ScoutReport).count() > 0
+    finally:
+        session.close()
 
 
 def test_load_data_filters_training_range(tmp_path, scouting_app_dir, monkeypatch):

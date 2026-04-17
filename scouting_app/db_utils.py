@@ -83,6 +83,18 @@ def ensure_player_columns(engine) -> int:
             "created_at": "TIMESTAMP",
             "updated_at": "TIMESTAMP",
         },
+        "matches": {
+            "created_at": "TIMESTAMP",
+            "updated_at": "TIMESTAMP",
+        },
+        "player_match_participations": {
+            "created_at": "TIMESTAMP",
+            "updated_at": "TIMESTAMP",
+        },
+        "scout_reports": {
+            "created_at": "TIMESTAMP",
+            "updated_at": "TIMESTAMP",
+        },
     }
 
     added_columns = 0

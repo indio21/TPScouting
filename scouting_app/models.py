@@ -55,6 +55,12 @@ class Player(TimestampMixin, Base):
 
     stats = relationship("PlayerStat", back_populates="player", cascade="all, delete-orphan")
     attribute_history = relationship("PlayerAttributeHistory", back_populates="player", cascade="all, delete-orphan")
+    match_participations = relationship(
+        "PlayerMatchParticipation",
+        back_populates="player",
+        cascade="all, delete-orphan",
+    )
+    scout_reports = relationship("ScoutReport", back_populates="player", cascade="all, delete-orphan")
 
     def to_dict(self) -> dict:
         """Convierte el modelo a un diccionario útil para JSON o plantillas."""
@@ -243,5 +249,113 @@ class PlayerAttributeHistory(TimestampMixin, Base):
             "tackling": self.tackling,
             "determination": self.determination,
             "technique": self.technique,
+            "notes": self.notes,
+        }
+
+
+class Match(TimestampMixin, Base):
+    """Contexto minimo del partido para enriquecer rendimiento y prediccion."""
+
+    __tablename__ = "matches"
+
+    id = Column(Integer, primary_key=True)
+    match_date = Column(Date, nullable=False)
+    opponent_name = Column(String, nullable=False)
+    opponent_level = Column(Integer, nullable=False, default=3)  # escala 1-5
+    tournament = Column(String, nullable=True)
+    competition_category = Column(String, nullable=True)
+    venue = Column(String, nullable=False, default="Local")
+    notes = Column(Text, nullable=True)
+
+    participations = relationship(
+        "PlayerMatchParticipation",
+        back_populates="match",
+        cascade="all, delete-orphan",
+    )
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "match_date": self.match_date.isoformat(),
+            "opponent_name": self.opponent_name,
+            "opponent_level": self.opponent_level,
+            "tournament": self.tournament,
+            "competition_category": self.competition_category,
+            "venue": self.venue,
+            "notes": self.notes,
+        }
+
+
+class PlayerMatchParticipation(TimestampMixin, Base):
+    """Participacion puntual del jugador en un partido."""
+
+    __tablename__ = "player_match_participations"
+
+    id = Column(Integer, primary_key=True)
+    player_id = Column(Integer, ForeignKey("players.id"), nullable=False)
+    match_id = Column(Integer, ForeignKey("matches.id"), nullable=False)
+    started = Column(Boolean, nullable=False, default=False)
+    position_played = Column(String, nullable=False)
+    minutes_played = Column(Integer, nullable=False, default=0)
+    final_score = Column(Float, nullable=True)  # valoracion 1-10
+    goals = Column(Integer, nullable=False, default=0)
+    assists = Column(Integer, nullable=False, default=0)
+    pass_accuracy = Column(Float, nullable=True)
+    shot_accuracy = Column(Float, nullable=True)
+    duels_won_pct = Column(Float, nullable=True)
+    yellow_cards = Column(Integer, nullable=False, default=0)
+    red_cards = Column(Integer, nullable=False, default=0)
+    role_notes = Column(Text, nullable=True)
+
+    player = relationship("Player", back_populates="match_participations")
+    match = relationship("Match", back_populates="participations")
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "player_id": self.player_id,
+            "match_id": self.match_id,
+            "started": self.started,
+            "position_played": self.position_played,
+            "minutes_played": self.minutes_played,
+            "final_score": self.final_score,
+            "goals": self.goals,
+            "assists": self.assists,
+            "pass_accuracy": self.pass_accuracy,
+            "shot_accuracy": self.shot_accuracy,
+            "duels_won_pct": self.duels_won_pct,
+            "yellow_cards": self.yellow_cards,
+            "red_cards": self.red_cards,
+            "role_notes": self.role_notes,
+        }
+
+
+class ScoutReport(TimestampMixin, Base):
+    """Observacion cualitativa sintetica o manual del scout."""
+
+    __tablename__ = "scout_reports"
+
+    id = Column(Integer, primary_key=True)
+    player_id = Column(Integer, ForeignKey("players.id"), nullable=False)
+    report_date = Column(Date, nullable=False)
+    decision_making = Column(Integer, nullable=True)  # escala 0-20
+    tactical_reading = Column(Integer, nullable=True)  # escala 0-20
+    mental_profile = Column(Integer, nullable=True)  # escala 0-20
+    adaptability = Column(Integer, nullable=True)  # escala 0-20
+    observed_projection_score = Column(Float, nullable=True)  # valoracion 1-10
+    notes = Column(Text, nullable=True)
+
+    player = relationship("Player", back_populates="scout_reports")
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "player_id": self.player_id,
+            "report_date": self.report_date.isoformat(),
+            "decision_making": self.decision_making,
+            "tactical_reading": self.tactical_reading,
+            "mental_profile": self.mental_profile,
+            "adaptability": self.adaptability,
+            "observed_projection_score": self.observed_projection_score,
             "notes": self.notes,
         }

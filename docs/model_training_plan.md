@@ -14,7 +14,7 @@
 - Split `train / validation / test`.
 - Seleccion de threshold por validacion.
 - Early stopping sobre `PR-AUC` con desempate por `F1`.
-- Resultado: PyTorch dejo de colapsar y alcanzo F1 0.5751 en test.
+- Resultado: PyTorch dejo de colapsar y alcanzo F1 0.6042 en test.
 
 ### Etapa 2 completada: alinear dataset al alcance real 12-18
 - Generacion sintetica por defecto restringida a 12-18.
@@ -31,7 +31,7 @@
 - Baseline obligatorio: `LogisticRegression(class_weight="balanced")`.
 - Comparacion bajo el mismo split y el mismo preprocesamiento.
 - Persistencia de metadata en `training_metadata.json`.
-- Estado actual: el baseline sigue mejor que PyTorch en test con F1 0.6878 vs 0.5751.
+- Estado actual: el baseline sigue mejor que PyTorch en test con F1 0.6769 vs 0.6042.
 
 ### Etapa 5 completada en nivel MVP
 - Se persisten threshold, metricas, tamanos de split, seed y configuracion.
@@ -42,15 +42,22 @@
 - Se sintetizo historial de `PlayerStat` en la base de entrenamiento.
 - Se integraron features de `PlayerAttributeHistory` al entrenamiento e inferencia.
 - La base de entrenamiento ahora representa trayectoria tecnica del jugador, no solo foto fija.
-- Resultado actual: PyTorch queda en F1 0.5751 y PR-AUC 0.6153.
+- Resultado actual: PyTorch queda en F1 0.6042 y PR-AUC 0.6508.
 - Aun asi, el baseline lineal balanceado sigue siendo superior.
 
+### Etapa 7 completada: contexto de partido y ScoutReport
+- Se agregaron `Match` y `PlayerMatchParticipation` al esquema.
+- El generador sintetico ahora crea partidos con contexto y participacion puntual del jugador.
+- `PlayerStat` pasa a derivarse de esas participaciones.
+- Se agregaron `ScoutReport` sinteticos al esquema y al pipeline.
+- Resultado actual: PyTorch queda en F1 0.6042 y PR-AUC 0.6508.
+- El baseline lineal balanceado sigue siendo superior.
+
 ## Siguiente iteracion recomendada
-### Etapa 7 recomendada: contexto de partido y target temporal
-- Agregar una tabla `Match` con contexto minimo del partido.
-- Agregar una tabla de participacion del jugador por partido.
+### Etapa 8 recomendada: target temporal y validacion metodologica
 - Redefinir el target hacia una meta temporal de progresion, no solo `potential_label`.
-- Volver a comparar PyTorch contra el baseline lineal bajo el mismo split.
+- Evaluar si conviene sumar `Availability` o `PhysicalAssessment`.
+- Revisar si PyTorch puede justificar su complejidad frente al baseline lineal.
 
 ## Criterios de aceptacion para la siguiente iteracion
 - La siguiente iteracion debe mejorar o estabilizar al menos una de estas metricas de PyTorch en test sin degradar claramente las demas:
@@ -70,6 +77,7 @@
 - Tests de generacion sintetica sensibles a edad y posicion.
 - Tests de merge de features historicas.
 - Tests de features longitudinales de `PlayerAttributeHistory`.
+- Tests de contexto de partido y `ScoutReport`.
 - Smoke del pipeline completo con artefactos reales.
 
 ## Decisiones fijas

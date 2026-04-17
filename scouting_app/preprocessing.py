@@ -13,7 +13,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from sqlalchemy import select
 
-from models import Player, PlayerAttributeHistory, PlayerStat
+from models import Match, Player, PlayerAttributeHistory, PlayerMatchParticipation, PlayerStat, ScoutReport
 from player_logic import ATTRIBUTE_FIELDS, POSITION_CHOICES, position_weights
 
 STATS_FEATURE_COLUMNS: List[str] = [
@@ -35,7 +35,28 @@ ATTRIBUTE_HISTORY_FEATURE_COLUMNS: List[str] = [
     "attr_weighted_volatility",
     "attr_current_vs_recent_gap",
 ]
-HISTORICAL_FEATURE_COLUMNS: List[str] = [*STATS_FEATURE_COLUMNS, *ATTRIBUTE_HISTORY_FEATURE_COLUMNS]
+MATCH_FEATURE_COLUMNS: List[str] = [
+    "match_entry_count",
+    "match_avg_final_score",
+    "match_avg_minutes",
+    "match_start_rate",
+    "match_avg_opponent_level",
+    "match_natural_position_rate",
+]
+SCOUT_REPORT_FEATURE_COLUMNS: List[str] = [
+    "scout_report_count",
+    "scout_avg_decision_making",
+    "scout_avg_tactical_reading",
+    "scout_avg_mental_profile",
+    "scout_avg_adaptability",
+    "scout_latest_projection_score",
+]
+HISTORICAL_FEATURE_COLUMNS: List[str] = [
+    *STATS_FEATURE_COLUMNS,
+    *ATTRIBUTE_HISTORY_FEATURE_COLUMNS,
+    *MATCH_FEATURE_COLUMNS,
+    *SCOUT_REPORT_FEATURE_COLUMNS,
+]
 BASE_NUMERIC_FEATURE_COLUMNS: List[str] = ["age", *ATTRIBUTE_FIELDS]
 NUMERIC_FEATURE_COLUMNS: List[str] = [*BASE_NUMERIC_FEATURE_COLUMNS, *HISTORICAL_FEATURE_COLUMNS]
 CATEGORICAL_FEATURE_COLUMNS: List[str] = ["position"]
@@ -153,22 +174,65 @@ def attribute_history_dataframe_from_engine(engine) -> pd.DataFrame:
         return pd.read_sql(query, connection)
 
 
+def match_participation_dataframe_from_engine(engine) -> pd.DataFrame:
+    query = (
+        select(
+            PlayerMatchParticipation.player_id,
+            Match.match_date,
+            Match.opponent_level,
+            PlayerMatchParticipation.started,
+            PlayerMatchParticipation.position_played,
+            PlayerMatchParticipation.minutes_played,
+            PlayerMatchParticipation.final_score,
+        )
+        .join(Match, PlayerMatchParticipation.match_id == Match.id)
+    )
+    with engine.connect() as connection:
+        return pd.read_sql(query, connection)
+
+
+def scout_report_dataframe_from_engine(engine) -> pd.DataFrame:
+    query = select(
+        ScoutReport.player_id,
+        ScoutReport.report_date,
+        ScoutReport.decision_making,
+        ScoutReport.tactical_reading,
+        ScoutReport.mental_profile,
+        ScoutReport.adaptability,
+        ScoutReport.observed_projection_score,
+    )
+    with engine.connect() as connection:
+        return pd.read_sql(query, connection)
+
+
 def training_dataframe_from_engine(engine) -> pd.DataFrame:
     players_df = player_base_dataframe_from_engine(engine)
     stats_df = stats_dataframe_from_engine(engine)
     attribute_history_df = attribute_history_dataframe_from_engine(engine)
-    return merge_historical_features(players_df, stats_df, attribute_history_df)
+    match_participation_df = match_participation_dataframe_from_engine(engine)
+    scout_report_df = scout_report_dataframe_from_engine(engine)
+    return merge_historical_features(
+        players_df,
+        stats_df,
+        attribute_history_df,
+        match_participation_df,
+        scout_report_df,
+    )
 
 
 def dataframe_from_players(
     players: Iterable[Player],
     stats_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
     attribute_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
+    match_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
+    scout_report_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
 ) -> pd.DataFrame:
     base_df = player_base_dataframe_from_players(players)
     rows = []
     stats_feature_map = stats_feature_map or {}
     attribute_feature_map = attribute_feature_map or {}
+    match_feature_map = match_feature_map or {}
+    scout_report_feature_map = scout_report_feature_map or {}
     for row in base_df.to_dict(orient="records"):
         player_id = row["player_id"]
         rows.append(
@@ -176,6 +240,8 @@ def dataframe_from_players(
                 **row,
                 **stats_feature_defaults(stats_feature_map.get(player_id)),
                 **attribute_history_feature_defaults(attribute_feature_map.get(player_id)),
+                **match_feature_defaults(match_feature_map.get(player_id)),
+                **scout_report_feature_defaults(scout_report_feature_map.get(player_id)),
             }
         )
     return pd.DataFrame(rows, columns=["player_id", *MODEL_FEATURE_COLUMNS])
@@ -240,6 +306,32 @@ def attribute_history_feature_defaults(
         "attr_weighted_trend_per_day": source.get("attr_weighted_trend_per_day"),
         "attr_weighted_volatility": source.get("attr_weighted_volatility"),
         "attr_current_vs_recent_gap": source.get("attr_current_vs_recent_gap"),
+    }
+
+
+def match_feature_defaults(values: Optional[Dict[str, Optional[float]]] = None) -> Dict[str, Optional[float]]:
+    source = values or {}
+    return {
+        "match_entry_count": source.get("match_entry_count"),
+        "match_avg_final_score": source.get("match_avg_final_score"),
+        "match_avg_minutes": source.get("match_avg_minutes"),
+        "match_start_rate": source.get("match_start_rate"),
+        "match_avg_opponent_level": source.get("match_avg_opponent_level"),
+        "match_natural_position_rate": source.get("match_natural_position_rate"),
+    }
+
+
+def scout_report_feature_defaults(
+    values: Optional[Dict[str, Optional[float]]] = None,
+) -> Dict[str, Optional[float]]:
+    source = values or {}
+    return {
+        "scout_report_count": source.get("scout_report_count"),
+        "scout_avg_decision_making": source.get("scout_avg_decision_making"),
+        "scout_avg_tactical_reading": source.get("scout_avg_tactical_reading"),
+        "scout_avg_mental_profile": source.get("scout_avg_mental_profile"),
+        "scout_avg_adaptability": source.get("scout_avg_adaptability"),
+        "scout_latest_projection_score": source.get("scout_latest_projection_score"),
     }
 
 
@@ -362,10 +454,65 @@ def aggregate_attribute_history_dataframe(players_df: pd.DataFrame, attribute_hi
     return pd.DataFrame(rows, columns=["player_id", *ATTRIBUTE_HISTORY_FEATURE_COLUMNS])
 
 
+def aggregate_match_participation_dataframe(players_df: pd.DataFrame, participation_df: pd.DataFrame) -> pd.DataFrame:
+    if participation_df.empty or players_df.empty:
+        return pd.DataFrame(columns=["player_id", *MATCH_FEATURE_COLUMNS])
+
+    current_df = players_df.loc[:, ["player_id", "position"]].copy()
+    working_df = participation_df.copy()
+    working_df["match_date"] = pd.to_datetime(working_df["match_date"], errors="coerce")
+    working_df = working_df.merge(current_df, on="player_id", how="left")
+    working_df["started_numeric"] = working_df["started"].fillna(False).astype(int)
+    working_df["natural_position_match"] = (
+        working_df["position_played"].fillna("") == working_df["position"].fillna("")
+    ).astype(int)
+
+    grouped = (
+        working_df.groupby("player_id", as_index=False)
+        .agg(
+            match_entry_count=("player_id", "size"),
+            match_avg_final_score=("final_score", "mean"),
+            match_avg_minutes=("minutes_played", "mean"),
+            match_start_rate=("started_numeric", "mean"),
+            match_avg_opponent_level=("opponent_level", "mean"),
+            match_natural_position_rate=("natural_position_match", "mean"),
+        )
+    )
+    return grouped.loc[:, ["player_id", *MATCH_FEATURE_COLUMNS]]
+
+
+def aggregate_scout_report_dataframe(scout_report_df: pd.DataFrame) -> pd.DataFrame:
+    if scout_report_df.empty:
+        return pd.DataFrame(columns=["player_id", *SCOUT_REPORT_FEATURE_COLUMNS])
+
+    working_df = scout_report_df.copy()
+    working_df["report_date"] = pd.to_datetime(working_df["report_date"], errors="coerce")
+    grouped = (
+        working_df.groupby("player_id", as_index=False)
+        .agg(
+            scout_report_count=("player_id", "size"),
+            scout_avg_decision_making=("decision_making", "mean"),
+            scout_avg_tactical_reading=("tactical_reading", "mean"),
+            scout_avg_mental_profile=("mental_profile", "mean"),
+            scout_avg_adaptability=("adaptability", "mean"),
+        )
+    )
+    latest_df = (
+        working_df.sort_values(["player_id", "report_date"])
+        .groupby("player_id", as_index=False)
+        .tail(1)
+        .loc[:, ["player_id", "observed_projection_score"]]
+        .rename(columns={"observed_projection_score": "scout_latest_projection_score"})
+    )
+    return grouped.merge(latest_df, on="player_id", how="left")
+
+
 def merge_historical_features(
     players_df: pd.DataFrame,
     stats_df: pd.DataFrame,
     attribute_history_df: Optional[pd.DataFrame] = None,
+    match_participation_df: Optional[pd.DataFrame] = None,
+    scout_report_df: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     merged = players_df.copy()
     stats_features_df = aggregate_stats_dataframe(stats_df)
@@ -374,6 +521,14 @@ def merge_historical_features(
     attribute_history_df = attribute_history_df if attribute_history_df is not None else pd.DataFrame()
     attr_features_df = aggregate_attribute_history_dataframe(players_df, attribute_history_df)
     merged = merged.merge(attr_features_df, on="player_id", how="left")
+
+    match_participation_df = match_participation_df if match_participation_df is not None else pd.DataFrame()
+    match_features_df = aggregate_match_participation_dataframe(players_df, match_participation_df)
+    merged = merged.merge(match_features_df, on="player_id", how="left")
+
+    scout_report_df = scout_report_df if scout_report_df is not None else pd.DataFrame()
+    scout_features_df = aggregate_scout_report_dataframe(scout_report_df)
+    merged = merged.merge(scout_features_df, on="player_id", how="left")
 
     for column in HISTORICAL_FEATURE_COLUMNS:
         if column not in merged.columns:

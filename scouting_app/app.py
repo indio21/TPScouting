@@ -15,19 +15,34 @@ from sqlalchemy.orm import sessionmaker, load_only
 import numpy as np
 import pandas as pd
 import torch
-from models import Base, Player, Coach, Director, User, PlayerStat, PlayerAttributeHistory
+from models import (
+    Base,
+    Match,
+    Player,
+    Coach,
+    Director,
+    User,
+    PlayerStat,
+    PlayerAttributeHistory,
+    PlayerMatchParticipation,
+    ScoutReport,
+)
 from train_model import PlayerNet
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from db_utils import normalize_db_url, create_app_engine, ensure_player_columns
 from preprocessing import (
     aggregate_attribute_history_dataframe,
+    aggregate_match_participation_dataframe,
+    aggregate_scout_report_dataframe,
     aggregate_stats_dataframe,
     attribute_history_feature_defaults,
     dataframe_from_players,
     load_preprocessor as load_saved_preprocessor,
+    match_feature_defaults,
     player_base_dataframe_from_players,
     preprocessor_input_dim,
+    scout_report_feature_defaults,
     stats_feature_defaults,
     transform_features,
 )
@@ -940,19 +955,83 @@ def fetch_player_attribute_feature_map(players: List[Player]) -> Dict[int, Dict[
     return feature_map
 
 
+def fetch_player_match_feature_map(players: List[Player]) -> Dict[int, Dict[str, Optional[float]]]:
+    player_ids = [player.id for player in players if player.id]
+    if not player_ids:
+        return {}
+    query = (
+        select(
+            PlayerMatchParticipation.player_id,
+            Match.match_date,
+            Match.opponent_level,
+            PlayerMatchParticipation.started,
+            PlayerMatchParticipation.position_played,
+            PlayerMatchParticipation.minutes_played,
+            PlayerMatchParticipation.final_score,
+        )
+        .join(Match, PlayerMatchParticipation.match_id == Match.id)
+        .where(PlayerMatchParticipation.player_id.in_(player_ids))
+    )
+    with engine.connect() as connection:
+        participation_df = pd.read_sql(query, connection)
+    players_df = player_base_dataframe_from_players(players)
+    aggregated_df = aggregate_match_participation_dataframe(players_df, participation_df)
+    if aggregated_df.empty:
+        return {}
+    feature_map: Dict[int, Dict[str, Optional[float]]] = {}
+    for row in aggregated_df.to_dict(orient="records"):
+        player_id = int(row["player_id"])
+        feature_map[player_id] = match_feature_defaults(row)
+    return feature_map
+
+
+def fetch_player_scout_report_feature_map(player_ids: List[int]) -> Dict[int, Dict[str, Optional[float]]]:
+    if not player_ids:
+        return {}
+    query = (
+        select(
+            ScoutReport.player_id,
+            ScoutReport.report_date,
+            ScoutReport.decision_making,
+            ScoutReport.tactical_reading,
+            ScoutReport.mental_profile,
+            ScoutReport.adaptability,
+            ScoutReport.observed_projection_score,
+        )
+        .where(ScoutReport.player_id.in_(player_ids))
+    )
+    with engine.connect() as connection:
+        scout_report_df = pd.read_sql(query, connection)
+    aggregated_df = aggregate_scout_report_dataframe(scout_report_df)
+    if aggregated_df.empty:
+        return {}
+    feature_map: Dict[int, Dict[str, Optional[float]]] = {}
+    for row in aggregated_df.to_dict(orient="records"):
+        player_id = int(row["player_id"])
+        feature_map[player_id] = scout_report_feature_defaults(row)
+    return feature_map
+
+
 def players_to_model_tensor(
     players: List[Player],
     stats_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
     attribute_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
+    match_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
+    scout_report_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
 ) -> torch.Tensor:
     if preprocessor is None:
         raise RuntimeError("No hay preprocesador cargado para inferencia.")
-    stats_feature_map = stats_feature_map or fetch_player_stat_feature_map([player.id for player in players if player.id])
+    player_ids = [player.id for player in players if player.id]
+    stats_feature_map = stats_feature_map or fetch_player_stat_feature_map(player_ids)
     attribute_feature_map = attribute_feature_map or fetch_player_attribute_feature_map(players)
+    match_feature_map = match_feature_map or fetch_player_match_feature_map(players)
+    scout_report_feature_map = scout_report_feature_map or fetch_player_scout_report_feature_map(player_ids)
     features_df = dataframe_from_players(
         players,
         stats_feature_map=stats_feature_map,
         attribute_feature_map=attribute_feature_map,
+        match_feature_map=match_feature_map,
+        scout_report_feature_map=scout_report_feature_map,
     )
     features_array = transform_features(features_df, preprocessor)
     return torch.tensor(features_array, dtype=torch.float32)
@@ -963,13 +1042,18 @@ def batch_project_players(
     avg_score_map: Optional[Dict[int, Optional[float]]] = None,
     stats_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
     attribute_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
+    match_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
+    scout_report_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
 ) -> Dict[int, Dict[str, object]]:
     if not players or model is None or preprocessor is None:
         return {}
 
     avg_score_map = avg_score_map or {}
-    stats_feature_map = stats_feature_map or fetch_player_stat_feature_map([player.id for player in players if player.id])
+    player_ids = [player.id for player in players if player.id]
+    stats_feature_map = stats_feature_map or fetch_player_stat_feature_map(player_ids)
     attribute_feature_map = attribute_feature_map or fetch_player_attribute_feature_map(players)
+    match_feature_map = match_feature_map or fetch_player_match_feature_map(players)
+    scout_report_feature_map = scout_report_feature_map or fetch_player_scout_report_feature_map(player_ids)
     with torch.no_grad():
         probs_tensor = torch.sigmoid(
             model(
@@ -977,6 +1061,8 @@ def batch_project_players(
                     players,
                     stats_feature_map=stats_feature_map,
                     attribute_feature_map=attribute_feature_map,
+                    match_feature_map=match_feature_map,
+                    scout_report_feature_map=scout_report_feature_map,
                 )
             )
         )
@@ -1262,11 +1348,15 @@ def compute_projection(player: Player, stats: Optional[List[PlayerStat]] = None,
         )
     }
     attribute_feature_map = fetch_player_attribute_feature_map([player])
+    match_feature_map = fetch_player_match_feature_map([player])
+    scout_report_feature_map = fetch_player_scout_report_feature_map([player.id])
     projection = batch_project_players(
         [player],
         {player.id: avg_score},
         stats_feature_map=stats_feature_map,
         attribute_feature_map=attribute_feature_map,
+        match_feature_map=match_feature_map,
+        scout_report_feature_map=scout_report_feature_map,
     ).get(player.id)
     if not projection:
         return None

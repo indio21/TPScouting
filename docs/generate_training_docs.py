@@ -124,6 +124,17 @@ def build_evidence_markdown(metadata: dict) -> str:
 - volatilidad del progreso
 - gap entre la ficha actual y la trayectoria reciente
 - La generacion sintetica ahora crea entre 6 y 12 snapshots tecnicos por jugador y deriva `PlayerStat` desde esa evolucion.
+- Se agrego contexto minimo de partido con `Match` y `PlayerMatchParticipation`.
+- El pipeline ahora agrega senales de partido como:
+- cantidad de participaciones
+- minutos medios
+- tasa de titularidad
+- nivel medio del rival
+- porcentaje de partidos en posicion natural
+- Se agregaron `ScoutReport` sinteticos y el pipeline agrega:
+- cantidad de reportes
+- medias de toma de decisiones, lectura tactica, perfil mental y adaptabilidad
+- ultima proyeccion observada por scout
 
 ## Resultado actual del entrenamiento mejorado
 - Fecha de corrida registrada: `{metadata["timestamp"]}`
@@ -147,14 +158,15 @@ def build_evidence_markdown(metadata: dict) -> str:
 - El nuevo preprocesamiento compartido con `pandas` y `scikit-learn` quedo implementado y funcionando tanto en entrenamiento como en inferencia.
 - La MLP actual ya no colapsa a todo negativo: paso de F1 0.0000 a F1 {format_metric(pytorch_test["f1"])} y de PR-AUC 0.0915 a PR-AUC {format_metric(pytorch_test["pr_auc"])}.
 - El entrenamiento ya no usa solo foto fija: aprende con rendimiento historico y con evolucion tecnica de `PlayerAttributeHistory`.
+- El entrenamiento ahora tambien incorpora contexto de partido y senal cualitativa sintetica del scout.
 - La alineacion del dataset a 12-18, el entrenamiento endurecido y las features longitudinales mejoraron fuerte la defendibilidad metodologica respecto al diagnostico previo.
 - Aun asi, el baseline `LogisticRegression(class_weight="balanced")` sigue superando a la MLP en ROC-AUC, PR-AUC y F1.
 - El baseline simple por promedio de atributos ya no explica bien el target frente al nuevo pipeline, lo que indica que la etiqueta sintetica quedo menos trivial que antes.
 - La senal del dataset existe, pero la red PyTorch todavia no demuestra una ventaja clara sobre el baseline lineal balanceado.
 
 ## Limites que todavia no estan resueltos
-- Todavia falta contexto de partido explicito (`Match` y participacion del jugador por partido).
-- Todavia no hay reportes cualitativos de scout en la base de entrenamiento.
+- Los partidos sinteticos todavia no representan encuentros compartidos entre varios jugadores del mismo plantel.
+- Los `ScoutReport` actuales siguen siendo sinteticos, no manuales ni cargados por usuarios reales.
 - El target sigue siendo `potential_label` binario y no una meta temporal de progresion.
 - No se implemento calibracion de probabilidades.
 - La evidencia actual sigue basada en datos sinteticos; no hay una validacion externa con datos reales.
@@ -233,12 +245,19 @@ def build_plan_markdown(metadata: dict) -> str:
 - Resultado actual: PyTorch queda en F1 {format_metric(pytorch_test["f1"])} y PR-AUC {format_metric(pytorch_test["pr_auc"])}.
 - Aun asi, el baseline lineal balanceado sigue siendo superior.
 
+### Etapa 7 completada: contexto de partido y ScoutReport
+- Se agregaron `Match` y `PlayerMatchParticipation` al esquema.
+- El generador sintetico ahora crea partidos con contexto y participacion puntual del jugador.
+- `PlayerStat` pasa a derivarse de esas participaciones.
+- Se agregaron `ScoutReport` sinteticos al esquema y al pipeline.
+- Resultado actual: PyTorch queda en F1 {format_metric(pytorch_test["f1"])} y PR-AUC {format_metric(pytorch_test["pr_auc"])}.
+- El baseline lineal balanceado sigue siendo superior.
+
 ## Siguiente iteracion recomendada
-### Etapa 7 recomendada: contexto de partido y target temporal
-- Agregar una tabla `Match` con contexto minimo del partido.
-- Agregar una tabla de participacion del jugador por partido.
+### Etapa 8 recomendada: target temporal y validacion metodologica
 - Redefinir el target hacia una meta temporal de progresion, no solo `potential_label`.
-- Volver a comparar PyTorch contra el baseline lineal bajo el mismo split.
+- Evaluar si conviene sumar `Availability` o `PhysicalAssessment`.
+- Revisar si PyTorch puede justificar su complejidad frente al baseline lineal.
 
 ## Criterios de aceptacion para la siguiente iteracion
 - La siguiente iteracion debe mejorar o estabilizar al menos una de estas metricas de PyTorch en test sin degradar claramente las demas:
@@ -258,6 +277,7 @@ def build_plan_markdown(metadata: dict) -> str:
 - Tests de generacion sintetica sensibles a edad y posicion.
 - Tests de merge de features historicas.
 - Tests de features longitudinales de `PlayerAttributeHistory`.
+- Tests de contexto de partido y `ScoutReport`.
 - Smoke del pipeline completo con artefactos reales.
 
 ## Decisiones fijas

@@ -9,7 +9,7 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Rama local actual: `training`
 - Remoto configurado: `origin -> https://github.com/indio21/TPScouting.git`
 - Ultimo commit publicado en `main`: `bd8e4ef`
-- Ultimo commit publicado en `training`: `77428ca`
+- Ultimo commit publicado en `training`: `449fbe9`
 - Estado actual: hay cambios locales nuevos en `training` aun no publicados
 
 ## Etapas Ya Trabajadas
@@ -158,10 +158,41 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Baseline `LogisticRegression(class_weight="balanced")`: `ROC-AUC 0.9052`, `PR-AUC 0.7360`, `F1 0.6878`
 - Conclusion honesta: esta version es metodologicamente mas rica y mas defendible, pero hoy todavia rinde menos que la etapa anterior y sigue por debajo del baseline lineal balanceado.
 
+### 15. Contexto de partido y ScoutReport
+
+- Se agregaron tres entidades nuevas al esquema:
+- `Match`
+- `PlayerMatchParticipation`
+- `ScoutReport`
+- `generate_data.py` ahora genera, por cada jugador:
+- trayectoria tecnica mensual
+- partidos sinteticos con contexto minimo
+- participacion puntual por partido
+- `PlayerStat` agregado a partir de esas participaciones
+- reportes cualitativos sinteticos del scout
+- El pipeline del modelo ahora agrega tambien features de:
+- cantidad de participaciones y minutos medios
+- tasa de titularidad
+- nivel medio del rival
+- porcentaje de partidos en posicion natural
+- cantidad de reportes de scout
+- medias de toma de decisiones, lectura tactica, perfil mental y adaptabilidad
+- ultima proyeccion observada por scout
+- Resultado medido sobre la corrida real actual:
+- base de entrenamiento: `20.000` jugadores
+- `PlayerAttributeHistory`: `179.377` snapshots
+- `PlayerStat`: `162.180` registros
+- `Match`: `324.165` partidos sinteticos
+- `PlayerMatchParticipation`: `324.165` participaciones
+- `ScoutReport`: `79.574` reportes
+- PyTorch: `ROC-AUC 0.8628`, `PR-AUC 0.6508`, `F1 0.6042`
+- Baseline `LogisticRegression(class_weight="balanced")`: `ROC-AUC 0.8996`, `PR-AUC 0.7373`, `F1 0.6769`
+- Conclusion honesta: respecto de la etapa longitudinal anterior, PyTorch mejora y la prediccion queda mas defendible por contexto; aun asi, el baseline lineal balanceado sigue siendo superior.
+
 ## Tests Ejecutados
 
 - La suite automatizada actual termina pasando en esta maquina.
-- Ultimo estado validado: `33 passed`
+- Ultimo estado validado: `34 passed`
 
 ## Puntos Mejorados De Forma Clara
 
@@ -181,6 +212,7 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Evidencia tecnica y plan de entrenamiento guardados en Markdown y Word
 - Features historicas agregadas funcionando en entrenamiento e inferencia
 - Trayectoria tecnica mensual incorporada al entrenamiento e inferencia
+- Contexto de partido y senal cualitativa del scout incorporados al pipeline de prediccion
 
 ## Puntos Que Siguen Parciales O Pendientes
 
