@@ -558,18 +558,82 @@ def test_prepare_input_includes_historical_features(app_module, db):
                 pass_accuracy=78.0,
                 final_score=7.0,
             ),
+            app_module.PlayerAttributeHistory(
+                player_id=player.id,
+                record_date=date(2025, 3, 1),
+                pace=8,
+                shooting=7,
+                passing=9,
+                dribbling=8,
+                defending=10,
+                physical=9,
+                vision=8,
+                tackling=10,
+                determination=11,
+                technique=8,
+            ),
+            app_module.PlayerAttributeHistory(
+                player_id=player.id,
+                record_date=date(2025, 10, 1),
+                pace=9,
+                shooting=8,
+                passing=10,
+                dribbling=9,
+                defending=11,
+                physical=10,
+                vision=9,
+                tackling=11,
+                determination=12,
+                technique=9,
+            ),
+            app_module.PlayerAttributeHistory(
+                player_id=player.id,
+                record_date=date(2026, 1, 1),
+                pace=9,
+                shooting=8,
+                passing=10,
+                dribbling=9,
+                defending=11,
+                physical=10,
+                vision=9,
+                tackling=11,
+                determination=12,
+                technique=9,
+            ),
+            app_module.PlayerAttributeHistory(
+                player_id=player.id,
+                record_date=date(2026, 3, 1),
+                pace=10,
+                shooting=8,
+                passing=10,
+                dribbling=9,
+                defending=11,
+                physical=10,
+                vision=9,
+                tackling=11,
+                determination=12,
+                technique=9,
+            ),
         ]
     )
     db.commit()
 
-    feature_map = app_module.fetch_player_stat_feature_map([player.id])
-    assert feature_map[player.id]["stats_entry_count"] == 2
-    assert round(float(feature_map[player.id]["avg_final_score_hist"]), 2) == 6.75
-    assert round(float(feature_map[player.id]["avg_pass_accuracy_hist"]), 2) == 75.0
-    assert round(float(feature_map[player.id]["latest_final_score_hist"]), 2) == 7.0
+    stats_feature_map = app_module.fetch_player_stat_feature_map([player.id])
+    attr_feature_map = app_module.fetch_player_attribute_feature_map([player])
+    assert stats_feature_map[player.id]["stats_entry_count"] == 2
+    assert round(float(stats_feature_map[player.id]["avg_final_score_hist"]), 2) == 6.75
+    assert round(float(stats_feature_map[player.id]["avg_pass_accuracy_hist"]), 2) == 75.0
+    assert round(float(stats_feature_map[player.id]["latest_final_score_hist"]), 2) == 7.0
+    assert attr_feature_map[player.id]["attr_history_entry_count"] == 4
+    assert float(attr_feature_map[player.id]["attr_weighted_improvement_90d"]) > 0
+    assert float(attr_feature_map[player.id]["attr_current_vs_recent_gap"]) > 0
 
     single_tensor = app_module.prepare_input(player).detach().cpu().numpy()
-    batch_tensor = app_module.players_to_model_tensor([player], stats_feature_map=feature_map).detach().cpu().numpy()
+    batch_tensor = app_module.players_to_model_tensor(
+        [player],
+        stats_feature_map=stats_feature_map,
+        attribute_feature_map=attr_feature_map,
+    ).detach().cpu().numpy()
     assert single_tensor[0].tolist() == batch_tensor[0].tolist()
 
 
@@ -669,6 +733,118 @@ def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir
                     pass_accuracy=74.0,
                     final_score=8.1,
                 ),
+                models_module.PlayerAttributeHistory(
+                    player_id=players[0].id,
+                    record_date=date(2025, 4, 1),
+                    pace=8,
+                    shooting=7,
+                    passing=9,
+                    dribbling=8,
+                    defending=11,
+                    physical=10,
+                    vision=8,
+                    tackling=11,
+                    determination=10,
+                    technique=8,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=players[0].id,
+                    record_date=date(2026, 2, 1),
+                    pace=9,
+                    shooting=8,
+                    passing=10,
+                    dribbling=9,
+                    defending=12,
+                    physical=11,
+                    vision=9,
+                    tackling=12,
+                    determination=11,
+                    technique=9,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=players[1].id,
+                    record_date=date(2025, 7, 1),
+                    pace=10,
+                    shooting=8,
+                    passing=12,
+                    dribbling=11,
+                    defending=8,
+                    physical=10,
+                    vision=12,
+                    tackling=7,
+                    determination=13,
+                    technique=11,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=players[1].id,
+                    record_date=date(2026, 3, 1),
+                    pace=11,
+                    shooting=9,
+                    passing=13,
+                    dribbling=12,
+                    defending=9,
+                    physical=10,
+                    vision=13,
+                    tackling=8,
+                    determination=14,
+                    technique=12,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=players[2].id,
+                    record_date=date(2025, 5, 1),
+                    pace=12,
+                    shooting=13,
+                    passing=8,
+                    dribbling=12,
+                    defending=4,
+                    physical=10,
+                    vision=8,
+                    tackling=3,
+                    determination=14,
+                    technique=11,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=players[2].id,
+                    record_date=date(2026, 2, 1),
+                    pace=14,
+                    shooting=15,
+                    passing=9,
+                    dribbling=14,
+                    defending=5,
+                    physical=11,
+                    vision=9,
+                    tackling=4,
+                    determination=15,
+                    technique=13,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=players[3].id,
+                    record_date=date(2025, 6, 1),
+                    pace=9,
+                    shooting=6,
+                    passing=8,
+                    dribbling=9,
+                    defending=10,
+                    physical=9,
+                    vision=7,
+                    tackling=10,
+                    determination=9,
+                    technique=7,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=players[3].id,
+                    record_date=date(2026, 2, 1),
+                    pace=10,
+                    shooting=7,
+                    passing=9,
+                    dribbling=10,
+                    defending=11,
+                    physical=10,
+                    vision=8,
+                    tackling=11,
+                    determination=10,
+                    technique=8,
+                ),
             ]
         )
         session.commit()
@@ -755,6 +931,62 @@ def test_training_dataframe_merges_historical_features(tmp_path, scouting_app_di
                     pass_accuracy=80.0,
                     final_score=8.0,
                 ),
+                models_module.PlayerAttributeHistory(
+                    player_id=player.id,
+                    record_date=date(2025, 3, 1),
+                    pace=9,
+                    shooting=7,
+                    passing=10,
+                    dribbling=10,
+                    defending=7,
+                    physical=8,
+                    vision=10,
+                    tackling=6,
+                    determination=11,
+                    technique=10,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=player.id,
+                    record_date=date(2025, 10, 1),
+                    pace=10,
+                    shooting=8,
+                    passing=11,
+                    dribbling=11,
+                    defending=8,
+                    physical=9,
+                    vision=11,
+                    tackling=7,
+                    determination=12,
+                    technique=11,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=player.id,
+                    record_date=date(2026, 1, 1),
+                    pace=11,
+                    shooting=9,
+                    passing=12,
+                    dribbling=12,
+                    defending=9,
+                    physical=10,
+                    vision=12,
+                    tackling=8,
+                    determination=13,
+                    technique=12,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=player.id,
+                    record_date=date(2026, 3, 1),
+                    pace=11,
+                    shooting=9,
+                    passing=12,
+                    dribbling=12,
+                    defending=9,
+                    physical=10,
+                    vision=12,
+                    tackling=8,
+                    determination=13,
+                    technique=12,
+                ),
             ]
         )
         session.commit()
@@ -768,6 +1000,12 @@ def test_training_dataframe_merges_historical_features(tmp_path, scouting_app_di
     assert round(float(row["avg_final_score_hist"]), 2) == 7.0
     assert round(float(row["avg_pass_accuracy_hist"]), 2) == 75.0
     assert round(float(row["latest_final_score_hist"]), 2) == 8.0
+    assert int(row["attr_history_entry_count"]) == 4
+    assert float(row["attr_avg_improvement_90d"]) >= 0
+    assert float(row["attr_avg_improvement_180d"]) > 0
+    assert float(row["attr_avg_improvement_365d"]) > 0
+    assert float(row["attr_weighted_improvement_90d"]) >= 0
+    assert float(row["attr_current_vs_recent_gap"]) > 0
 
 
 def test_load_data_filters_training_range(tmp_path, scouting_app_dir, monkeypatch):

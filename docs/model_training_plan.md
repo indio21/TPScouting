@@ -14,7 +14,7 @@
 - Split `train / validation / test`.
 - Seleccion de threshold por validacion.
 - Early stopping sobre `PR-AUC` con desempate por `F1`.
-- Resultado: PyTorch dejo de colapsar y alcanzo F1 0.6905 en test.
+- Resultado: PyTorch dejo de colapsar y alcanzo F1 0.5751 en test.
 
 ### Etapa 2 completada: alinear dataset al alcance real 12-18
 - Generacion sintetica por defecto restringida a 12-18.
@@ -31,7 +31,7 @@
 - Baseline obligatorio: `LogisticRegression(class_weight="balanced")`.
 - Comparacion bajo el mismo split y el mismo preprocesamiento.
 - Persistencia de metadata en `training_metadata.json`.
-- Estado actual: el baseline sigue mejor que PyTorch en test con F1 0.8536 vs 0.6905.
+- Estado actual: el baseline sigue mejor que PyTorch en test con F1 0.6878 vs 0.5751.
 
 ### Etapa 5 completada en nivel MVP
 - Se persisten threshold, metricas, tamanos de split, seed y configuracion.
@@ -40,13 +40,16 @@
 ### Etapa 6 completada: crecimiento con features historicas
 - Se agregaron features historicas agregadas con `pandas`.
 - Se sintetizo historial de `PlayerStat` en la base de entrenamiento.
-- Resultado: PyTorch mejoro hasta F1 0.6905 y PR-AUC 0.7887.
+- Se integraron features de `PlayerAttributeHistory` al entrenamiento e inferencia.
+- La base de entrenamiento ahora representa trayectoria tecnica del jugador, no solo foto fija.
+- Resultado actual: PyTorch queda en F1 0.5751 y PR-AUC 0.6153.
 - Aun asi, el baseline lineal balanceado sigue siendo superior.
 
 ## Siguiente iteracion recomendada
-### Etapa 7 opcional: calibracion y cierre metodologico
-- Evaluar calibracion de probabilidades si se necesita que la probabilidad base sea mas interpretable.
-- Revisar si conviene simplificar arquitectura de la MLP o ajustar regularizacion.
+### Etapa 7 recomendada: contexto de partido y target temporal
+- Agregar una tabla `Match` con contexto minimo del partido.
+- Agregar una tabla de participacion del jugador por partido.
+- Redefinir el target hacia una meta temporal de progresion, no solo `potential_label`.
 - Volver a comparar PyTorch contra el baseline lineal bajo el mismo split.
 
 ## Criterios de aceptacion para la siguiente iteracion
@@ -54,6 +57,7 @@
 - PR-AUC
 - F1 positiva
 - Recall positiva
+- Y ademas debe volver mas explicable la prediccion desde el punto de vista futbolistico.
 - La comparacion debe seguir quedando trazable en `training_metadata.json`.
 - Si PyTorch no supera al baseline tras esa iteracion, el baseline debe quedar reconocido como referencia principal de rendimiento.
 
@@ -65,6 +69,7 @@
 - Tests de entrenamiento limitado a 12-18.
 - Tests de generacion sintetica sensibles a edad y posicion.
 - Tests de merge de features historicas.
+- Tests de features longitudinales de `PlayerAttributeHistory`.
 - Smoke del pipeline completo con artefactos reales.
 
 ## Decisiones fijas

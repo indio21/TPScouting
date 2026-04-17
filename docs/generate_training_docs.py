@@ -118,6 +118,12 @@ def build_evidence_markdown(metadata: dict) -> str:
 - promedio historico de `pass_accuracy`
 - ultimo `final_score` registrado
 - La generacion sintetica ahora crea `PlayerStat` para que esas features existan tambien en la base de entrenamiento.
+- `PlayerAttributeHistory` ahora entra al pipeline con senales longitudinales como:
+- mejora media en 90, 180 y 365 dias
+- pendiente de crecimiento
+- volatilidad del progreso
+- gap entre la ficha actual y la trayectoria reciente
+- La generacion sintetica ahora crea entre 6 y 12 snapshots tecnicos por jugador y deriva `PlayerStat` desde esa evolucion.
 
 ## Resultado actual del entrenamiento mejorado
 - Fecha de corrida registrada: `{metadata["timestamp"]}`
@@ -140,12 +146,16 @@ def build_evidence_markdown(metadata: dict) -> str:
 ## Hallazgos verificados
 - El nuevo preprocesamiento compartido con `pandas` y `scikit-learn` quedo implementado y funcionando tanto en entrenamiento como en inferencia.
 - La MLP actual ya no colapsa a todo negativo: paso de F1 0.0000 a F1 {format_metric(pytorch_test["f1"])} y de PR-AUC 0.0915 a PR-AUC {format_metric(pytorch_test["pr_auc"])}.
-- La alineacion del dataset a 12-18, el entrenamiento endurecido y las features historicas agregadas mejoraron fuerte la calidad respecto al diagnostico previo.
+- El entrenamiento ya no usa solo foto fija: aprende con rendimiento historico y con evolucion tecnica de `PlayerAttributeHistory`.
+- La alineacion del dataset a 12-18, el entrenamiento endurecido y las features longitudinales mejoraron fuerte la defendibilidad metodologica respecto al diagnostico previo.
 - Aun asi, el baseline `LogisticRegression(class_weight="balanced")` sigue superando a la MLP en ROC-AUC, PR-AUC y F1.
 - El baseline simple por promedio de atributos ya no explica bien el target frente al nuevo pipeline, lo que indica que la etiqueta sintetica quedo menos trivial que antes.
 - La senal del dataset existe, pero la red PyTorch todavia no demuestra una ventaja clara sobre el baseline lineal balanceado.
 
 ## Limites que todavia no estan resueltos
+- Todavia falta contexto de partido explicito (`Match` y participacion del jugador por partido).
+- Todavia no hay reportes cualitativos de scout en la base de entrenamiento.
+- El target sigue siendo `potential_label` binario y no una meta temporal de progresion.
 - No se implemento calibracion de probabilidades.
 - La evidencia actual sigue basada en datos sinteticos; no hay una validacion externa con datos reales.
 - La MLP mejoro, pero todavia no justifica por rendimiento reemplazar al baseline lineal como referencia formal.
@@ -160,6 +170,7 @@ def build_evidence_markdown(metadata: dict) -> str:
 - sensibilidad de la etiqueta sintetica a edad y posicion
 - merge de features historicas en el dataset de entrenamiento
 - inclusion de features historicas en la inferencia de la app
+- features longitudinales de `PlayerAttributeHistory`
 - smoke del pipeline completo de entrenamiento
 
 ## Procedimiento reproducible
@@ -217,13 +228,16 @@ def build_plan_markdown(metadata: dict) -> str:
 ### Etapa 6 completada: crecimiento con features historicas
 - Se agregaron features historicas agregadas con `pandas`.
 - Se sintetizo historial de `PlayerStat` en la base de entrenamiento.
-- Resultado: PyTorch mejoro hasta F1 {format_metric(pytorch_test["f1"])} y PR-AUC {format_metric(pytorch_test["pr_auc"])}.
+- Se integraron features de `PlayerAttributeHistory` al entrenamiento e inferencia.
+- La base de entrenamiento ahora representa trayectoria tecnica del jugador, no solo foto fija.
+- Resultado actual: PyTorch queda en F1 {format_metric(pytorch_test["f1"])} y PR-AUC {format_metric(pytorch_test["pr_auc"])}.
 - Aun asi, el baseline lineal balanceado sigue siendo superior.
 
 ## Siguiente iteracion recomendada
-### Etapa 7 opcional: calibracion y cierre metodologico
-- Evaluar calibracion de probabilidades si se necesita que la probabilidad base sea mas interpretable.
-- Revisar si conviene simplificar arquitectura de la MLP o ajustar regularizacion.
+### Etapa 7 recomendada: contexto de partido y target temporal
+- Agregar una tabla `Match` con contexto minimo del partido.
+- Agregar una tabla de participacion del jugador por partido.
+- Redefinir el target hacia una meta temporal de progresion, no solo `potential_label`.
 - Volver a comparar PyTorch contra el baseline lineal bajo el mismo split.
 
 ## Criterios de aceptacion para la siguiente iteracion
@@ -231,6 +245,7 @@ def build_plan_markdown(metadata: dict) -> str:
 - PR-AUC
 - F1 positiva
 - Recall positiva
+- Y ademas debe volver mas explicable la prediccion desde el punto de vista futbolistico.
 - La comparacion debe seguir quedando trazable en `training_metadata.json`.
 - Si PyTorch no supera al baseline tras esa iteracion, el baseline debe quedar reconocido como referencia principal de rendimiento.
 
@@ -242,6 +257,7 @@ def build_plan_markdown(metadata: dict) -> str:
 - Tests de entrenamiento limitado a 12-18.
 - Tests de generacion sintetica sensibles a edad y posicion.
 - Tests de merge de features historicas.
+- Tests de features longitudinales de `PlayerAttributeHistory`.
 - Smoke del pipeline completo con artefactos reales.
 
 ## Decisiones fijas

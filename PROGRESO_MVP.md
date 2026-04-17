@@ -1,6 +1,6 @@
 # Progreso Del MVP
 
-Fecha de actualizacion: 2026-04-16
+Fecha de actualizacion: 2026-04-17
 
 Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP real del proyecto `TPScouting`.
 
@@ -9,7 +9,7 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Rama local actual: `training`
 - Remoto configurado: `origin -> https://github.com/indio21/TPScouting.git`
 - Ultimo commit publicado en `main`: `bd8e4ef`
-- Ultimo commit local de la rama `training`: `8dea5ac`
+- Ultimo commit publicado en `training`: `77428ca`
 - Estado actual: hay cambios locales nuevos en `training` aun no publicados
 
 ## Etapas Ya Trabajadas
@@ -137,6 +137,27 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Baseline `LogisticRegression(class_weight="balanced")`: `ROC-AUC 0.9621`, `PR-AUC 0.9175`, `F1 0.8536`
 - Conclusion honesta: PyTorch mejoro bastante, pero el baseline lineal balanceado sigue siendo superior.
 
+### 14. Trayectoria tecnica con PlayerAttributeHistory
+
+- El pipeline del modelo ahora incorpora senales longitudinales reales a partir de `PlayerAttributeHistory`.
+- Se agregaron features como:
+- mejora media a 90, 180 y 365 dias
+- pendiente de crecimiento
+- volatilidad del progreso
+- gap entre la ficha actual y la trayectoria reciente
+- La inferencia en la app ahora usa tambien esas features tecnicas historicas, no solo `PlayerStat`.
+- `generate_data.py` paso de generar una foto fija con stats derivados a generar:
+- perfil base del jugador
+- trayectoria tecnica mensual sintetica
+- historial de rendimiento derivado de esa evolucion
+- Resultado medido sobre la corrida real actual:
+- base de entrenamiento: `20.000` jugadores
+- `PlayerStat`: `162.778` registros
+- `PlayerAttributeHistory`: `180.051` snapshots
+- PyTorch: `ROC-AUC 0.8468`, `PR-AUC 0.6153`, `F1 0.5751`
+- Baseline `LogisticRegression(class_weight="balanced")`: `ROC-AUC 0.9052`, `PR-AUC 0.7360`, `F1 0.6878`
+- Conclusion honesta: esta version es metodologicamente mas rica y mas defendible, pero hoy todavia rinde menos que la etapa anterior y sigue por debajo del baseline lineal balanceado.
+
 ## Tests Ejecutados
 
 - La suite automatizada actual termina pasando en esta maquina.
@@ -159,6 +180,7 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Entrenamiento PyTorch endurecido y alineado al alcance 12-18
 - Evidencia tecnica y plan de entrenamiento guardados en Markdown y Word
 - Features historicas agregadas funcionando en entrenamiento e inferencia
+- Trayectoria tecnica mensual incorporada al entrenamiento e inferencia
 
 ## Puntos Que Siguen Parciales O Pendientes
 

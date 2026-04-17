@@ -33,34 +33,44 @@
 - promedio historico de `pass_accuracy`
 - ultimo `final_score` registrado
 - La generacion sintetica ahora crea `PlayerStat` para que esas features existan tambien en la base de entrenamiento.
+- `PlayerAttributeHistory` ahora entra al pipeline con senales longitudinales como:
+- mejora media en 90, 180 y 365 dias
+- pendiente de crecimiento
+- volatilidad del progreso
+- gap entre la ficha actual y la trayectoria reciente
+- La generacion sintetica ahora crea entre 6 y 12 snapshots tecnicos por jugador y deriva `PlayerStat` desde esa evolucion.
 
 ## Resultado actual del entrenamiento mejorado
-- Fecha de corrida registrada: `2026-04-16T23:38:49.493944`
+- Fecha de corrida registrada: `2026-04-17T23:06:50.198032`
 - Dataset actual: 20000 jugadores dentro del rango 12-18.
-- Distribucion actual de clases: 4058 positivos y 15942 negativos.
-- Tasa positiva actual: 20.29%.
+- Distribucion actual de clases: 3988 positivos y 16012 negativos.
+- Tasa positiva actual: 19.94%.
 - Split efectivo: train 14000, validation 3000, test 3000.
-- `pos_weight` utilizado: 3.9296.
-- Early stopping: mejor epoca 30 y threshold elegido 0.525.
+- `pos_weight` utilizado: 4.0143.
+- Early stopping: mejor epoca 30 y threshold elegido 0.550.
 
 ## Metricas del modelo PyTorch actual
-- Validacion: accuracy 0.8460, ROC-AUC 0.9010, PR-AUC 0.7657, F1 0.6705, precision 0.5927, recall 0.7718.
-- Test: accuracy 0.8557, ROC-AUC 0.9130, PR-AUC 0.7887, F1 0.6905, precision 0.6114, recall 0.7931.
-- Matriz de confusion PyTorch en test: [[2084, 307], [126, 483]].
+- Validacion: accuracy 0.8283, ROC-AUC 0.8390, PR-AUC 0.5955, F1 0.5712, precision 0.5688, recall 0.5736.
+- Test: accuracy 0.8360, ROC-AUC 0.8468, PR-AUC 0.6153, F1 0.5751, precision 0.5946, recall 0.5569.
+- Matriz de confusion PyTorch en test: [[2175, 227], [265, 333]].
 
 ## Baselines actuales bajo el mismo split y preprocesamiento
-- `LogisticRegression(class_weight="balanced")`: accuracy 0.9447, ROC-AUC 0.9621, PR-AUC 0.9175, F1 0.8536, precision 0.9219, recall 0.7947.
-- Baseline simple por promedio de atributos: accuracy 0.7557, ROC-AUC 0.8088, PR-AUC 0.5515, F1 0.5292.
+- `LogisticRegression(class_weight="balanced")`: accuracy 0.8687, ROC-AUC 0.9052, PR-AUC 0.7360, F1 0.6878, precision 0.6536, recall 0.7258.
+- Baseline simple por promedio de atributos: accuracy 0.8010, ROC-AUC 0.8206, PR-AUC 0.5483, F1 0.5383.
 
 ## Hallazgos verificados
 - El nuevo preprocesamiento compartido con `pandas` y `scikit-learn` quedo implementado y funcionando tanto en entrenamiento como en inferencia.
-- La MLP actual ya no colapsa a todo negativo: paso de F1 0.0000 a F1 0.6905 y de PR-AUC 0.0915 a PR-AUC 0.7887.
-- La alineacion del dataset a 12-18, el entrenamiento endurecido y las features historicas agregadas mejoraron fuerte la calidad respecto al diagnostico previo.
+- La MLP actual ya no colapsa a todo negativo: paso de F1 0.0000 a F1 0.5751 y de PR-AUC 0.0915 a PR-AUC 0.6153.
+- El entrenamiento ya no usa solo foto fija: aprende con rendimiento historico y con evolucion tecnica de `PlayerAttributeHistory`.
+- La alineacion del dataset a 12-18, el entrenamiento endurecido y las features longitudinales mejoraron fuerte la defendibilidad metodologica respecto al diagnostico previo.
 - Aun asi, el baseline `LogisticRegression(class_weight="balanced")` sigue superando a la MLP en ROC-AUC, PR-AUC y F1.
 - El baseline simple por promedio de atributos ya no explica bien el target frente al nuevo pipeline, lo que indica que la etiqueta sintetica quedo menos trivial que antes.
 - La senal del dataset existe, pero la red PyTorch todavia no demuestra una ventaja clara sobre el baseline lineal balanceado.
 
 ## Limites que todavia no estan resueltos
+- Todavia falta contexto de partido explicito (`Match` y participacion del jugador por partido).
+- Todavia no hay reportes cualitativos de scout en la base de entrenamiento.
+- El target sigue siendo `potential_label` binario y no una meta temporal de progresion.
 - No se implemento calibracion de probabilidades.
 - La evidencia actual sigue basada en datos sinteticos; no hay una validacion externa con datos reales.
 - La MLP mejoro, pero todavia no justifica por rendimiento reemplazar al baseline lineal como referencia formal.
@@ -75,6 +85,7 @@
 - sensibilidad de la etiqueta sintetica a edad y posicion
 - merge de features historicas en el dataset de entrenamiento
 - inclusion de features historicas en la inferencia de la app
+- features longitudinales de `PlayerAttributeHistory`
 - smoke del pipeline completo de entrenamiento
 
 ## Procedimiento reproducible

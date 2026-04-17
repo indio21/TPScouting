@@ -1,7 +1,7 @@
-"""Generador de datos sintéticos para la base de entrenamiento.
+"""Generador de datos sinteticos para la base de entrenamiento.
 
-Este script crea jugadores juveniles y les asigna una etiqueta de potencial
-con una logica ponderada por posicion, ajuste etario y ruido controlado.
+Este script crea jugadores juveniles, sintetiza su trayectoria tecnica y,
+a partir de esa evolucion, deriva su historial de rendimiento.
 """
 
 from __future__ import annotations
@@ -11,17 +11,19 @@ from datetime import date, timedelta
 import math
 import os
 import random
+from typing import Dict, List
 
 from sqlalchemy.orm import sessionmaker
 
 from db_utils import create_app_engine, ensure_player_columns, normalize_db_url
-from models import Base, Player, PlayerStat
+from models import Base, Player, PlayerAttributeHistory, PlayerStat
 from player_logic import (
+    ATTRIBUTE_FIELDS,
     EVAL_MAX_AGE,
     EVAL_MIN_AGE,
-    ATTRIBUTE_FIELDS,
     default_player_photo_url,
     normalized_position,
+    position_weights,
     recommend_position_from_attrs,
     weighted_score_from_attrs,
 )
@@ -38,12 +40,19 @@ def next_identifier() -> str:
             return str(value)
 
 
+def clamp(value: float, lower: float, upper: float) -> float:
+    return max(lower, min(upper, value))
+
+
+def player_attr_map(player: Player) -> Dict[str, int]:
+    return {field: int(getattr(player, field) or 0) for field in ATTRIBUTE_FIELDS}
+
+
 def age_potential_bonus(age: int) -> float:
-    # Jugadores mas jovenes con buenos atributos reciben un extra moderado.
     return round((EVAL_MAX_AGE - age) * 0.18, 2)
 
 
-def mental_bonus(position: str, attrs: dict) -> float:
+def mental_bonus(position: str, attrs: Dict[str, int]) -> float:
     determination = float(attrs["determination"])
     technique = float(attrs["technique"])
     vision = float(attrs["vision"])
@@ -56,7 +65,7 @@ def mental_bonus(position: str, attrs: dict) -> float:
     return 0.18 * vision + 0.22 * technique + 0.28 * determination
 
 
-def label_probability(position: str, age: int, attrs: dict) -> tuple[float, float]:
+def label_probability(position: str, age: int, attrs: Dict[str, int]) -> tuple[float, float]:
     weighted_score = weighted_score_from_attrs(attrs, position)
     recommended_position, recommended_score = recommend_position_from_attrs(attrs)
     alignment_bonus = 0.55 if recommended_position == position else -0.20
@@ -77,23 +86,23 @@ def label_probability(position: str, age: int, attrs: dict) -> tuple[float, floa
 
 
 def generate_player(min_age: int = EVAL_MIN_AGE, max_age: int = EVAL_MAX_AGE) -> Player:
-    """Genera un jugador con atributos aleatorios y etiqueta sintética."""
+    """Genera un jugador con atributos aleatorios y etiqueta sintetica."""
     names = [
         "Juan", "Pedro", "Carlos", "Mateo", "Lucas", "Gabriel",
         "Nicolas", "Diego", "Federico", "Martin", "Rodrigo", "Franco",
         "Facundo", "Santiago", "Tomas", "Julian", "Pablo", "Ignacio",
-        "Marcelo", "Hernan"
+        "Marcelo", "Hernan",
     ]
     surnames = [
         "Garcia", "Lopez", "Martinez", "Rodriguez", "Gonzalez", "Perez",
         "Sanchez", "Romero", "Ferreira", "Suarez", "Herrera", "Ramirez",
         "Flores", "Torres", "Luna", "Alvarez", "Rojas", "Bautista",
-        "Cordoba", "Vega"
+        "Cordoba", "Vega",
     ]
     positions = ["Portero", "Defensa", "Lateral", "Mediocampista", "Delantero"]
     clubs = [
         "Club A", "Club B", "Club C", "Club D", "Club E", "Club F",
-        "Academia Juvenil", "Escuela de Futbol"
+        "Academia Juvenil", "Escuela de Futbol",
     ]
     countries = ["Argentina", "Brasil", "Uruguay", "Chile", "Paraguay"]
 
@@ -103,12 +112,8 @@ def generate_player(min_age: int = EVAL_MIN_AGE, max_age: int = EVAL_MAX_AGE) ->
     club = random.choice(clubs)
     country = random.choice(countries)
 
-    attrs = {
-        field: random.randint(0, 20)
-        for field in ATTRIBUTE_FIELDS
-    }
-
-    probability, weighted_score = label_probability(position, age, attrs)
+    attrs = {field: random.randint(0, 20) for field in ATTRIBUTE_FIELDS}
+    probability, _weighted_score = label_probability(position, age, attrs)
     potential = random.random() < probability
 
     return Player(
@@ -133,41 +138,153 @@ def generate_player(min_age: int = EVAL_MIN_AGE, max_age: int = EVAL_MAX_AGE) ->
     )
 
 
-def clamp(value: float, lower: float, upper: float) -> float:
-    return max(lower, min(upper, value))
+def build_development_profile(player: Player) -> Dict[str, float]:
+    attrs = player_attr_map(player)
+    age = int(player.age or EVAL_MAX_AGE)
+    growth_factor = clamp(
+        0.55
+        + (EVAL_MAX_AGE - age) * 0.12
+        + attrs["determination"] / 24.0
+        + attrs["technique"] / 42.0
+        + attrs["vision"] / 48.0,
+        0.65,
+        2.8,
+    )
+    volatility = clamp(
+        0.10 + (20 - attrs["determination"]) / 110.0 + random.uniform(0.0, 0.12),
+        0.08,
+        0.42,
+    )
+    availability = clamp(
+        0.66 + attrs["physical"] / 55.0 + attrs["determination"] / 95.0 + random.uniform(-0.06, 0.06),
+        0.55,
+        0.97,
+    )
+    snapshot_count = random.randint(6, 12)
+    slump_month = random.randint(2, snapshot_count - 1) if snapshot_count >= 4 and random.random() < 0.42 else None
+    return {
+        "growth_factor": growth_factor,
+        "volatility": volatility,
+        "availability": availability,
+        "snapshot_count": snapshot_count,
+        "slump_month": slump_month or 0,
+        "form_bias": random.gauss(0.0, 0.18),
+    }
 
 
-def synthetic_player_stats(player: Player) -> list[PlayerStat]:
-    entry_count = random.choices([0, 1, 2, 3, 4], weights=[0.12, 0.26, 0.28, 0.22, 0.12], k=1)[0]
-    if entry_count == 0:
+def total_growth_by_attribute(player: Player, profile: Dict[str, float]) -> Dict[str, float]:
+    weights = position_weights(player.position)
+    current_attrs = player_attr_map(player)
+    growth_map: Dict[str, float] = {}
+    for field in ATTRIBUTE_FIELDS:
+        current_value = float(current_attrs[field])
+        ceiling_room = max(0.10, (20.0 - current_value) / 20.0)
+        weighted_factor = 0.55 + (weights[field] * 2.0)
+        random_adjustment = random.uniform(0.85, 1.25)
+        growth = profile["growth_factor"] * weighted_factor * ceiling_room * random_adjustment
+        growth_map[field] = clamp(growth, 0.0, 5.5)
+    return growth_map
+
+
+def synthetic_attribute_history(
+    player: Player,
+    profile: Dict[str, float],
+) -> List[PlayerAttributeHistory]:
+    current_attrs = player_attr_map(player)
+    growth_map = total_growth_by_attribute(player, profile)
+    snapshot_count = int(profile["snapshot_count"])
+    slump_month = int(profile["slump_month"])
+    history: List[PlayerAttributeHistory] = []
+    today = date.today()
+
+    for months_back in range(snapshot_count, 0, -1):
+        remaining_fraction = months_back / float(snapshot_count + 1)
+        wave = math.sin(((snapshot_count - months_back + 1) / float(snapshot_count + 1)) * math.pi)
+        values: Dict[str, int] = {}
+        for field in ATTRIBUTE_FIELDS:
+            current_value = float(current_attrs[field])
+            weight = position_weights(player.position)[field]
+            progression_component = growth_map[field] * remaining_fraction
+            curve_component = growth_map[field] * 0.10 * wave
+            noise = random.gauss(0.0, profile["volatility"] * (0.30 + weight))
+            slump = 0.0
+            if slump_month and months_back == slump_month:
+                slump = random.uniform(-0.9, -0.3) * (0.30 + weight)
+            historical_value = current_value - progression_component + curve_component + noise + slump
+            values[field] = int(round(clamp(historical_value, 0.0, current_value)))
+
+        history.append(
+            PlayerAttributeHistory(
+                record_date=today - timedelta(days=30 * months_back),
+                notes="Dato sintetico de trayectoria tecnica",
+                **values,
+            )
+        )
+    return history
+
+
+def synthetic_player_stats(
+    player: Player,
+    attribute_history: List[PlayerAttributeHistory],
+    profile: Dict[str, float],
+) -> List[PlayerStat]:
+    if not attribute_history:
         return []
 
-    attrs = {
-        field: float(getattr(player, field) or 0)
-        for field in ATTRIBUTE_FIELDS
-    }
-    fit_score = weighted_score_from_attrs(attrs, player.position)
-    base_final = clamp((fit_score / 20.0) * 6.2 + (1.4 if player.potential_label else 0.2), 1.0, 9.8)
-    base_pass = clamp((attrs["passing"] * 0.45) + (attrs["vision"] * 0.30) + (attrs["technique"] * 0.25), 2.0, 19.5)
-    base_duels = clamp((attrs["defending"] * 0.45) + (attrs["physical"] * 0.30) + (attrs["tackling"] * 0.25), 2.0, 19.5)
-    base_shot = clamp((attrs["shooting"] * 0.60) + (attrs["technique"] * 0.25) + (attrs["vision"] * 0.15), 2.0, 19.5)
+    stats: List[PlayerStat] = []
+    previous_weighted_score = None
+    for entry in attribute_history:
+        attrs = {field: float(getattr(entry, field) or 0) for field in ATTRIBUTE_FIELDS}
+        weighted_score = weighted_score_from_attrs(attrs, player.position)
+        avg_attr_score = sum(attrs.values()) / len(attrs)
+        momentum = 0.0 if previous_weighted_score is None else weighted_score - previous_weighted_score
+        previous_weighted_score = weighted_score
 
-    today = date.today()
-    stats: list[PlayerStat] = []
-    for idx in range(entry_count):
-        progress = (idx + 1) / max(entry_count, 1)
-        trend = (progress - 0.5) * (0.5 if player.potential_label else 0.2)
-        final_score = clamp(base_final + trend + random.gauss(0.0, 0.45), 1.0, 10.0)
-        pass_accuracy = clamp(base_pass * 5 + random.gauss(0.0, 5.5), 35.0, 96.0)
-        duels_won_pct = clamp(base_duels * 5 + random.gauss(0.0, 6.0), 30.0, 94.0)
-        shot_accuracy = clamp(base_shot * 5 + random.gauss(0.0, 7.0), 20.0, 92.0)
-        matches_played = random.randint(1, 4)
-        minutes_played = matches_played * random.randint(55, 90)
+        if random.random() > profile["availability"]:
+            continue
+
+        starter_probability = clamp(0.28 + weighted_score / 28.0 + momentum / 7.0, 0.12, 0.92)
+        is_starter = random.random() < starter_probability
+        matches_played = random.randint(1, 3)
+        minutes_base = random.randint(60, 90) if is_starter else random.randint(10, 35)
+        minutes_played = matches_played * minutes_base
+
+        pass_accuracy = clamp(
+            (attrs["passing"] * 0.42 + attrs["vision"] * 0.33 + attrs["technique"] * 0.25) * 5
+            + momentum * 3.5
+            + random.gauss(0.0, 5.5),
+            35.0,
+            96.0,
+        )
+        shot_accuracy = clamp(
+            (attrs["shooting"] * 0.60 + attrs["technique"] * 0.25 + attrs["vision"] * 0.15) * 5
+            + momentum * 2.5
+            + random.gauss(0.0, 7.0),
+            20.0,
+            92.0,
+        )
+        duels_won_pct = clamp(
+            (attrs["defending"] * 0.42 + attrs["physical"] * 0.33 + attrs["tackling"] * 0.25) * 5
+            + momentum * 3.0
+            + random.gauss(0.0, 6.0),
+            28.0,
+            95.0,
+        )
+        final_score = clamp(
+            (weighted_score / 20.0) * 6.1
+            + (avg_attr_score / 20.0) * 1.5
+            + momentum * 0.55
+            + profile["form_bias"]
+            + random.gauss(0.0, 0.40),
+            1.0,
+            10.0,
+        )
+
         goals = 0
         assists = 0
         if player.position == "Delantero":
-            goals = random.randint(0, max(0, matches_played))
-            assists = random.randint(0, max(0, matches_played - goals))
+            goals = random.randint(0, max(1, matches_played))
+            assists = random.randint(0, max(0, matches_played))
         elif player.position == "Mediocampista":
             goals = random.randint(0, 2)
             assists = random.randint(0, 3)
@@ -176,18 +293,18 @@ def synthetic_player_stats(player: Player) -> list[PlayerStat]:
 
         stats.append(
             PlayerStat(
-                record_date=today - timedelta(days=(entry_count - idx) * 28),
+                record_date=entry.record_date,
                 matches_played=matches_played,
                 goals=goals,
                 assists=assists,
                 minutes_played=minutes_played,
                 yellow_cards=random.randint(0, 2),
-                red_cards=1 if random.random() < 0.02 else 0,
+                red_cards=1 if random.random() < 0.015 else 0,
                 pass_accuracy=round(pass_accuracy, 2),
                 shot_accuracy=round(shot_accuracy, 2),
                 duels_won_pct=round(duels_won_pct, 2),
                 final_score=round(final_score, 2),
-                notes="Dato sintetico de entrenamiento",
+                notes="Dato sintetico derivado de trayectoria tecnica",
             )
         )
     return stats
@@ -200,7 +317,7 @@ def main(
     min_age: int = EVAL_MIN_AGE,
     max_age: int = EVAL_MAX_AGE,
 ) -> None:
-    """Genera `num_players` jugadores y los guarda en la base de datos."""
+    """Genera `num_players` jugadores y sus historiales coherentes."""
     random.seed(seed)
     used_identifiers.clear()
     normalized_db_url = normalize_db_url(db_url, base_dir=os.path.dirname(os.path.abspath(__file__)))
@@ -209,6 +326,7 @@ def main(
     ensure_player_columns(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
+
     batch_size = 500
     created = 0
     while created < num_players:
@@ -217,16 +335,28 @@ def main(
         players_batch = [generate_player(min_age=min_age, max_age=max_age) for _ in range(current_batch)]
         session.add_all(players_batch)
         session.flush()
-        stats_batch: list[PlayerStat] = []
+
+        attribute_history_batch: List[PlayerAttributeHistory] = []
+        stats_batch: List[PlayerStat] = []
         for player in players_batch:
-            generated_stats = synthetic_player_stats(player)
+            profile = build_development_profile(player)
+            attribute_history = synthetic_attribute_history(player, profile)
+            for entry in attribute_history:
+                entry.player_id = player.id
+            attribute_history_batch.extend(attribute_history)
+
+            generated_stats = synthetic_player_stats(player, attribute_history, profile)
             for stat in generated_stats:
                 stat.player_id = player.id
             stats_batch.extend(generated_stats)
+
+        if attribute_history_batch:
+            session.add_all(attribute_history_batch)
         if stats_batch:
             session.add_all(stats_batch)
         session.commit()
         created += current_batch
+
     print(
         f"Se generaron {num_players} jugadores en la base de datos: {normalized_db_url} "
         f"(seed={seed}, edades={min_age}-{max_age})"

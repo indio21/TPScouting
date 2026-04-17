@@ -21,11 +21,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from db_utils import normalize_db_url, create_app_engine, ensure_player_columns
 from preprocessing import (
+    aggregate_attribute_history_dataframe,
     aggregate_stats_dataframe,
+    attribute_history_feature_defaults,
     dataframe_from_players,
-    historical_feature_defaults,
     load_preprocessor as load_saved_preprocessor,
+    player_base_dataframe_from_players,
     preprocessor_input_dim,
+    stats_feature_defaults,
     transform_features,
 )
 from player_logic import (
@@ -899,18 +902,58 @@ def fetch_player_stat_feature_map(player_ids: List[int]) -> Dict[int, Dict[str, 
     feature_map: Dict[int, Dict[str, Optional[float]]] = {}
     for row in aggregated_df.to_dict(orient="records"):
         player_id = int(row["player_id"])
-        feature_map[player_id] = historical_feature_defaults(row)
+        feature_map[player_id] = stats_feature_defaults(row)
+    return feature_map
+
+
+def fetch_player_attribute_feature_map(players: List[Player]) -> Dict[int, Dict[str, Optional[float]]]:
+    player_ids = [player.id for player in players if player.id]
+    if not player_ids:
+        return {}
+    query = (
+        select(
+            PlayerAttributeHistory.player_id,
+            PlayerAttributeHistory.record_date,
+            PlayerAttributeHistory.pace,
+            PlayerAttributeHistory.shooting,
+            PlayerAttributeHistory.passing,
+            PlayerAttributeHistory.dribbling,
+            PlayerAttributeHistory.defending,
+            PlayerAttributeHistory.physical,
+            PlayerAttributeHistory.vision,
+            PlayerAttributeHistory.tackling,
+            PlayerAttributeHistory.determination,
+            PlayerAttributeHistory.technique,
+        )
+        .where(PlayerAttributeHistory.player_id.in_(player_ids))
+    )
+    with engine.connect() as connection:
+        history_df = pd.read_sql(query, connection)
+    players_df = player_base_dataframe_from_players(players)
+    aggregated_df = aggregate_attribute_history_dataframe(players_df, history_df)
+    if aggregated_df.empty:
+        return {}
+    feature_map: Dict[int, Dict[str, Optional[float]]] = {}
+    for row in aggregated_df.to_dict(orient="records"):
+        player_id = int(row["player_id"])
+        feature_map[player_id] = attribute_history_feature_defaults(row)
     return feature_map
 
 
 def players_to_model_tensor(
     players: List[Player],
     stats_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
+    attribute_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
 ) -> torch.Tensor:
     if preprocessor is None:
         raise RuntimeError("No hay preprocesador cargado para inferencia.")
     stats_feature_map = stats_feature_map or fetch_player_stat_feature_map([player.id for player in players if player.id])
-    features_df = dataframe_from_players(players, stats_feature_map=stats_feature_map)
+    attribute_feature_map = attribute_feature_map or fetch_player_attribute_feature_map(players)
+    features_df = dataframe_from_players(
+        players,
+        stats_feature_map=stats_feature_map,
+        attribute_feature_map=attribute_feature_map,
+    )
     features_array = transform_features(features_df, preprocessor)
     return torch.tensor(features_array, dtype=torch.float32)
 
@@ -919,14 +962,24 @@ def batch_project_players(
     players: List[Player],
     avg_score_map: Optional[Dict[int, Optional[float]]] = None,
     stats_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
+    attribute_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
 ) -> Dict[int, Dict[str, object]]:
     if not players or model is None or preprocessor is None:
         return {}
 
     avg_score_map = avg_score_map or {}
     stats_feature_map = stats_feature_map or fetch_player_stat_feature_map([player.id for player in players if player.id])
+    attribute_feature_map = attribute_feature_map or fetch_player_attribute_feature_map(players)
     with torch.no_grad():
-        probs_tensor = torch.sigmoid(model(players_to_model_tensor(players, stats_feature_map=stats_feature_map)))
+        probs_tensor = torch.sigmoid(
+            model(
+                players_to_model_tensor(
+                    players,
+                    stats_feature_map=stats_feature_map,
+                    attribute_feature_map=attribute_feature_map,
+                )
+            )
+        )
     base_probs = np.asarray(probs_tensor.detach().cpu().numpy()).reshape(-1).tolist()
 
     projections: Dict[int, Dict[str, object]] = {}
@@ -1199,7 +1252,7 @@ def compute_projection(player: Player, stats: Optional[List[PlayerStat]] = None,
     summary = summarize_stats(stats_list)
     avg_score = summary.get("avg_final_score")
     stats_feature_map = {
-        player.id: historical_feature_defaults(
+        player.id: stats_feature_defaults(
             {
                 "stats_entry_count": summary.get("entries"),
                 "avg_final_score_hist": avg_score,
@@ -1208,7 +1261,13 @@ def compute_projection(player: Player, stats: Optional[List[PlayerStat]] = None,
             }
         )
     }
-    projection = batch_project_players([player], {player.id: avg_score}, stats_feature_map=stats_feature_map).get(player.id)
+    attribute_feature_map = fetch_player_attribute_feature_map([player])
+    projection = batch_project_players(
+        [player],
+        {player.id: avg_score},
+        stats_feature_map=stats_feature_map,
+        attribute_feature_map=attribute_feature_map,
+    ).get(player.id)
     if not projection:
         return None
     projection["history"] = stats_list
