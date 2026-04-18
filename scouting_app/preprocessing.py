@@ -61,6 +61,7 @@ BASE_NUMERIC_FEATURE_COLUMNS: List[str] = ["age", *ATTRIBUTE_FIELDS]
 NUMERIC_FEATURE_COLUMNS: List[str] = [*BASE_NUMERIC_FEATURE_COLUMNS, *HISTORICAL_FEATURE_COLUMNS]
 CATEGORICAL_FEATURE_COLUMNS: List[str] = ["position"]
 MODEL_FEATURE_COLUMNS: List[str] = [*NUMERIC_FEATURE_COLUMNS, *CATEGORICAL_FEATURE_COLUMNS]
+TEMPORAL_TARGET_COLUMN = "temporal_target_label"
 
 
 def build_preprocessor() -> ColumnTransformer:
@@ -212,6 +213,21 @@ def training_dataframe_from_engine(engine) -> pd.DataFrame:
     match_participation_df = match_participation_dataframe_from_engine(engine)
     scout_report_df = scout_report_dataframe_from_engine(engine)
     return merge_historical_features(
+        players_df,
+        stats_df,
+        attribute_history_df,
+        match_participation_df,
+        scout_report_df,
+    )
+
+
+def temporal_training_dataframe_from_engine(engine) -> pd.DataFrame:
+    players_df = player_base_dataframe_from_engine(engine)
+    stats_df = stats_dataframe_from_engine(engine)
+    attribute_history_df = attribute_history_dataframe_from_engine(engine)
+    match_participation_df = match_participation_dataframe_from_engine(engine)
+    scout_report_df = scout_report_dataframe_from_engine(engine)
+    return build_temporal_training_dataframe(
         players_df,
         stats_df,
         attribute_history_df,
@@ -505,6 +521,270 @@ def aggregate_scout_report_dataframe(scout_report_df: pd.DataFrame) -> pd.DataFr
         .rename(columns={"observed_projection_score": "scout_latest_projection_score"})
     )
     return grouped.merge(latest_df, on="player_id", how="left")
+
+
+def _timestamp_cutoff_map(attribute_history_df: pd.DataFrame, stats_df: pd.DataFrame) -> Dict[int, pd.Timestamp]:
+    date_frames: List[pd.DataFrame] = []
+    if not attribute_history_df.empty:
+        attr_dates = attribute_history_df.loc[:, ["player_id", "record_date"]].copy()
+        attr_dates["event_date"] = pd.to_datetime(attr_dates["record_date"], errors="coerce")
+        date_frames.append(attr_dates.loc[:, ["player_id", "event_date"]])
+    if not stats_df.empty:
+        stat_dates = stats_df.loc[:, ["player_id", "record_date"]].copy()
+        stat_dates["event_date"] = pd.to_datetime(stat_dates["record_date"], errors="coerce")
+        date_frames.append(stat_dates.loc[:, ["player_id", "event_date"]])
+    if not date_frames:
+        return {}
+
+    combined_dates = pd.concat(date_frames, ignore_index=True).dropna(subset=["event_date"])
+    if combined_dates.empty:
+        return {}
+
+    cutoff_map: Dict[int, pd.Timestamp] = {}
+    for player_id, group in combined_dates.groupby("player_id", sort=False):
+        dates = sorted(pd.Series(group["event_date"]).dropna().unique())
+        if len(dates) < 2:
+            continue
+        future_window = min(3, max(1, len(dates) // 3))
+        cutoff_index = max(0, len(dates) - future_window - 1)
+        cutoff_map[int(player_id)] = pd.Timestamp(dates[cutoff_index])
+    return cutoff_map
+
+
+def _filter_rows_by_cutoff(
+    df: pd.DataFrame,
+    player_id_col: str,
+    date_col: str,
+    cutoff_map: Dict[int, pd.Timestamp],
+    keep_observed: bool,
+) -> pd.DataFrame:
+    if df.empty or not cutoff_map:
+        return df.iloc[0:0].copy()
+    cutoff_df = pd.DataFrame(
+        [(player_id, cutoff) for player_id, cutoff in cutoff_map.items()],
+        columns=[player_id_col, "_cutoff_date"],
+    )
+    working_df = df.copy()
+    working_df[date_col] = pd.to_datetime(working_df[date_col], errors="coerce")
+    working_df = working_df.merge(cutoff_df, on=player_id_col, how="inner")
+    if keep_observed:
+        filtered = working_df[working_df[date_col] <= working_df["_cutoff_date"]]
+    else:
+        filtered = working_df[working_df[date_col] > working_df["_cutoff_date"]]
+    return filtered.drop(columns=["_cutoff_date"])
+
+
+def _temporal_anchor_players_dataframe(
+    players_df: pd.DataFrame,
+    attribute_history_df: pd.DataFrame,
+    cutoff_map: Dict[int, pd.Timestamp],
+) -> pd.DataFrame:
+    if players_df.empty:
+        return players_df.copy()
+
+    attr_working_df = attribute_history_df.copy()
+    if not attr_working_df.empty:
+        attr_working_df["record_date"] = pd.to_datetime(attr_working_df["record_date"], errors="coerce")
+
+    latest_attr_df = pd.DataFrame()
+    latest_history_date_map: Dict[int, pd.Timestamp] = {}
+    if not attr_working_df.empty:
+        latest_history_rows = (
+            attr_working_df.sort_values(["player_id", "record_date"])
+            .groupby("player_id", as_index=False)
+            .tail(1)
+            .loc[:, ["player_id", "record_date"]]
+        )
+        latest_history_date_map = {
+            int(row["player_id"]): pd.Timestamp(row["record_date"])
+            for row in latest_history_rows.to_dict(orient="records")
+            if pd.notna(row["record_date"])
+        }
+        observed_attr_df = _filter_rows_by_cutoff(attr_working_df, "player_id", "record_date", cutoff_map, True)
+        if not observed_attr_df.empty:
+            latest_attr_df = (
+                observed_attr_df.sort_values(["player_id", "record_date"])
+                .groupby("player_id", as_index=False)
+                .tail(1)
+            )
+
+    latest_attr_map = {
+        int(row["player_id"]): row
+        for row in latest_attr_df.to_dict(orient="records")
+    }
+
+    rows = []
+    for player in players_df.to_dict(orient="records"):
+        player_id = int(player["player_id"])
+        anchor_row = latest_attr_map.get(player_id)
+        cutoff_date = cutoff_map.get(player_id)
+        latest_history_date = latest_history_date_map.get(player_id)
+        if anchor_row is not None:
+            anchor_attrs = {field: float(anchor_row[field]) for field in ATTRIBUTE_FIELDS}
+        else:
+            anchor_attrs = {field: float(player[field]) for field in ATTRIBUTE_FIELDS}
+
+        age_value = float(player["age"])
+        if cutoff_date is not None and latest_history_date is not None and latest_history_date > cutoff_date:
+            age_value = max(12.0, age_value - ((latest_history_date - cutoff_date).days / 365.25))
+
+        rows.append(
+            {
+                "player_id": player_id,
+                "age": round(age_value, 2),
+                **anchor_attrs,
+                "position": player["position"],
+                "potential_label": player.get("potential_label"),
+            }
+        )
+    return pd.DataFrame(rows, columns=["player_id", "age", *ATTRIBUTE_FIELDS, "position", "potential_label"])
+
+
+def _temporal_target_dataframe(
+    players_df: pd.DataFrame,
+    stats_df: pd.DataFrame,
+    attribute_history_df: pd.DataFrame,
+    cutoff_map: Dict[int, pd.Timestamp],
+) -> pd.DataFrame:
+    if players_df.empty or not cutoff_map:
+        return pd.DataFrame(
+            columns=[
+                "player_id",
+                TEMPORAL_TARGET_COLUMN,
+                "observed_weighted_score",
+                "future_weighted_score",
+                "weighted_score_growth",
+                "observed_final_score",
+                "future_final_score",
+                "final_score_growth",
+            ]
+        )
+
+    attr_working_df = attribute_history_df.copy()
+    attr_working_df["record_date"] = pd.to_datetime(attr_working_df["record_date"], errors="coerce")
+    attr_working_df = attr_working_df.merge(
+        players_df.loc[:, ["player_id", "position"]],
+        on="player_id",
+        how="left",
+    )
+    attr_working_df["history_weighted_attr_score"] = weighted_score_series(attr_working_df)
+
+    observed_attr_df = _filter_rows_by_cutoff(attr_working_df, "player_id", "record_date", cutoff_map, True)
+    future_attr_df = _filter_rows_by_cutoff(attr_working_df, "player_id", "record_date", cutoff_map, False)
+
+    stats_working_df = stats_df.copy()
+    stats_working_df["record_date"] = pd.to_datetime(stats_working_df["record_date"], errors="coerce")
+    observed_stats_df = _filter_rows_by_cutoff(stats_working_df, "player_id", "record_date", cutoff_map, True)
+    future_stats_df = _filter_rows_by_cutoff(stats_working_df, "player_id", "record_date", cutoff_map, False)
+
+    rows = []
+    for player_id in players_df["player_id"].astype(int).tolist():
+        observed_attr = observed_attr_df[observed_attr_df["player_id"] == player_id].sort_values("record_date")
+        future_attr = future_attr_df[future_attr_df["player_id"] == player_id].sort_values("record_date")
+        if observed_attr.empty or future_attr.empty:
+            continue
+
+        observed_weighted_score = float(observed_attr["history_weighted_attr_score"].tail(min(2, len(observed_attr))).mean())
+        future_weighted_score = float(future_attr["history_weighted_attr_score"].mean())
+        weighted_score_growth = future_weighted_score - observed_weighted_score
+
+        observed_stats = observed_stats_df[observed_stats_df["player_id"] == player_id].sort_values("record_date")
+        future_stats = future_stats_df[future_stats_df["player_id"] == player_id].sort_values("record_date")
+        observed_final_score = (
+            float(observed_stats["final_score"].tail(min(2, len(observed_stats))).mean())
+            if not observed_stats.empty and observed_stats["final_score"].notna().any()
+            else np.nan
+        )
+        future_final_score = (
+            float(future_stats["final_score"].mean())
+            if not future_stats.empty and future_stats["final_score"].notna().any()
+            else np.nan
+        )
+        final_score_growth = (
+            future_final_score - observed_final_score
+            if not np.isnan(observed_final_score) and not np.isnan(future_final_score)
+            else np.nan
+        )
+
+        future_performance_high = (not np.isnan(future_final_score)) and future_final_score >= 6.9
+        positive_label = (
+            weighted_score_growth >= 0.35
+            and (
+                ((not np.isnan(final_score_growth)) and final_score_growth >= 0.20)
+                or (weighted_score_growth >= 0.65 and future_performance_high)
+            )
+        )
+        rows.append(
+            {
+                "player_id": player_id,
+                TEMPORAL_TARGET_COLUMN: bool(positive_label),
+                "observed_weighted_score": observed_weighted_score,
+                "future_weighted_score": future_weighted_score,
+                "weighted_score_growth": weighted_score_growth,
+                "observed_final_score": observed_final_score,
+                "future_final_score": future_final_score,
+                "final_score_growth": final_score_growth,
+            }
+        )
+
+    return pd.DataFrame(rows)
+
+
+def build_temporal_training_dataframe(
+    players_df: pd.DataFrame,
+    stats_df: pd.DataFrame,
+    attribute_history_df: pd.DataFrame,
+    match_participation_df: Optional[pd.DataFrame] = None,
+    scout_report_df: Optional[pd.DataFrame] = None,
+) -> pd.DataFrame:
+    cutoff_map = _timestamp_cutoff_map(attribute_history_df, stats_df)
+    if not cutoff_map:
+        empty_columns = [
+            "player_id",
+            "age",
+            *ATTRIBUTE_FIELDS,
+            "position",
+            "potential_label",
+            *HISTORICAL_FEATURE_COLUMNS,
+            TEMPORAL_TARGET_COLUMN,
+            "observed_weighted_score",
+            "future_weighted_score",
+            "weighted_score_growth",
+            "observed_final_score",
+            "future_final_score",
+            "final_score_growth",
+        ]
+        return pd.DataFrame(columns=empty_columns)
+
+    anchor_players_df = _temporal_anchor_players_dataframe(players_df, attribute_history_df, cutoff_map)
+    observed_stats_df = _filter_rows_by_cutoff(stats_df, "player_id", "record_date", cutoff_map, True)
+    observed_attr_df = _filter_rows_by_cutoff(attribute_history_df, "player_id", "record_date", cutoff_map, True)
+    observed_match_df = _filter_rows_by_cutoff(
+        match_participation_df if match_participation_df is not None else pd.DataFrame(),
+        "player_id",
+        "match_date",
+        cutoff_map,
+        True,
+    )
+    observed_scout_df = _filter_rows_by_cutoff(
+        scout_report_df if scout_report_df is not None else pd.DataFrame(),
+        "player_id",
+        "report_date",
+        cutoff_map,
+        True,
+    )
+    features_df = merge_historical_features(
+        anchor_players_df,
+        observed_stats_df,
+        observed_attr_df,
+        observed_match_df,
+        observed_scout_df,
+    )
+    target_df = _temporal_target_dataframe(players_df, stats_df, attribute_history_df, cutoff_map)
+    if target_df.empty:
+        return target_df
+    merged_df = features_df.merge(target_df, on="player_id", how="inner")
+    return merged_df
 
 
 def merge_historical_features(

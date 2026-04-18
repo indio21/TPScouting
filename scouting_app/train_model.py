@@ -36,6 +36,8 @@ from preprocessing import (
     fit_transform_features,
     preprocessor_input_dim,
     save_preprocessor,
+    TEMPORAL_TARGET_COLUMN,
+    temporal_training_dataframe_from_engine,
     training_dataframe_from_engine,
     transform_features,
 )
@@ -79,7 +81,7 @@ def load_data(
     engine = create_app_engine(normalized_db_url)
     Base.metadata.create_all(engine)
     ensure_player_columns(engine)
-    raw_df = training_dataframe_from_engine(engine)
+    raw_df = temporal_training_dataframe_from_engine(engine)
     if raw_df.empty:
         raise ValueError("No hay jugadores disponibles para entrenar el modelo.")
 
@@ -89,13 +91,13 @@ def load_data(
             f"No hay jugadores disponibles en el rango etario {age_min}-{age_max} para entrenar el modelo."
         )
 
-    y = filtered_df["potential_label"].astype(np.float32).to_numpy()
-    summary = dataset_summary(raw_df, filtered_df)
+    y = filtered_df[TEMPORAL_TARGET_COLUMN].astype(np.float32).to_numpy()
+    summary = dataset_summary(raw_df, filtered_df, TEMPORAL_TARGET_COLUMN)
     return filtered_df, y, summary
 
 
-def dataset_summary(raw_df: pd.DataFrame, filtered_df: pd.DataFrame) -> Dict[str, object]:
-    y_filtered = filtered_df["potential_label"].astype(int)
+def dataset_summary(raw_df: pd.DataFrame, filtered_df: pd.DataFrame, target_column: str) -> Dict[str, object]:
+    y_filtered = filtered_df[target_column].astype(int)
     positive_count = int(y_filtered.sum())
     total_count = int(len(filtered_df))
     negative_count = int(total_count - positive_count)
@@ -119,6 +121,7 @@ def dataset_summary(raw_df: pd.DataFrame, filtered_df: pd.DataFrame) -> Dict[str
             str(key): int(value)
             for key, value in filtered_df["position"].value_counts().sort_index().items()
         },
+        "target_column": target_column,
     }
 
 
@@ -398,6 +401,7 @@ def train_model(
             "age_min": int(EVAL_MIN_AGE),
             "age_max": int(EVAL_MAX_AGE),
             "loss": "BCEWithLogitsLoss",
+            "target_type": "temporal_progression",
             "pos_weight": float(pos_weight_value),
             "test_size": float(DEFAULT_TEST_SIZE),
             "validation_size_on_train_pool": float(DEFAULT_VAL_SIZE),

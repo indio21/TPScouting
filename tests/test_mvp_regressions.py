@@ -712,276 +712,11 @@ def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir
     monkeypatch.chdir(str(scouting_app_dir))
 
     train_module = importlib.import_module("train_model")
-    models_module = importlib.import_module("models")
-    db_utils_module = importlib.import_module("db_utils")
+    generate_module = importlib.import_module("generate_data")
 
     db_path = tmp_path / "train_pipeline.db"
     db_url = f"sqlite:///{db_path.as_posix()}"
-    normalized_db_url = db_utils_module.normalize_db_url(db_url, base_dir=str(scouting_app_dir))
-    engine = db_utils_module.create_app_engine(normalized_db_url)
-    models_module.Base.metadata.create_all(engine)
-    db_utils_module.ensure_player_columns(engine)
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    try:
-        players = [
-            models_module.Player(
-                name=f"Train {idx}",
-                national_id=f"488990{idx:02d}",
-                age=age,
-                position=position,
-                club="Club Train",
-                country="Argentina",
-                photo_url="",
-                pace=pace,
-                shooting=shooting,
-                passing=passing,
-                dribbling=dribbling,
-                defending=defending,
-                physical=physical,
-                vision=vision,
-                tackling=tackling,
-                determination=determination,
-                technique=technique,
-                potential_label=potential,
-            )
-            for idx, (
-                age,
-                position,
-                pace,
-                shooting,
-                passing,
-                dribbling,
-                defending,
-                physical,
-                vision,
-                tackling,
-                determination,
-                technique,
-                potential,
-            ) in enumerate(
-                [
-                    (16, "Defensa", 10, 8, 11, 9, 14, 12, 10, 13, 12, 9, False),
-                    (17, "Mediocampista", 12, 10, 14, 13, 10, 11, 14, 9, 15, 13, True),
-                    (15, "Delantero", 15, 16, 10, 15, 6, 12, 10, 5, 16, 14, True),
-                    (16, "Lateral", 11, 8, 10, 11, 12, 11, 9, 12, 11, 9, False),
-                    (14, "Portero", 6, 3, 8, 4, 14, 15, 8, 15, 12, 9, False),
-                    (18, "Defensa", 11, 7, 10, 8, 15, 13, 9, 14, 13, 10, False),
-                    (13, "Delantero", 16, 17, 11, 16, 4, 11, 10, 3, 17, 15, True),
-                    (17, "Mediocampista", 13, 9, 15, 14, 9, 11, 15, 8, 16, 14, True),
-                    (15, "Lateral", 14, 8, 12, 13, 13, 12, 11, 13, 14, 11, False),
-                    (18, "Delantero", 17, 18, 12, 17, 4, 13, 11, 3, 17, 16, True),
-                ],
-                start=1,
-            )
-        ]
-        session.add_all(players)
-        session.flush()
-        session.add_all(
-            [
-                models_module.PlayerStat(
-                    player_id=players[0].id,
-                    record_date=date(2026, 4, 1),
-                    matches_played=1,
-                    minutes_played=90,
-                    pass_accuracy=68.0,
-                    final_score=6.2,
-                ),
-                models_module.PlayerStat(
-                    player_id=players[1].id,
-                    record_date=date(2026, 4, 3),
-                    matches_played=1,
-                    minutes_played=90,
-                    pass_accuracy=82.0,
-                    final_score=7.8,
-                ),
-                models_module.PlayerStat(
-                    player_id=players[2].id,
-                    record_date=date(2026, 4, 5),
-                    matches_played=1,
-                    minutes_played=90,
-                    pass_accuracy=74.0,
-                    final_score=8.1,
-                ),
-                models_module.PlayerAttributeHistory(
-                    player_id=players[0].id,
-                    record_date=date(2025, 4, 1),
-                    pace=8,
-                    shooting=7,
-                    passing=9,
-                    dribbling=8,
-                    defending=11,
-                    physical=10,
-                    vision=8,
-                    tackling=11,
-                    determination=10,
-                    technique=8,
-                ),
-                models_module.PlayerAttributeHistory(
-                    player_id=players[0].id,
-                    record_date=date(2026, 2, 1),
-                    pace=9,
-                    shooting=8,
-                    passing=10,
-                    dribbling=9,
-                    defending=12,
-                    physical=11,
-                    vision=9,
-                    tackling=12,
-                    determination=11,
-                    technique=9,
-                ),
-                models_module.PlayerAttributeHistory(
-                    player_id=players[1].id,
-                    record_date=date(2025, 7, 1),
-                    pace=10,
-                    shooting=8,
-                    passing=12,
-                    dribbling=11,
-                    defending=8,
-                    physical=10,
-                    vision=12,
-                    tackling=7,
-                    determination=13,
-                    technique=11,
-                ),
-                models_module.PlayerAttributeHistory(
-                    player_id=players[1].id,
-                    record_date=date(2026, 3, 1),
-                    pace=11,
-                    shooting=9,
-                    passing=13,
-                    dribbling=12,
-                    defending=9,
-                    physical=10,
-                    vision=13,
-                    tackling=8,
-                    determination=14,
-                    technique=12,
-                ),
-                models_module.PlayerAttributeHistory(
-                    player_id=players[2].id,
-                    record_date=date(2025, 5, 1),
-                    pace=12,
-                    shooting=13,
-                    passing=8,
-                    dribbling=12,
-                    defending=4,
-                    physical=10,
-                    vision=8,
-                    tackling=3,
-                    determination=14,
-                    technique=11,
-                ),
-                models_module.PlayerAttributeHistory(
-                    player_id=players[2].id,
-                    record_date=date(2026, 2, 1),
-                    pace=14,
-                    shooting=15,
-                    passing=9,
-                    dribbling=14,
-                    defending=5,
-                    physical=11,
-                    vision=9,
-                    tackling=4,
-                    determination=15,
-                    technique=13,
-                ),
-                models_module.PlayerAttributeHistory(
-                    player_id=players[3].id,
-                    record_date=date(2025, 6, 1),
-                    pace=9,
-                    shooting=6,
-                    passing=8,
-                    dribbling=9,
-                    defending=10,
-                    physical=9,
-                    vision=7,
-                    tackling=10,
-                    determination=9,
-                    technique=7,
-                ),
-                models_module.PlayerAttributeHistory(
-                    player_id=players[3].id,
-                    record_date=date(2026, 2, 1),
-                    pace=10,
-                    shooting=7,
-                    passing=9,
-                    dribbling=10,
-                    defending=11,
-                    physical=10,
-                    vision=8,
-                    tackling=11,
-                    determination=10,
-                    technique=8,
-                ),
-                models_module.Match(
-                    match_date=date(2026, 4, 1),
-                    opponent_name="Racing Juvenil",
-                    opponent_level=4,
-                    tournament="Liga Juvenil Regional",
-                    competition_category="Sub-17",
-                    venue="Visitante",
-                ),
-                models_module.Match(
-                    match_date=date(2026, 4, 3),
-                    opponent_name="Belgrano Inferiores",
-                    opponent_level=2,
-                    tournament="Copa Proyeccion",
-                    competition_category="Sub-17",
-                    venue="Local",
-                ),
-            ]
-        )
-        session.flush()
-        created_matches = session.query(models_module.Match).order_by(models_module.Match.id.asc()).all()
-        session.add_all(
-            [
-                models_module.PlayerMatchParticipation(
-                    player_id=players[0].id,
-                    match_id=created_matches[0].id,
-                    started=True,
-                    position_played="Defensa",
-                    minutes_played=90,
-                    final_score=6.3,
-                    pass_accuracy=69.0,
-                    shot_accuracy=31.0,
-                    duels_won_pct=71.0,
-                ),
-                models_module.PlayerMatchParticipation(
-                    player_id=players[1].id,
-                    match_id=created_matches[1].id,
-                    started=True,
-                    position_played="Mediocampista",
-                    minutes_played=88,
-                    final_score=7.9,
-                    pass_accuracy=83.0,
-                    shot_accuracy=55.0,
-                    duels_won_pct=58.0,
-                ),
-                models_module.ScoutReport(
-                    player_id=players[0].id,
-                    report_date=date(2026, 4, 2),
-                    decision_making=11,
-                    tactical_reading=12,
-                    mental_profile=13,
-                    adaptability=10,
-                    observed_projection_score=6.4,
-                ),
-                models_module.ScoutReport(
-                    player_id=players[1].id,
-                    report_date=date(2026, 4, 4),
-                    decision_making=14,
-                    tactical_reading=14,
-                    mental_profile=15,
-                    adaptability=13,
-                    observed_projection_score=7.8,
-                ),
-            ]
-        )
-        session.commit()
-    finally:
-        session.close()
+    generate_module.main(80, db_url, seed=42, min_age=12, max_age=18)
 
     model_path = tmp_path / "model.pt"
     preprocessor_path = tmp_path / "preprocessor.joblib"
@@ -1001,10 +736,11 @@ def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir
     assert metadata_path.exists()
 
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-    assert metadata["dataset_summary"]["age_range_filtered"] == {"min": 13, "max": 18}
+    assert metadata["dataset_summary"]["age_range_filtered"]["min"] >= 12
+    assert metadata["dataset_summary"]["age_range_filtered"]["max"] <= 18
     assert metadata["dataset"]["validation_size"] > 0
     assert 0.0 <= metadata["pytorch"]["selected_threshold"] <= 1.0
-
+    assert metadata["dataset_summary"]["target_column"] == "temporal_target_label"
 
 def test_training_dataframe_merges_historical_features(tmp_path, scouting_app_dir, monkeypatch):
     monkeypatch.syspath_prepend(str(scouting_app_dir))
@@ -1206,6 +942,151 @@ def test_training_dataframe_merges_historical_features(tmp_path, scouting_app_di
     assert round(float(row["scout_latest_projection_score"]), 2) == 7.9
 
 
+def test_temporal_training_dataframe_uses_future_progression_target(tmp_path, scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    preprocessing_module = importlib.import_module("preprocessing")
+    models_module = importlib.import_module("models")
+    db_utils_module = importlib.import_module("db_utils")
+
+    db_path = tmp_path / "temporal_target.db"
+    db_url = f"sqlite:///{db_path.as_posix()}"
+    normalized_db_url = db_utils_module.normalize_db_url(db_url, base_dir=str(scouting_app_dir))
+    engine = db_utils_module.create_app_engine(normalized_db_url)
+    models_module.Base.metadata.create_all(engine)
+    db_utils_module.ensure_player_columns(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    try:
+        player = models_module.Player(
+            name="Temporal Prospect",
+            national_id="70000111",
+            age=16,
+            position="Mediocampista",
+            club="Club Temporal",
+            country="Argentina",
+            photo_url="",
+            pace=14,
+            shooting=11,
+            passing=15,
+            dribbling=14,
+            defending=10,
+            physical=12,
+            vision=15,
+            tackling=9,
+            determination=16,
+            technique=14,
+            potential_label=True,
+        )
+        session.add(player)
+        session.flush()
+        session.add_all(
+            [
+                models_module.PlayerAttributeHistory(
+                    player_id=player.id,
+                    record_date=date(2025, 8, 1),
+                    pace=10,
+                    shooting=8,
+                    passing=11,
+                    dribbling=10,
+                    defending=8,
+                    physical=9,
+                    vision=11,
+                    tackling=7,
+                    determination=12,
+                    technique=10,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=player.id,
+                    record_date=date(2025, 10, 1),
+                    pace=11,
+                    shooting=8,
+                    passing=12,
+                    dribbling=11,
+                    defending=8,
+                    physical=9,
+                    vision=12,
+                    tackling=7,
+                    determination=13,
+                    technique=11,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=player.id,
+                    record_date=date(2026, 1, 1),
+                    pace=12,
+                    shooting=9,
+                    passing=13,
+                    dribbling=12,
+                    defending=9,
+                    physical=10,
+                    vision=13,
+                    tackling=8,
+                    determination=14,
+                    technique=12,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=player.id,
+                    record_date=date(2026, 3, 1),
+                    pace=13,
+                    shooting=10,
+                    passing=14,
+                    dribbling=13,
+                    defending=9,
+                    physical=11,
+                    vision=14,
+                    tackling=8,
+                    determination=15,
+                    technique=13,
+                ),
+                models_module.PlayerStat(
+                    player_id=player.id,
+                    record_date=date(2025, 8, 1),
+                    matches_played=2,
+                    minutes_played=110,
+                    pass_accuracy=68.0,
+                    final_score=5.9,
+                ),
+                models_module.PlayerStat(
+                    player_id=player.id,
+                    record_date=date(2025, 10, 1),
+                    matches_played=2,
+                    minutes_played=125,
+                    pass_accuracy=71.0,
+                    final_score=6.3,
+                ),
+                models_module.PlayerStat(
+                    player_id=player.id,
+                    record_date=date(2026, 1, 1),
+                    matches_played=2,
+                    minutes_played=140,
+                    pass_accuracy=76.0,
+                    final_score=7.0,
+                ),
+                models_module.PlayerStat(
+                    player_id=player.id,
+                    record_date=date(2026, 3, 1),
+                    matches_played=3,
+                    minutes_played=180,
+                    pass_accuracy=80.0,
+                    final_score=7.6,
+                ),
+            ]
+        )
+        session.commit()
+    finally:
+        session.close()
+
+    temporal_df = preprocessing_module.temporal_training_dataframe_from_engine(engine)
+
+    assert len(temporal_df) == 1
+    row = temporal_df.iloc[0]
+    assert bool(row["temporal_target_label"]) is True
+    assert float(row["weighted_score_growth"]) > 0
+    assert float(row["future_final_score"]) > float(row["observed_final_score"])
+    assert float(row["attr_history_entry_count"]) >= 2
+
+
 def test_generate_data_creates_match_context_and_scout_reports(tmp_path, scouting_app_dir, monkeypatch):
     monkeypatch.syspath_prepend(str(scouting_app_dir))
     monkeypatch.chdir(str(scouting_app_dir))
@@ -1294,6 +1175,187 @@ def test_load_data_filters_training_range(tmp_path, scouting_app_dir, monkeypatc
                 ),
             ]
         )
+        session.flush()
+        session.add_all(
+            [
+                models_module.PlayerAttributeHistory(
+                    player_id=1,
+                    record_date=date(2025, 8, 1),
+                    pace=8,
+                    shooting=7,
+                    passing=9,
+                    dribbling=8,
+                    defending=11,
+                    physical=10,
+                    vision=8,
+                    tackling=11,
+                    determination=10,
+                    technique=8,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=1,
+                    record_date=date(2025, 11, 1),
+                    pace=9,
+                    shooting=7,
+                    passing=10,
+                    dribbling=8,
+                    defending=12,
+                    physical=11,
+                    vision=9,
+                    tackling=12,
+                    determination=11,
+                    technique=8,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=1,
+                    record_date=date(2026, 2, 1),
+                    pace=10,
+                    shooting=8,
+                    passing=11,
+                    dribbling=9,
+                    defending=13,
+                    physical=12,
+                    vision=10,
+                    tackling=13,
+                    determination=12,
+                    technique=9,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=1,
+                    record_date=date(2026, 4, 1),
+                    pace=10,
+                    shooting=8,
+                    passing=11,
+                    dribbling=9,
+                    defending=14,
+                    physical=12,
+                    vision=10,
+                    tackling=13,
+                    determination=12,
+                    technique=9,
+                ),
+                models_module.PlayerStat(
+                    player_id=1,
+                    record_date=date(2025, 8, 1),
+                    matches_played=1,
+                    minutes_played=80,
+                    pass_accuracy=65.0,
+                    final_score=5.8,
+                ),
+                models_module.PlayerStat(
+                    player_id=1,
+                    record_date=date(2025, 11, 1),
+                    matches_played=1,
+                    minutes_played=90,
+                    pass_accuracy=69.0,
+                    final_score=6.2,
+                ),
+                models_module.PlayerStat(
+                    player_id=1,
+                    record_date=date(2026, 2, 1),
+                    matches_played=2,
+                    minutes_played=150,
+                    pass_accuracy=73.0,
+                    final_score=6.9,
+                ),
+                models_module.PlayerStat(
+                    player_id=1,
+                    record_date=date(2026, 4, 1),
+                    matches_played=2,
+                    minutes_played=165,
+                    pass_accuracy=75.0,
+                    final_score=7.1,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=2,
+                    record_date=date(2025, 8, 1),
+                    pace=13,
+                    shooting=14,
+                    passing=8,
+                    dribbling=13,
+                    defending=5,
+                    physical=10,
+                    vision=8,
+                    tackling=4,
+                    determination=14,
+                    technique=12,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=2,
+                    record_date=date(2025, 11, 1),
+                    pace=14,
+                    shooting=15,
+                    passing=8,
+                    dribbling=14,
+                    defending=5,
+                    physical=11,
+                    vision=8,
+                    tackling=4,
+                    determination=15,
+                    technique=13,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=2,
+                    record_date=date(2026, 2, 1),
+                    pace=15,
+                    shooting=16,
+                    passing=9,
+                    dribbling=15,
+                    defending=6,
+                    physical=11,
+                    vision=9,
+                    tackling=4,
+                    determination=15,
+                    technique=13,
+                ),
+                models_module.PlayerAttributeHistory(
+                    player_id=2,
+                    record_date=date(2026, 4, 1),
+                    pace=16,
+                    shooting=17,
+                    passing=10,
+                    dribbling=15,
+                    defending=6,
+                    physical=12,
+                    vision=10,
+                    tackling=5,
+                    determination=16,
+                    technique=14,
+                ),
+                models_module.PlayerStat(
+                    player_id=2,
+                    record_date=date(2025, 8, 1),
+                    matches_played=1,
+                    minutes_played=75,
+                    pass_accuracy=58.0,
+                    final_score=5.7,
+                ),
+                models_module.PlayerStat(
+                    player_id=2,
+                    record_date=date(2025, 11, 1),
+                    matches_played=1,
+                    minutes_played=85,
+                    pass_accuracy=60.0,
+                    final_score=6.0,
+                ),
+                models_module.PlayerStat(
+                    player_id=2,
+                    record_date=date(2026, 2, 1),
+                    matches_played=2,
+                    minutes_played=145,
+                    pass_accuracy=64.0,
+                    final_score=6.5,
+                ),
+                models_module.PlayerStat(
+                    player_id=2,
+                    record_date=date(2026, 4, 1),
+                    matches_played=2,
+                    minutes_played=160,
+                    pass_accuracy=66.0,
+                    final_score=6.8,
+                ),
+            ]
+        )
         session.commit()
     finally:
         session.close()
@@ -1301,10 +1363,11 @@ def test_load_data_filters_training_range(tmp_path, scouting_app_dir, monkeypatc
     df, y, summary = train_module.load_data(db_url)
 
     assert len(df) == 1
-    assert int(df.iloc[0]["age"]) == 17
+    assert float(df.iloc[0]["age"]) <= 17.0
     assert len(y) == 1
     assert summary["raw_rows"] == 2
     assert summary["filtered_rows"] == 1
+    assert summary["target_column"] == "temporal_target_label"
 
 
 def test_label_probability_favors_younger_and_position_fit(scouting_app_dir, monkeypatch):

@@ -9,7 +9,7 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Rama local actual: `training`
 - Remoto configurado: `origin -> https://github.com/indio21/TPScouting.git`
 - Ultimo commit publicado en `main`: `bd8e4ef`
-- Ultimo commit publicado en `training`: `449fbe9`
+- Ultimo commit publicado en `training`: `7df19cb`
 - Estado actual: hay cambios locales nuevos en `training` aun no publicados
 
 ## Etapas Ya Trabajadas
@@ -189,10 +189,27 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Baseline `LogisticRegression(class_weight="balanced")`: `ROC-AUC 0.8996`, `PR-AUC 0.7373`, `F1 0.6769`
 - Conclusion honesta: respecto de la etapa longitudinal anterior, PyTorch mejora y la prediccion queda mas defendible por contexto; aun asi, el baseline lineal balanceado sigue siendo superior.
 
+### 16. Target temporal de progresion
+
+- El entrenamiento ya no usa `potential_label` como target principal.
+- Se construyo un dataset temporal con corte observado/futuro por jugador.
+- Las features de entrenamiento ahora se calculan solo sobre la parte observada de la trayectoria.
+- Los atributos base para entrenar se anclan en el punto de corte temporal para evitar fuga de informacion desde el estado final del jugador.
+- El nuevo target `temporal_target_label` marca positivo cuando el tramo futuro del jugador muestra:
+- crecimiento tecnico ponderado por posicion
+- mejora o consolidacion del rendimiento futuro
+- Resultado medido sobre la corrida real actual:
+- base de entrenamiento: `20.000` jugadores
+- positivos del target temporal: `988`
+- tasa positiva: `4.94%`
+- PyTorch: `ROC-AUC 0.8374`, `PR-AUC 0.2598`, `F1 0.2528`
+- Baseline `LogisticRegression(class_weight="balanced")`: `ROC-AUC 0.9279`, `PR-AUC 0.3645`, `F1 0.3922`
+- Conclusion honesta: metodologicamente esta version es mejor porque predice progresion futura y no una etiqueta estatica, pero el problema quedo bastante mas dificil y hoy PyTorch rinde peor que en la etapa anterior. El baseline lineal sigue siendo superior.
+
 ## Tests Ejecutados
 
 - La suite automatizada actual termina pasando en esta maquina.
-- Ultimo estado validado: `34 passed`
+- Ultimo estado validado: `35 passed`
 
 ## Puntos Mejorados De Forma Clara
 
@@ -213,6 +230,7 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Features historicas agregadas funcionando en entrenamiento e inferencia
 - Trayectoria tecnica mensual incorporada al entrenamiento e inferencia
 - Contexto de partido y senal cualitativa del scout incorporados al pipeline de prediccion
+- Target temporal de progresion incorporado al entrenamiento
 
 ## Puntos Que Siguen Parciales O Pendientes
 

@@ -14,7 +14,7 @@
 - Split `train / validation / test`.
 - Seleccion de threshold por validacion.
 - Early stopping sobre `PR-AUC` con desempate por `F1`.
-- Resultado: PyTorch dejo de colapsar y alcanzo F1 0.6042 en test.
+- Resultado: PyTorch dejo de colapsar y alcanzo F1 0.2528 en test.
 
 ### Etapa 2 completada: alinear dataset al alcance real 12-18
 - Generacion sintetica por defecto restringida a 12-18.
@@ -31,7 +31,7 @@
 - Baseline obligatorio: `LogisticRegression(class_weight="balanced")`.
 - Comparacion bajo el mismo split y el mismo preprocesamiento.
 - Persistencia de metadata en `training_metadata.json`.
-- Estado actual: el baseline sigue mejor que PyTorch en test con F1 0.6769 vs 0.6042.
+- Estado actual: el baseline sigue mejor que PyTorch en test con F1 0.3922 vs 0.2528.
 
 ### Etapa 5 completada en nivel MVP
 - Se persisten threshold, metricas, tamanos de split, seed y configuracion.
@@ -42,7 +42,7 @@
 - Se sintetizo historial de `PlayerStat` en la base de entrenamiento.
 - Se integraron features de `PlayerAttributeHistory` al entrenamiento e inferencia.
 - La base de entrenamiento ahora representa trayectoria tecnica del jugador, no solo foto fija.
-- Resultado actual: PyTorch queda en F1 0.6042 y PR-AUC 0.6508.
+- Resultado actual: PyTorch queda en F1 0.2528 y PR-AUC 0.2598.
 - Aun asi, el baseline lineal balanceado sigue siendo superior.
 
 ### Etapa 7 completada: contexto de partido y ScoutReport
@@ -50,14 +50,21 @@
 - El generador sintetico ahora crea partidos con contexto y participacion puntual del jugador.
 - `PlayerStat` pasa a derivarse de esas participaciones.
 - Se agregaron `ScoutReport` sinteticos al esquema y al pipeline.
-- Resultado actual: PyTorch queda en F1 0.6042 y PR-AUC 0.6508.
+- Resultado actual: PyTorch queda en F1 0.2528 y PR-AUC 0.2598.
+- El baseline lineal balanceado sigue siendo superior.
+
+### Etapa 8 completada: target temporal de progresion
+- El entrenamiento deja de usar `potential_label` como target principal.
+- Las features de entrenamiento se construyen en un punto de corte observado de la trayectoria.
+- El target positivo se define por crecimiento tecnico futuro y mejora o consolidacion de rendimiento futuro.
+- Resultado actual: PyTorch queda en F1 0.2528 y PR-AUC 0.2598 sobre un target con tasa positiva 4.94%.
 - El baseline lineal balanceado sigue siendo superior.
 
 ## Siguiente iteracion recomendada
-### Etapa 8 recomendada: target temporal y validacion metodologica
-- Redefinir el target hacia una meta temporal de progresion, no solo `potential_label`.
+### Etapa 9 recomendada: recalibracion del target y senales de disponibilidad
+- Revisar los umbrales del target temporal para evitar un positivo demasiado raro o demasiado facil.
 - Evaluar si conviene sumar `Availability` o `PhysicalAssessment`.
-- Revisar si PyTorch puede justificar su complejidad frente al baseline lineal.
+- Revisar si PyTorch puede justificar su complejidad frente al baseline lineal bajo este target temporal.
 
 ## Criterios de aceptacion para la siguiente iteracion
 - La siguiente iteracion debe mejorar o estabilizar al menos una de estas metricas de PyTorch en test sin degradar claramente las demas:

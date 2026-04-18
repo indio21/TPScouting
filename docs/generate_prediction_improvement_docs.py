@@ -17,19 +17,22 @@ PROGRESS_MD = DOCS_DIR / "prediction_improvement_progress.md"
 PROGRESS_DOCX = DOCS_DIR / "prediction_improvement_progress.docx"
 
 PRIOR_LONGITUDINAL_STAGE = {
-    "commit": "449fbe9",
+    "commit": "7df19cb",
     "players": 20000,
-    "player_attribute_history": 180051,
-    "player_stats": 162778,
+    "player_attribute_history": 179377,
+    "player_stats": 162180,
+    "matches": 324165,
+    "player_match_participations": 324165,
+    "scout_reports": 79574,
     "pytorch": {
-        "roc_auc": 0.8468,
-        "pr_auc": 0.6153,
-        "f1": 0.5751,
+        "roc_auc": 0.8628,
+        "pr_auc": 0.6508,
+        "f1": 0.6042,
     },
     "logistic_balanced": {
-        "roc_auc": 0.9052,
-        "pr_auc": 0.7360,
-        "f1": 0.6878,
+        "roc_auc": 0.8996,
+        "pr_auc": 0.7373,
+        "f1": 0.6769,
     },
 }
 
@@ -98,26 +101,18 @@ def build_markdown(metadata: dict, counts: dict[str, int]) -> str:
 - Rama de trabajo: `{git_branch()}`
 - Ultimo commit publicado antes de esta etapa: `{PRIOR_LONGITUDINAL_STAGE["commit"]}`
 - HEAD local al generar este documento: `{git_head()}`
-- Objetivo de esta iteracion: sumar contexto de partido (`Match` + `PlayerMatchParticipation`) y observacion cualitativa (`ScoutReport`) al sistema de prediccion.
+- Objetivo de esta iteracion: pasar de un target binario estatico a un target temporal de progresion futura.
 - Alcance del producto mantenido: scouting juvenil de 12 a 18 anos para clubes formativos.
 
 ## Que se implemento en esta etapa
-- Nueva tabla `Match` para contexto minimo del partido.
-- Nueva tabla `PlayerMatchParticipation` para registrar la participacion puntual del jugador por partido.
-- Nueva tabla `ScoutReport` para observaciones cualitativas del scout.
-- El generador sintetico ahora crea:
-- trayectoria tecnica mensual
-- partidos con contexto
-- participacion del jugador en cada partido
-- `PlayerStat` agregado a partir de esas participaciones
-- reportes de scout derivados de trayectoria y rendimiento reciente
-- El pipeline de entrenamiento e inferencia ahora agrega features de:
-- contexto de partido
-- tasa de titularidad
-- minutos medios
-- nivel medio del rival
-- alineacion entre posicion natural y posicion jugada
-- reportes cualitativos del scout
+- El entrenamiento deja de usar `potential_label` como target principal.
+- Se construye un dataset temporal con corte observado/futuro por jugador.
+- Las features se calculan solo con la parte observada de la trayectoria.
+- Los atributos base de entrenamiento se anclan en el punto de corte temporal para evitar fuga de informacion desde el estado final.
+- El target `temporal_target_label` se marca positivo cuando el tramo futuro combina:
+- crecimiento tecnico ponderado por posicion
+- mejora o consolidacion del rendimiento futuro
+- La app no cambia su interfaz en esta etapa; el cambio queda en el pipeline de entrenamiento y en los artefactos del modelo.
 
 ## Conteos reales de la base de entrenamiento actual
 - Jugadores: {counts["players"]}
@@ -128,31 +123,33 @@ def build_markdown(metadata: dict, counts: dict[str, int]) -> str:
 - Reportes de scout: {counts["scout_reports"]}
 
 ## Comparacion con la etapa anterior
-### Etapa anterior: trayectoria tecnica sin contexto de partido explicito
+### Etapa anterior: contexto de partido + ScoutReport con target estatico
 - PyTorch: ROC-AUC {PRIOR_LONGITUDINAL_STAGE["pytorch"]["roc_auc"]:.4f}, PR-AUC {PRIOR_LONGITUDINAL_STAGE["pytorch"]["pr_auc"]:.4f}, F1 {PRIOR_LONGITUDINAL_STAGE["pytorch"]["f1"]:.4f}
 - Logistic balanceado: ROC-AUC {PRIOR_LONGITUDINAL_STAGE["logistic_balanced"]["roc_auc"]:.4f}, PR-AUC {PRIOR_LONGITUDINAL_STAGE["logistic_balanced"]["pr_auc"]:.4f}, F1 {PRIOR_LONGITUDINAL_STAGE["logistic_balanced"]["f1"]:.4f}
 
-### Etapa actual: contexto de partido + ScoutReport
+### Etapa actual: target temporal de progresion
 - PyTorch: accuracy {format_metric(pytorch_test["accuracy"])}, ROC-AUC {format_metric(pytorch_test["roc_auc"])}, PR-AUC {format_metric(pytorch_test["pr_auc"])}, F1 {format_metric(pytorch_test["f1"])}, precision {format_metric(pytorch_test["precision"])}, recall {format_metric(pytorch_test["recall"])}
 - Logistic balanceado: accuracy {format_metric(baseline_lr["accuracy"])}, ROC-AUC {format_metric(baseline_lr["roc_auc"])}, PR-AUC {format_metric(baseline_lr["pr_auc"])}, F1 {format_metric(baseline_lr["f1"])}
 
 ## Hallazgos verificados
-- PyTorch mejora respecto de la etapa longitudinal anterior:
+- El target temporal deja el problema mucho mas exigente: la tasa positiva actual es {metadata["dataset_summary"]["class_distribution"]["positive_rate"]:.2%}.
+- PyTorch empeora respecto de la etapa anterior:
 - cambio en F1: {delta_pytorch_f1:+.4f}
 - cambio en PR-AUC: {delta_pytorch_pr_auc:+.4f}
 - El baseline `LogisticRegression(class_weight="balanced")` sigue siendo mejor que PyTorch en esta corrida.
-- La prediccion ahora es mas defendible metodologicamente porque ya no se apoya solo en atributos actuales y agregados simples.
-- El sistema ya puede incorporar senal de contexto competitivo y senal cualitativa del scout sin romper el pipeline compartido entre entrenamiento e inferencia.
+- La prediccion es metodologicamente mas defendible porque el modelo ahora intenta anticipar progresion futura en lugar de reproducir una etiqueta estatica.
+- El sistema mantiene el pipeline compartido entre entrenamiento e inferencia, pero el entrenamiento ya no mira la trayectoria completa como si fuera toda observable en el momento de decidir.
 
 ## Limites honestos de esta etapa
 - Los partidos sinteticos siguen siendo por jugador; todavia no representan encuentros compartidos entre varios jugadores del mismo plantel.
 - `ScoutReport` sigue siendo sintetico, no manual ni proveniente de observacion real de usuarios.
-- El target del entrenamiento sigue siendo `potential_label` binario; todavia no pasamos a una meta temporal de progresion.
-- Aunque PyTorch mejoro, todavia no supera al baseline lineal balanceado.
+- El target temporal actual es sintetico y todavia puede estar demasiado restringido: deja solo {metadata["dataset_summary"]["class_distribution"]["positive"]} positivos sobre {metadata["dataset_summary"]["filtered_rows"]} jugadores.
+- Aunque el target mejora la validez metodologica, hoy empeora el rendimiento de PyTorch frente a la etapa anterior.
+- PyTorch sigue sin superar al baseline lineal balanceado.
 - La base de entrenamiento SQLite ya es pesada y el repo recibio advertencia de GitHub por tamano de `players_training.db`.
 
 ## Validacion ejecutada
-- `pytest -q`: 34 tests aprobados.
+- `pytest -q`: 35 tests aprobados.
 - Smoke de app con artefactos nuevos:
 - `/` -> 200
 - `/health` -> 200
@@ -160,7 +157,7 @@ def build_markdown(metadata: dict, counts: dict[str, int]) -> str:
 - Reentrenamiento completo ejecutado sobre la nueva base sintetica.
 
 ## Proximo paso recomendado
-- Cambiar el target a una meta temporal de progresion.
+- Recalibrar los umbrales del target temporal para que la clase positiva no quede tan rara.
 - Evaluar si conviene introducir `Availability` o `PhysicalAssessment`.
 - Replantear si el baseline lineal debe quedar como referencia principal hasta que PyTorch demuestre ventaja clara.
 """

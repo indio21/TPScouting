@@ -135,6 +135,11 @@ def build_evidence_markdown(metadata: dict) -> str:
 - cantidad de reportes
 - medias de toma de decisiones, lectura tactica, perfil mental y adaptabilidad
 - ultima proyeccion observada por scout
+- El entrenamiento ya no usa `potential_label` como target principal.
+- Ahora el target es `temporal_target_label`, derivado de un corte observado/futuro por jugador:
+- las features se construyen sobre la parte observada de la trayectoria
+- el target se marca positivo cuando el tramo futuro muestra crecimiento tecnico y mejora o consolidacion de rendimiento
+- el dataset temporal usa atributos anclados en el punto de corte para evitar fuga de informacion desde el estado final del jugador
 
 ## Resultado actual del entrenamiento mejorado
 - Fecha de corrida registrada: `{metadata["timestamp"]}`
@@ -159,6 +164,8 @@ def build_evidence_markdown(metadata: dict) -> str:
 - La MLP actual ya no colapsa a todo negativo: paso de F1 0.0000 a F1 {format_metric(pytorch_test["f1"])} y de PR-AUC 0.0915 a PR-AUC {format_metric(pytorch_test["pr_auc"])}.
 - El entrenamiento ya no usa solo foto fija: aprende con rendimiento historico y con evolucion tecnica de `PlayerAttributeHistory`.
 - El entrenamiento ahora tambien incorpora contexto de partido y senal cualitativa sintetica del scout.
+- El problema de entrenamiento ahora es metodologicamente mas realista porque el target representa progresion futura y no un booleano estatico sintetico.
+- El cambio de target volvio el problema mucho mas desbalanceado y exigente: la tasa positiva actual es {dataset_summary["class_distribution"]["positive_rate"]:.2%}.
 - La alineacion del dataset a 12-18, el entrenamiento endurecido y las features longitudinales mejoraron fuerte la defendibilidad metodologica respecto al diagnostico previo.
 - Aun asi, el baseline `LogisticRegression(class_weight="balanced")` sigue superando a la MLP en ROC-AUC, PR-AUC y F1.
 - El baseline simple por promedio de atributos ya no explica bien el target frente al nuevo pipeline, lo que indica que la etiqueta sintetica quedo menos trivial que antes.
@@ -167,7 +174,7 @@ def build_evidence_markdown(metadata: dict) -> str:
 ## Limites que todavia no estan resueltos
 - Los partidos sinteticos todavia no representan encuentros compartidos entre varios jugadores del mismo plantel.
 - Los `ScoutReport` actuales siguen siendo sinteticos, no manuales ni cargados por usuarios reales.
-- El target sigue siendo `potential_label` binario y no una meta temporal de progresion.
+- Aunque el target ya es temporal, sus umbrales todavia son sinteticos y pueden requerir recalibracion.
 - No se implemento calibracion de probabilidades.
 - La evidencia actual sigue basada en datos sinteticos; no hay una validacion externa con datos reales.
 - La MLP mejoro, pero todavia no justifica por rendimiento reemplazar al baseline lineal como referencia formal.
@@ -198,6 +205,7 @@ def build_evidence_markdown(metadata: dict) -> str:
 def build_plan_markdown(metadata: dict) -> str:
     baseline_lr = metadata["baselines"]["logistic_regression_balanced"]["test"]
     pytorch_test = metadata["pytorch"]["test"]
+    dataset_summary = metadata["dataset_summary"]
     return f"""# Plan tecnico de entrenamiento
 
 ## Resumen
@@ -253,11 +261,18 @@ def build_plan_markdown(metadata: dict) -> str:
 - Resultado actual: PyTorch queda en F1 {format_metric(pytorch_test["f1"])} y PR-AUC {format_metric(pytorch_test["pr_auc"])}.
 - El baseline lineal balanceado sigue siendo superior.
 
+### Etapa 8 completada: target temporal de progresion
+- El entrenamiento deja de usar `potential_label` como target principal.
+- Las features de entrenamiento se construyen en un punto de corte observado de la trayectoria.
+- El target positivo se define por crecimiento tecnico futuro y mejora o consolidacion de rendimiento futuro.
+- Resultado actual: PyTorch queda en F1 {format_metric(pytorch_test["f1"])} y PR-AUC {format_metric(pytorch_test["pr_auc"])} sobre un target con tasa positiva {dataset_summary["class_distribution"]["positive_rate"]:.2%}.
+- El baseline lineal balanceado sigue siendo superior.
+
 ## Siguiente iteracion recomendada
-### Etapa 8 recomendada: target temporal y validacion metodologica
-- Redefinir el target hacia una meta temporal de progresion, no solo `potential_label`.
+### Etapa 9 recomendada: recalibracion del target y senales de disponibilidad
+- Revisar los umbrales del target temporal para evitar un positivo demasiado raro o demasiado facil.
 - Evaluar si conviene sumar `Availability` o `PhysicalAssessment`.
-- Revisar si PyTorch puede justificar su complejidad frente al baseline lineal.
+- Revisar si PyTorch puede justificar su complejidad frente al baseline lineal bajo este target temporal.
 
 ## Criterios de aceptacion para la siguiente iteracion
 - La siguiente iteracion debe mejorar o estabilizar al menos una de estas metricas de PyTorch en test sin degradar claramente las demas:
