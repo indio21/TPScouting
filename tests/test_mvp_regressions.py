@@ -716,15 +716,17 @@ def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir
 
     db_path = tmp_path / "train_pipeline.db"
     db_url = f"sqlite:///{db_path.as_posix()}"
-    generate_module.main(80, db_url, seed=42, min_age=12, max_age=18)
+    generate_module.main(180, db_url, seed=42, min_age=12, max_age=18)
 
     model_path = tmp_path / "model.pt"
     preprocessor_path = tmp_path / "preprocessor.joblib"
+    calibrator_path = tmp_path / "probability_calibrator.joblib"
     metadata_path = tmp_path / "training_metadata.json"
     train_module.main(
         db_url,
         str(model_path),
         str(preprocessor_path),
+        str(calibrator_path),
         str(metadata_path),
         epochs=4,
         lr=1e-3,
@@ -1070,6 +1072,50 @@ def test_temporal_training_dataframe_uses_future_progression_target(tmp_path, sc
                     minutes_played=180,
                     pass_accuracy=80.0,
                     final_score=7.6,
+                ),
+                models_module.Match(
+                    match_date=date(2026, 3, 10),
+                    opponent_name="Rival Exigente",
+                    opponent_level=4,
+                    tournament="Liga Juvenil",
+                    competition_category="Sub-17",
+                    venue="Visitante",
+                ),
+                models_module.Match(
+                    match_date=date(2026, 3, 24),
+                    opponent_name="Rival Regional",
+                    opponent_level=3,
+                    tournament="Liga Juvenil",
+                    competition_category="Sub-17",
+                    venue="Local",
+                ),
+            ]
+        )
+        session.flush()
+        future_matches = session.query(models_module.Match).order_by(models_module.Match.match_date.asc()).all()
+        session.add_all(
+            [
+                models_module.PlayerMatchParticipation(
+                    player_id=player.id,
+                    match_id=future_matches[0].id,
+                    started=True,
+                    position_played="Mediocampista",
+                    minutes_played=88,
+                    final_score=7.7,
+                    pass_accuracy=81.0,
+                    shot_accuracy=42.0,
+                    duels_won_pct=63.0,
+                ),
+                models_module.PlayerMatchParticipation(
+                    player_id=player.id,
+                    match_id=future_matches[1].id,
+                    started=True,
+                    position_played="Mediocampista",
+                    minutes_played=76,
+                    final_score=7.4,
+                    pass_accuracy=79.0,
+                    shot_accuracy=38.0,
+                    duels_won_pct=61.0,
                 ),
             ]
         )

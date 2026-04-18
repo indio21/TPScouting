@@ -38,9 +38,13 @@ ATTRIBUTE_HISTORY_FEATURE_COLUMNS: List[str] = [
 MATCH_FEATURE_COLUMNS: List[str] = [
     "match_entry_count",
     "match_avg_final_score",
+    "match_recent_final_score",
     "match_avg_minutes",
+    "match_minutes_volatility",
     "match_start_rate",
     "match_avg_opponent_level",
+    "match_high_difficulty_rate",
+    "match_high_difficulty_score",
     "match_natural_position_rate",
 ]
 SCOUT_REPORT_FEATURE_COLUMNS: List[str] = [
@@ -50,6 +54,7 @@ SCOUT_REPORT_FEATURE_COLUMNS: List[str] = [
     "scout_avg_mental_profile",
     "scout_avg_adaptability",
     "scout_latest_projection_score",
+    "scout_projection_trend",
 ]
 HISTORICAL_FEATURE_COLUMNS: List[str] = [
     *STATS_FEATURE_COLUMNS,
@@ -330,9 +335,13 @@ def match_feature_defaults(values: Optional[Dict[str, Optional[float]]] = None) 
     return {
         "match_entry_count": source.get("match_entry_count"),
         "match_avg_final_score": source.get("match_avg_final_score"),
+        "match_recent_final_score": source.get("match_recent_final_score"),
         "match_avg_minutes": source.get("match_avg_minutes"),
+        "match_minutes_volatility": source.get("match_minutes_volatility"),
         "match_start_rate": source.get("match_start_rate"),
         "match_avg_opponent_level": source.get("match_avg_opponent_level"),
+        "match_high_difficulty_rate": source.get("match_high_difficulty_rate"),
+        "match_high_difficulty_score": source.get("match_high_difficulty_score"),
         "match_natural_position_rate": source.get("match_natural_position_rate"),
     }
 
@@ -348,6 +357,7 @@ def scout_report_feature_defaults(
         "scout_avg_mental_profile": source.get("scout_avg_mental_profile"),
         "scout_avg_adaptability": source.get("scout_avg_adaptability"),
         "scout_latest_projection_score": source.get("scout_latest_projection_score"),
+        "scout_projection_trend": source.get("scout_projection_trend"),
     }
 
 
@@ -482,6 +492,12 @@ def aggregate_match_participation_dataframe(players_df: pd.DataFrame, participat
     working_df["natural_position_match"] = (
         working_df["position_played"].fillna("") == working_df["position"].fillna("")
     ).astype(int)
+    working_df["high_difficulty_match"] = (working_df["opponent_level"].fillna(0) >= 4).astype(int)
+    working_df["high_difficulty_final_score"] = np.where(
+        working_df["high_difficulty_match"] == 1,
+        working_df["final_score"],
+        np.nan,
+    )
 
     grouped = (
         working_df.groupby("player_id", as_index=False)
@@ -489,12 +505,23 @@ def aggregate_match_participation_dataframe(players_df: pd.DataFrame, participat
             match_entry_count=("player_id", "size"),
             match_avg_final_score=("final_score", "mean"),
             match_avg_minutes=("minutes_played", "mean"),
+            match_minutes_volatility=("minutes_played", "std"),
             match_start_rate=("started_numeric", "mean"),
             match_avg_opponent_level=("opponent_level", "mean"),
+            match_high_difficulty_rate=("high_difficulty_match", "mean"),
+            match_high_difficulty_score=("high_difficulty_final_score", "mean"),
             match_natural_position_rate=("natural_position_match", "mean"),
         )
     )
-    return grouped.loc[:, ["player_id", *MATCH_FEATURE_COLUMNS]]
+    latest_df = (
+        working_df.sort_values(["player_id", "match_date"])
+        .groupby("player_id", as_index=False)
+        .tail(1)
+        .loc[:, ["player_id", "final_score"]]
+        .rename(columns={"final_score": "match_recent_final_score"})
+    )
+    merged = grouped.merge(latest_df, on="player_id", how="left")
+    return merged.loc[:, ["player_id", *MATCH_FEATURE_COLUMNS]]
 
 
 def aggregate_scout_report_dataframe(scout_report_df: pd.DataFrame) -> pd.DataFrame:
@@ -520,7 +547,20 @@ def aggregate_scout_report_dataframe(scout_report_df: pd.DataFrame) -> pd.DataFr
         .loc[:, ["player_id", "observed_projection_score"]]
         .rename(columns={"observed_projection_score": "scout_latest_projection_score"})
     )
-    return grouped.merge(latest_df, on="player_id", how="left")
+    trend_rows = []
+    for player_id, group in working_df.groupby("player_id", sort=False):
+        ordered = group.sort_values("report_date").dropna(subset=["observed_projection_score"])
+        if len(ordered) < 2:
+            projection_trend = np.nan
+        else:
+            days = (ordered["report_date"] - ordered["report_date"].iloc[0]).dt.days.astype(float)
+            if float(days.iloc[-1]) <= 0:
+                projection_trend = np.nan
+            else:
+                projection_trend = float(np.polyfit(days.to_numpy(), ordered["observed_projection_score"].astype(float).to_numpy(), 1)[0])
+        trend_rows.append({"player_id": int(player_id), "scout_projection_trend": projection_trend})
+    trend_df = pd.DataFrame(trend_rows, columns=["player_id", "scout_projection_trend"])
+    return grouped.merge(latest_df, on="player_id", how="left").merge(trend_df, on="player_id", how="left")
 
 
 def _timestamp_cutoff_map(attribute_history_df: pd.DataFrame, stats_df: pd.DataFrame) -> Dict[int, pd.Timestamp]:
@@ -572,6 +612,77 @@ def _filter_rows_by_cutoff(
     else:
         filtered = working_df[working_df[date_col] > working_df["_cutoff_date"]]
     return filtered.drop(columns=["_cutoff_date"])
+
+
+def _sigmoid_component(value: float, center: float = 0.0, scale: float = 1.0) -> float:
+    if pd.isna(value):
+        return 0.0
+    safe_scale = scale if abs(scale) > 1e-6 else 1.0
+    return float(1.0 / (1.0 + np.exp(-((float(value) - center) / safe_scale))))
+
+
+def _future_match_target_metrics(
+    players_df: pd.DataFrame,
+    match_participation_df: pd.DataFrame,
+    cutoff_map: Dict[int, pd.Timestamp],
+) -> pd.DataFrame:
+    if players_df.empty or match_participation_df.empty or not cutoff_map:
+        return pd.DataFrame(
+            columns=[
+                "player_id",
+                "future_match_entry_count",
+                "future_avg_match_score",
+                "future_minutes_per_match",
+                "future_start_rate",
+                "future_avg_opponent_level",
+                "future_high_difficulty_rate",
+                "future_high_difficulty_score",
+                "future_natural_position_rate",
+            ]
+        )
+
+    future_match_df = _filter_rows_by_cutoff(match_participation_df, "player_id", "match_date", cutoff_map, False)
+    if future_match_df.empty:
+        return pd.DataFrame(
+            columns=[
+                "player_id",
+                "future_match_entry_count",
+                "future_avg_match_score",
+                "future_minutes_per_match",
+                "future_start_rate",
+                "future_avg_opponent_level",
+                "future_high_difficulty_rate",
+                "future_high_difficulty_score",
+                "future_natural_position_rate",
+            ]
+        )
+
+    current_df = players_df.loc[:, ["player_id", "position"]].copy()
+    future_match_df = future_match_df.merge(current_df, on="player_id", how="left")
+    future_match_df["started_numeric"] = future_match_df["started"].fillna(False).astype(int)
+    future_match_df["natural_position_match"] = (
+        future_match_df["position_played"].fillna("") == future_match_df["position"].fillna("")
+    ).astype(int)
+    future_match_df["high_difficulty_match"] = (future_match_df["opponent_level"].fillna(0) >= 4).astype(int)
+    future_match_df["high_difficulty_final_score"] = np.where(
+        future_match_df["high_difficulty_match"] == 1,
+        future_match_df["final_score"],
+        np.nan,
+    )
+    grouped = (
+        future_match_df.groupby("player_id", as_index=False)
+        .agg(
+            future_match_entry_count=("player_id", "size"),
+            future_avg_match_score=("final_score", "mean"),
+            future_minutes_per_match=("minutes_played", "mean"),
+            future_start_rate=("started_numeric", "mean"),
+            future_avg_opponent_level=("opponent_level", "mean"),
+            future_high_difficulty_rate=("high_difficulty_match", "mean"),
+            future_high_difficulty_score=("high_difficulty_final_score", "mean"),
+            future_natural_position_rate=("natural_position_match", "mean"),
+        )
+    )
+    return grouped
 
 
 def _temporal_anchor_players_dataframe(
@@ -645,12 +756,18 @@ def _temporal_target_dataframe(
     stats_df: pd.DataFrame,
     attribute_history_df: pd.DataFrame,
     cutoff_map: Dict[int, pd.Timestamp],
+    match_participation_df: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     if players_df.empty or not cutoff_map:
         return pd.DataFrame(
             columns=[
                 "player_id",
                 TEMPORAL_TARGET_COLUMN,
+                "progression_score",
+                "temporal_target_threshold",
+                "temporal_future_score_threshold",
+                "temporal_consolidation_path",
+                "temporal_breakout_path",
                 "observed_weighted_score",
                 "future_weighted_score",
                 "weighted_score_growth",
@@ -676,6 +793,15 @@ def _temporal_target_dataframe(
     stats_working_df["record_date"] = pd.to_datetime(stats_working_df["record_date"], errors="coerce")
     observed_stats_df = _filter_rows_by_cutoff(stats_working_df, "player_id", "record_date", cutoff_map, True)
     future_stats_df = _filter_rows_by_cutoff(stats_working_df, "player_id", "record_date", cutoff_map, False)
+    future_match_metrics_df = _future_match_target_metrics(
+        players_df,
+        match_participation_df if match_participation_df is not None else pd.DataFrame(),
+        cutoff_map,
+    )
+    future_match_metrics_map = {
+        int(row["player_id"]): row
+        for row in future_match_metrics_df.to_dict(orient="records")
+    }
 
     rows = []
     for player_id in players_df["player_id"].astype(int).tolist():
@@ -705,29 +831,109 @@ def _temporal_target_dataframe(
             if not np.isnan(observed_final_score) and not np.isnan(future_final_score)
             else np.nan
         )
+        recent_window = observed_attr["history_weighted_attr_score"].tail(min(3, len(observed_attr)))
+        observed_weighted_volatility = float(recent_window.diff().dropna().std()) if len(recent_window) >= 2 else np.nan
 
-        future_performance_high = (not np.isnan(future_final_score)) and future_final_score >= 6.9
-        positive_label = (
-            weighted_score_growth >= 0.35
-            and (
-                ((not np.isnan(final_score_growth)) and final_score_growth >= 0.20)
-                or (weighted_score_growth >= 0.65 and future_performance_high)
-            )
+        match_metrics = future_match_metrics_map.get(player_id, {})
+        future_minutes_per_match = float(match_metrics.get("future_minutes_per_match")) if match_metrics.get("future_minutes_per_match") is not None else np.nan
+        future_start_rate = float(match_metrics.get("future_start_rate")) if match_metrics.get("future_start_rate") is not None else np.nan
+        future_avg_opponent_level = float(match_metrics.get("future_avg_opponent_level")) if match_metrics.get("future_avg_opponent_level") is not None else np.nan
+        future_high_difficulty_score = float(match_metrics.get("future_high_difficulty_score")) if match_metrics.get("future_high_difficulty_score") is not None else np.nan
+        future_natural_position_rate = float(match_metrics.get("future_natural_position_rate")) if match_metrics.get("future_natural_position_rate") is not None else np.nan
+        future_match_entry_count = float(match_metrics.get("future_match_entry_count")) if match_metrics.get("future_match_entry_count") is not None else np.nan
+
+        growth_component = _sigmoid_component(weighted_score_growth, center=0.14, scale=0.22)
+        future_level_component = _sigmoid_component(future_weighted_score, center=12.7, scale=0.65)
+        performance_component = _sigmoid_component(
+            final_score_growth if not np.isnan(final_score_growth) else (future_final_score - 6.2 if not np.isnan(future_final_score) else np.nan),
+            center=0.08,
+            scale=0.28,
         )
+        challenge_component = _sigmoid_component(future_high_difficulty_score, center=6.7, scale=0.32) * _sigmoid_component(
+            future_avg_opponent_level,
+            center=3.4,
+            scale=0.45,
+        )
+        consistency_component = (
+            _sigmoid_component(future_minutes_per_match, center=58.0, scale=12.0)
+            * _sigmoid_component(future_start_rate, center=0.46, scale=0.14)
+            * _sigmoid_component(future_match_entry_count, center=2.2, scale=0.8)
+        )
+        role_component = (
+            0.75 * _sigmoid_component(future_natural_position_rate, center=0.62, scale=0.18)
+            + 0.25 * _sigmoid_component(future_natural_position_rate, center=0.88, scale=0.08)
+        )
+        breakout_component = growth_component * max(performance_component, challenge_component) * max(consistency_component, 0.15)
+        stability_penalty = _sigmoid_component(observed_weighted_volatility, center=0.24, scale=0.08)
+        progression_score = (
+            0.20 * growth_component
+            + 0.16 * future_level_component
+            + 0.18 * performance_component
+            + 0.14 * challenge_component
+            + 0.12 * consistency_component
+            + 0.08 * role_component
+            + 0.22 * breakout_component
+            - 0.10 * stability_penalty
+        )
+
         rows.append(
             {
                 "player_id": player_id,
-                TEMPORAL_TARGET_COLUMN: bool(positive_label),
+                TEMPORAL_TARGET_COLUMN: False,
+                "progression_score": progression_score,
+                "temporal_target_threshold": np.nan,
+                "temporal_future_score_threshold": np.nan,
+                "temporal_consolidation_path": False,
+                "temporal_breakout_path": False,
                 "observed_weighted_score": observed_weighted_score,
                 "future_weighted_score": future_weighted_score,
                 "weighted_score_growth": weighted_score_growth,
                 "observed_final_score": observed_final_score,
                 "future_final_score": future_final_score,
                 "final_score_growth": final_score_growth,
+                "future_minutes_per_match": future_minutes_per_match,
+                "future_start_rate": future_start_rate,
+                "future_avg_opponent_level": future_avg_opponent_level,
+                "future_high_difficulty_score": future_high_difficulty_score,
+                "future_natural_position_rate": future_natural_position_rate,
+                "observed_weighted_volatility": observed_weighted_volatility,
             }
         )
+    target_df = pd.DataFrame(rows)
+    if target_df.empty:
+        return target_df
 
-    return pd.DataFrame(rows)
+    progression_quantile_threshold = float(target_df["progression_score"].quantile(0.86))
+    future_final_quantile_threshold = float(target_df["future_final_score"].dropna().quantile(0.93))
+    volatility_threshold = float(target_df["observed_weighted_volatility"].dropna().quantile(0.70))
+    breakout_growth_threshold = float(target_df["weighted_score_growth"].dropna().quantile(0.88))
+    breakout_final_growth_threshold = float(target_df["final_score_growth"].dropna().quantile(0.88))
+    breakout_difficulty_threshold = float(target_df["future_high_difficulty_score"].dropna().quantile(0.80))
+
+    target_threshold = max(progression_quantile_threshold, 0.40)
+    future_score_threshold = max(future_final_quantile_threshold, 5.25)
+    target_df["temporal_target_threshold"] = target_threshold
+    target_df["temporal_future_score_threshold"] = future_score_threshold
+    consolidation_mask = (
+        (target_df["progression_score"] >= target_threshold)
+        & (target_df["future_final_score"].fillna(0.0) >= future_score_threshold)
+        & (target_df["future_natural_position_rate"].fillna(0.0) >= 0.65)
+        & (target_df["observed_weighted_volatility"].fillna(99.0) <= volatility_threshold)
+        & (
+            (target_df["future_minutes_per_match"].fillna(0.0) >= 42.0)
+            | (target_df["future_start_rate"].fillna(0.0) >= 0.40)
+        )
+    )
+    breakout_mask = (
+        (target_df["weighted_score_growth"].fillna(-99.0) >= breakout_growth_threshold)
+        & (target_df["final_score_growth"].fillna(-99.0) >= breakout_final_growth_threshold)
+        & (target_df["future_high_difficulty_score"].fillna(0.0) >= breakout_difficulty_threshold)
+        & (target_df["future_start_rate"].fillna(0.0) >= 0.45)
+    )
+    target_df["temporal_consolidation_path"] = consolidation_mask
+    target_df["temporal_breakout_path"] = breakout_mask
+    target_df[TEMPORAL_TARGET_COLUMN] = consolidation_mask | breakout_mask
+    return target_df
 
 
 def build_temporal_training_dataframe(
@@ -747,12 +953,23 @@ def build_temporal_training_dataframe(
             "potential_label",
             *HISTORICAL_FEATURE_COLUMNS,
             TEMPORAL_TARGET_COLUMN,
+            "progression_score",
+            "temporal_target_threshold",
+            "temporal_future_score_threshold",
+            "temporal_consolidation_path",
+            "temporal_breakout_path",
             "observed_weighted_score",
             "future_weighted_score",
             "weighted_score_growth",
             "observed_final_score",
             "future_final_score",
             "final_score_growth",
+            "future_minutes_per_match",
+            "future_start_rate",
+            "future_avg_opponent_level",
+            "future_high_difficulty_score",
+            "future_natural_position_rate",
+            "observed_weighted_volatility",
         ]
         return pd.DataFrame(columns=empty_columns)
 
@@ -780,7 +997,13 @@ def build_temporal_training_dataframe(
         observed_match_df,
         observed_scout_df,
     )
-    target_df = _temporal_target_dataframe(players_df, stats_df, attribute_history_df, cutoff_map)
+    target_df = _temporal_target_dataframe(
+        players_df,
+        stats_df,
+        attribute_history_df,
+        cutoff_map,
+        match_participation_df=match_participation_df,
+    )
     if target_df.empty:
         return target_df
     merged_df = features_df.merge(target_df, on="player_id", how="inner")

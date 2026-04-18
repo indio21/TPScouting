@@ -4,6 +4,7 @@
 - Rama analizada: `training`
 - Cambio estructural ya incorporado: pipeline compartido de preprocesamiento con `pandas`, `ColumnTransformer`, `SimpleImputer`, `MinMaxScaler`, `OneHotEncoder` y persistencia en `preprocessor.joblib`.
 - Artefactos actuales del entrenamiento: `model.pt`, `preprocessor.joblib`, `training_metadata.json` y `experiments.csv`.
+- Artefacto adicional actual: `probability_calibrator.joblib`.
 - El objetivo del producto se mantiene acotado a scouting juvenil de 12 a 18 anos para clubes formativos.
 
 ## Diagnostico previo verificado antes de endurecer el entrenamiento
@@ -21,8 +22,11 @@
 - Se reemplazo `BCELoss` por `BCEWithLogitsLoss`.
 - Se elimino la `Sigmoid` final de `PlayerNet` y ahora se trabaja con logits; la probabilidad se recupera con `torch.sigmoid(...)` solo en evaluacion e inferencia.
 - Se incorporo manejo explicito del desbalance con `pos_weight`.
+- Se agrego muestreo balanceado por mini-batch con `WeightedRandomSampler`.
 - Se cambio el split a `train / validation / test` con seleccion del threshold en validacion.
 - Se agrego early stopping sobre `PR-AUC` con desempate por `F1` positiva.
+- Se incorporo calibracion de probabilidades con seleccion automatica entre `none`, `isotonic` y `platt`.
+- Se adopto `AdamW` como optimizador base.
 - El entrenamiento ahora se alinea por defecto al alcance real del MVP: edades 12-18.
 - La generacion sintetica de `potential_label` ahora usa score ponderado por posicion, ajuste etario, componente mental y ruido controlado.
 - Se formalizo `LogisticRegression(class_weight="balanced")` como baseline obligatorio de comparacion.
@@ -53,34 +57,43 @@
 - El entrenamiento ya no usa `potential_label` como target principal.
 - Ahora el target es `temporal_target_label`, derivado de un corte observado/futuro por jugador:
 - las features se construyen sobre la parte observada de la trayectoria
-- el target se marca positivo cuando el tramo futuro muestra crecimiento tecnico y mejora o consolidacion de rendimiento
+- el target se recalibra con umbrales explicitos de progresion y rendimiento futuro
+- el target positivo ahora admite dos caminos: consolidacion y breakout
 - el dataset temporal usa atributos anclados en el punto de corte para evitar fuga de informacion desde el estado final del jugador
+- `generate_data.py` ahora admite `--reset` para regenerar la base sintetica de entrenamiento desde cero de forma reproducible
 
 ## Resultado actual del entrenamiento mejorado
-- Fecha de corrida registrada: `2026-04-18T00:10:13.257885`
+- Fecha de corrida registrada: `2026-04-18T03:05:47.143763`
 - Dataset actual: 20000 jugadores dentro del rango 12-17.
-- Distribucion actual de clases: 988 positivos y 19012 negativos.
-- Tasa positiva actual: 4.94%.
+- Distribucion actual de clases: 599 positivos y 19401 negativos.
+- Tasa positiva actual: 3.00%.
 - Split efectivo: train 14000, validation 3000, test 3000.
-- `pos_weight` utilizado: 19.2312.
-- Early stopping: mejor epoca 30 y threshold elegido 0.525.
+- `pos_weight` utilizado: 5.6932.
+- Early stopping: mejor epoca 1 y threshold elegido 0.175.
+- Metodo de calibracion seleccionado: `isotonic`.
+- Threshold de progresion del target: 0.4051.
+- Threshold de rendimiento futuro del target: 5.2500.
+- Casos positivos por via de consolidacion: 542.
+- Casos positivos por via de breakout: 66.
 
 ## Metricas del modelo PyTorch actual
-- Validacion: accuracy 0.8637, ROC-AUC 0.8353, PR-AUC 0.2018, F1 0.2735, precision 0.1855, recall 0.5203.
-- Test: accuracy 0.8680, ROC-AUC 0.8374, PR-AUC 0.2598, F1 0.2528, precision 0.1754, recall 0.4527.
-- Matriz de confusion PyTorch en test: [[2537, 315], [81, 67]].
+- Validacion: accuracy 0.9570, ROC-AUC 0.9543, PR-AUC 0.3558, F1 0.4317, precision 0.3577, recall 0.5444.
+- Test: accuracy 0.9600, ROC-AUC 0.9247, PR-AUC 0.3279, F1 0.4231, precision 0.3729, recall 0.4889.
+- Matriz de confusion PyTorch en test: [[2836, 74], [46, 44]].
 
 ## Baselines actuales bajo el mismo split y preprocesamiento
-- `LogisticRegression(class_weight="balanced")`: accuracy 0.9380, ROC-AUC 0.9279, PR-AUC 0.3645, F1 0.3922, precision 0.3797, recall 0.4054.
-- Baseline simple por promedio de atributos: accuracy 0.1037, ROC-AUC 0.4094, PR-AUC 0.0389, F1 0.0906.
+- `LogisticRegression(class_weight="balanced")`: accuracy 0.9527, ROC-AUC 0.9431, PR-AUC 0.3923, F1 0.4409, precision 0.3415, recall 0.6222.
+- Baseline simple por promedio de atributos: accuracy 0.9547, ROC-AUC 0.9137, PR-AUC 0.2876, F1 0.3061.
 
 ## Hallazgos verificados
 - El nuevo preprocesamiento compartido con `pandas` y `scikit-learn` quedo implementado y funcionando tanto en entrenamiento como en inferencia.
-- La MLP actual ya no colapsa a todo negativo: paso de F1 0.0000 a F1 0.2528 y de PR-AUC 0.0915 a PR-AUC 0.2598.
+- La MLP actual ya no colapsa a todo negativo: paso de F1 0.0000 a F1 0.4231 y de PR-AUC 0.0915 a PR-AUC 0.3279.
 - El entrenamiento ya no usa solo foto fija: aprende con rendimiento historico y con evolucion tecnica de `PlayerAttributeHistory`.
 - El entrenamiento ahora tambien incorpora contexto de partido y senal cualitativa sintetica del scout.
 - El problema de entrenamiento ahora es metodologicamente mas realista porque el target representa progresion futura y no un booleano estatico sintetico.
-- El cambio de target volvio el problema mucho mas desbalanceado y exigente: la tasa positiva actual es 4.94%.
+- El target temporal ya no depende de una sola puerta monotona: mezcla consolidacion y breakout con umbrales explicitados en metadata.
+- La calibracion de probabilidades si quedo implementada y en la corrida actual el metodo elegido fue `isotonic`.
+- El cambio de target mantiene un problema exigente y todavia desbalanceado: la tasa positiva actual es 3.00%.
 - La alineacion del dataset a 12-18, el entrenamiento endurecido y las features longitudinales mejoraron fuerte la defendibilidad metodologica respecto al diagnostico previo.
 - Aun asi, el baseline `LogisticRegression(class_weight="balanced")` sigue superando a la MLP en ROC-AUC, PR-AUC y F1.
 - El baseline simple por promedio de atributos ya no explica bien el target frente al nuevo pipeline, lo que indica que la etiqueta sintetica quedo menos trivial que antes.
@@ -89,13 +102,13 @@
 ## Limites que todavia no estan resueltos
 - Los partidos sinteticos todavia no representan encuentros compartidos entre varios jugadores del mismo plantel.
 - Los `ScoutReport` actuales siguen siendo sinteticos, no manuales ni cargados por usuarios reales.
-- Aunque el target ya es temporal, sus umbrales todavia son sinteticos y pueden requerir recalibracion.
-- No se implemento calibracion de probabilidades.
+- Aunque el target ya es temporal y esta mejor calibrado, sus umbrales siguen siendo sinteticos y pueden requerir otro ajuste.
+- La calibracion de probabilidades existe, pero por ahora no alcanza para que PyTorch supere al baseline lineal.
 - La evidencia actual sigue basada en datos sinteticos; no hay una validacion externa con datos reales.
 - La MLP mejoro, pero todavia no justifica por rendimiento reemplazar al baseline lineal como referencia formal.
 
 ## Pruebas ejecutadas
-- `pytest -q`: 33 tests aprobados.
+- `pytest -q`: 35 tests aprobados.
 - Cobertura nueva o reforzada:
 - persistencia del `preprocessor.joblib`
 - consistencia entre inferencia individual y batch
@@ -109,8 +122,8 @@
 
 ## Procedimiento reproducible
 - Regenerar dataset de entrenamiento:
-- `python scouting_app/generate_data.py --num-players 20000 --db-url sqlite:///players_training.db --seed 42`
+- `python scouting_app/generate_data.py --num-players 20000 --db-url sqlite:///players_training.db --seed 42 --min-age 12 --max-age 18 --reset`
 - Reentrenar artefactos:
-- `python scouting_app/train_model.py --db-url sqlite:///players_training.db --model-out scouting_app/model.pt --preprocessor-out scouting_app/preprocessor.joblib --metadata-out scouting_app/training_metadata.json --epochs 30 --lr 1e-3 --patience 8`
+- `python scouting_app/train_model.py --db-url sqlite:///players_training.db --model-out scouting_app/model.pt --preprocessor-out scouting_app/preprocessor.joblib --calibrator-out scouting_app/probability_calibrator.joblib --metadata-out scouting_app/training_metadata.json --epochs 45 --lr 5e-4 --patience 10`
 - Ejecutar tests:
 - `python -m pytest -q`

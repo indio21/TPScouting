@@ -70,6 +70,15 @@ def next_identifier() -> str:
             return str(value)
 
 
+def load_existing_identifiers(session) -> None:
+    existing_ids = session.query(Player.national_id).filter(Player.national_id.isnot(None)).all()
+    used_identifiers.update(
+        int(national_id)
+        for (national_id,) in existing_ids
+        if national_id is not None and str(national_id).isdigit()
+    )
+
+
 def clamp(value: float, lower: float, upper: float) -> float:
     return max(lower, min(upper, value))
 
@@ -171,6 +180,26 @@ def generate_player(min_age: int = EVAL_MIN_AGE, max_age: int = EVAL_MAX_AGE) ->
 def build_development_profile(player: Player) -> Dict[str, float]:
     attrs = player_attr_map(player)
     age = int(player.age or EVAL_MAX_AGE)
+    resilience = clamp(
+        0.45 + attrs["determination"] / 26.0 + attrs["physical"] / 90.0 + random.uniform(-0.12, 0.12),
+        0.45,
+        1.45,
+    )
+    tactical_discipline = clamp(
+        0.40 + attrs["vision"] / 38.0 + attrs["passing"] / 80.0 + attrs["defending"] / 95.0 + random.uniform(-0.10, 0.10),
+        0.35,
+        1.40,
+    )
+    adaptability_bias = clamp(
+        0.35 + attrs["technique"] / 44.0 + attrs["vision"] / 70.0 + attrs["pace"] / 110.0 + random.uniform(-0.10, 0.10),
+        0.30,
+        1.35,
+    )
+    professionalism = clamp(
+        0.42 + attrs["determination"] / 34.0 + attrs["technique"] / 75.0 + random.uniform(-0.10, 0.10),
+        0.35,
+        1.35,
+    )
     growth_factor = clamp(
         0.55
         + (EVAL_MAX_AGE - age) * 0.12
@@ -193,12 +222,16 @@ def build_development_profile(player: Player) -> Dict[str, float]:
     snapshot_count = random.randint(6, 12)
     slump_month = random.randint(2, snapshot_count - 1) if snapshot_count >= 4 and random.random() < 0.42 else None
     return {
-        "growth_factor": growth_factor,
+        "growth_factor": growth_factor * ((0.88 + professionalism * 0.10) * (0.92 + resilience * 0.08)),
         "volatility": volatility,
         "availability": availability,
         "snapshot_count": snapshot_count,
         "slump_month": slump_month or 0,
         "form_bias": random.gauss(0.0, 0.18),
+        "resilience": resilience,
+        "tactical_discipline": tactical_discipline,
+        "adaptability_bias": adaptability_bias,
+        "professionalism": professionalism,
     }
 
 
@@ -210,8 +243,17 @@ def total_growth_by_attribute(player: Player, profile: Dict[str, float]) -> Dict
         current_value = float(current_attrs[field])
         ceiling_room = max(0.10, (20.0 - current_value) / 20.0)
         weighted_factor = 0.55 + (weights[field] * 2.0)
+        trait_multiplier = 1.0
+        if field in ("determination", "technique"):
+            trait_multiplier *= 0.92 + profile["professionalism"] * 0.10
+        if field in ("vision", "passing"):
+            trait_multiplier *= 0.90 + profile["tactical_discipline"] * 0.12
+        if field in ("pace", "dribbling"):
+            trait_multiplier *= 0.90 + profile["adaptability_bias"] * 0.10
+        if field in ("physical", "tackling", "defending"):
+            trait_multiplier *= 0.90 + profile["resilience"] * 0.10
         random_adjustment = random.uniform(0.85, 1.25)
-        growth = profile["growth_factor"] * weighted_factor * ceiling_room * random_adjustment
+        growth = profile["growth_factor"] * weighted_factor * ceiling_room * trait_multiplier * random_adjustment
         growth_map[field] = clamp(growth, 0.0, 5.5)
     return growth_map
 
@@ -254,9 +296,12 @@ def synthetic_attribute_history(
             noise = random.gauss(0.0, profile["volatility"] * (0.30 + weight))
             slump = 0.0
             if slump_month and months_back == slump_month:
-                slump = random.uniform(-0.9, -0.3) * (0.30 + weight)
+                slump = random.uniform(-0.9, -0.3) * (0.30 + weight) * (1.18 - profile["resilience"] * 0.14)
+            growth_spurt = 0.0
+            if player.age <= 14 and months_back in (1, 2) and random.random() < 0.35:
+                growth_spurt = random.uniform(0.10, 0.35) * (0.25 + weight) * profile["professionalism"]
             historical_value = current_value - progression_component + curve_component + noise + slump
-            values[field] = int(round(clamp(historical_value, 0.0, current_value)))
+            values[field] = int(round(clamp(historical_value + growth_spurt, 0.0, current_value)))
 
         history.append(
             PlayerAttributeHistory(
@@ -299,28 +344,35 @@ def synthetic_matches_and_stats(
             opponent_level = random.choices([1, 2, 3, 4, 5], weights=[0.10, 0.24, 0.32, 0.22, 0.12], k=1)[0]
             venue = "Local" if random.random() < 0.56 else "Visitante"
             pressure = (opponent_level - 3) * 0.22 + (-0.10 if venue == "Visitante" else 0.06)
+            pressure -= (profile["resilience"] - 0.85) * 0.18
+            pressure -= (profile["tactical_discipline"] - 0.80) * 0.10
             starter_probability = clamp(
                 0.24
                 + weighted_score / 28.0
                 + momentum / 6.0
                 + profile["availability"] * 0.10
+                + (profile["professionalism"] - 0.85) * 0.08
                 - max(0, opponent_level - 3) * 0.05,
                 0.10,
                 0.93,
             )
             is_starter = random.random() < starter_probability
-            if alternative_positions and random.random() > 0.78:
+            if alternative_positions and random.random() > (0.82 - profile["adaptability_bias"] * 0.12):
                 position_played = random.choice(alternative_positions)
             else:
                 position_played = player.position
 
             minutes_base = random.randint(62, 90) if is_starter else random.randint(12, 38)
-            fatigue_penalty = max(0.0, (1.0 - profile["availability"]) * random.uniform(0.0, 1.5))
+            fatigue_penalty = max(
+                0.0,
+                (1.0 - profile["availability"]) * random.uniform(0.0, 1.5) * (1.12 - profile["resilience"] * 0.10),
+            )
             minutes_played = int(round(clamp(minutes_base - fatigue_penalty * 8, 5, 90)))
             pass_accuracy = clamp(
                 (attrs["passing"] * 0.40 + attrs["vision"] * 0.32 + attrs["technique"] * 0.28) * 5
                 + momentum * 3.0
                 - pressure * 4.5
+                + (profile["tactical_discipline"] - 0.85) * 6.0
                 + random.gauss(0.0, 5.0),
                 35.0,
                 96.0,
@@ -329,6 +381,7 @@ def synthetic_matches_and_stats(
                 (attrs["shooting"] * 0.58 + attrs["technique"] * 0.24 + attrs["vision"] * 0.18) * 5
                 + momentum * 2.4
                 - pressure * 3.4
+                + (profile["professionalism"] - 0.85) * 4.0
                 + random.gauss(0.0, 6.5),
                 18.0,
                 92.0,
@@ -337,6 +390,7 @@ def synthetic_matches_and_stats(
                 (attrs["defending"] * 0.40 + attrs["physical"] * 0.34 + attrs["tackling"] * 0.26) * 5
                 + momentum * 2.8
                 - pressure * 4.0
+                + (profile["resilience"] - 0.85) * 5.5
                 + random.gauss(0.0, 6.0),
                 25.0,
                 95.0,
@@ -348,6 +402,8 @@ def synthetic_matches_and_stats(
                 - pressure
                 + profile["form_bias"]
                 + (0.18 if is_starter else -0.12)
+                + (profile["professionalism"] - 0.85) * 0.35
+                + (profile["adaptability_bias"] - 0.80) * (0.25 if position_played != player.position else 0.08)
                 + random.gauss(0.0, 0.45),
                 1.0,
                 10.0,
@@ -472,6 +528,7 @@ def synthetic_scout_reports(
                     attrs["determination"] * 0.62
                     + attrs["physical"] * 0.16
                     + profile["availability"] * 4.0
+                    + profile["resilience"] * 2.2
                     + recent_final_score * 0.32
                     + random.gauss(0.0, 1.0),
                     0.0,
@@ -486,6 +543,7 @@ def synthetic_scout_reports(
                     + attrs["vision"] * 0.24
                     + attrs["pace"] * 0.14
                     + attrs["physical"] * 0.14
+                    + profile["adaptability_bias"] * 2.4
                     + recent_final_score * 0.28
                     + random.gauss(0.0, 1.1),
                     0.0,
@@ -498,6 +556,7 @@ def synthetic_scout_reports(
             + age_potential_bonus(player.age) * 0.30
             + trend * 0.75
             + (recent_final_score - 6.0) * 0.35
+            + (profile["professionalism"] - 0.85) * 0.45
             + random.gauss(0.0, 0.35),
             1.0,
             10.0,
@@ -526,16 +585,20 @@ def main(
     seed: int = DEFAULT_SEED,
     min_age: int = EVAL_MIN_AGE,
     max_age: int = EVAL_MAX_AGE,
+    reset_existing: bool = False,
 ) -> None:
     """Genera `num_players` jugadores y sus historiales coherentes."""
     random.seed(seed)
     used_identifiers.clear()
     normalized_db_url = normalize_db_url(db_url, base_dir=os.path.dirname(os.path.abspath(__file__)))
     engine = create_app_engine(normalized_db_url)
+    if reset_existing:
+        Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     ensure_player_columns(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
+    load_existing_identifiers(session)
 
     batch_size = 500
     created = 0
@@ -585,7 +648,7 @@ def main(
 
     print(
         f"Se generaron {num_players} jugadores en la base de datos: {normalized_db_url} "
-        f"(seed={seed}, edades={min_age}-{max_age})"
+        f"(seed={seed}, edades={min_age}-{max_age}, reset={reset_existing})"
     )
 
 
@@ -596,5 +659,13 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED, help="Semilla para reproduccion de datos")
     parser.add_argument("--min-age", type=int, default=EVAL_MIN_AGE, help="Edad minima de generacion")
     parser.add_argument("--max-age", type=int, default=EVAL_MAX_AGE, help="Edad maxima de generacion")
+    parser.add_argument("--reset", action="store_true", help="Recrea la base de entrenamiento antes de generar")
     args = parser.parse_args()
-    main(args.num_players, args.db_url, seed=args.seed, min_age=args.min_age, max_age=args.max_age)
+    main(
+        args.num_players,
+        args.db_url,
+        seed=args.seed,
+        min_age=args.min_age,
+        max_age=args.max_age,
+        reset_existing=args.reset,
+    )

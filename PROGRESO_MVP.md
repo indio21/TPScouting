@@ -206,6 +206,22 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Baseline `LogisticRegression(class_weight="balanced")`: `ROC-AUC 0.9279`, `PR-AUC 0.3645`, `F1 0.3922`
 - Conclusion honesta: metodologicamente esta version es mejor porque predice progresion futura y no una etiqueta estatica, pero el problema quedo bastante mas dificil y hoy PyTorch rinde peor que en la etapa anterior. El baseline lineal sigue siendo superior.
 
+### 17. Recalibracion temporal, calibracion y ajuste del entrenamiento
+
+- Se recalibro el target temporal para evitar etiquetas patologicamente raras y dejar dos caminos positivos defendibles:
+- `consolidacion`
+- `breakout`
+- Se incorporo calibracion de probabilidades al pipeline con seleccion automatica entre `none`, `isotonic` y `platt`.
+- `generate_data.py` ahora permite regenerar la base sintetica con `--reset`, manteniendo reproducibilidad del experimento.
+- En la corrida real actual:
+- positivos del target temporal recalibrado: `599`
+- tasa positiva: `3.00%`
+- casos de consolidacion: `542`
+- casos de breakout: `66`
+- PyTorch: `ROC-AUC 0.9247`, `PR-AUC 0.3279`, `F1 0.4231`
+- Baseline `LogisticRegression(class_weight="balanced")`: `ROC-AUC 0.9431`, `PR-AUC 0.3923`, `F1 0.4409`
+- Conclusion honesta: esta etapa mejoro con claridad respecto del target temporal publicado antes (`F1 +0.1703`, `PR-AUC +0.0681`), pero PyTorch todavia no supera al baseline lineal balanceado.
+
 ## Tests Ejecutados
 
 - La suite automatizada actual termina pasando en esta maquina.

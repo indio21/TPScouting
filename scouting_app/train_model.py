@@ -16,10 +16,14 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
+from joblib import dump
+from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     average_precision_score,
+    brier_score_loss,
     confusion_matrix,
     f1_score,
     precision_score,
@@ -27,6 +31,7 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader, TensorDataset, WeightedRandomSampler
 
 from db_utils import create_app_engine, ensure_player_columns, normalize_db_url
 from models import Base
@@ -46,6 +51,11 @@ SEED = int(os.environ.get("SEED", "42"))
 DEFAULT_THRESHOLDS = np.linspace(0.10, 0.90, 33)
 DEFAULT_TEST_SIZE = 0.15
 DEFAULT_VAL_SIZE = 0.17647058823529413  # 15% del total tras separar test
+BATCH_SIZE = int(os.environ.get("TRAIN_BATCH_SIZE", "256"))
+DEFAULT_WEIGHT_DECAY = float(os.environ.get("TRAIN_WEIGHT_DECAY", "0.0005"))
+DEFAULT_DROPOUT = float(os.environ.get("TRAIN_DROPOUT", "0.15"))
+DEFAULT_LOSS_KIND = os.environ.get("TRAIN_LOSS_KIND", "bce").strip().lower()
+DEFAULT_FOCAL_GAMMA = float(os.environ.get("TRAIN_FOCAL_GAMMA", "1.5"))
 
 random.seed(SEED)
 np.random.seed(SEED)
@@ -57,18 +67,49 @@ torch.backends.cudnn.benchmark = False
 
 
 class PlayerNet(nn.Module):
-    def __init__(self, input_dim: int):
+    def __init__(self, input_dim: int, dropout: float = DEFAULT_DROPOUT):
         super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(input_dim, 64),
-            nn.ReLU(),
-            nn.Linear(64, 32),
-            nn.ReLU(),
-            nn.Linear(32, 1),
+        self.backbone = nn.Sequential(
+            nn.Linear(input_dim, 192),
+            nn.BatchNorm1d(192),
+            nn.SiLU(),
+            nn.Dropout(dropout),
+            nn.Linear(192, 128),
+            nn.BatchNorm1d(128),
+            nn.SiLU(),
+            nn.Dropout(max(0.05, dropout - 0.02)),
+            nn.Linear(128, 64),
+            nn.BatchNorm1d(64),
+            nn.SiLU(),
+            nn.Dropout(max(0.05, dropout - 0.05)),
         )
+        self.skip = nn.Linear(input_dim, 64)
+        self.head = nn.Linear(64, 1)
 
     def forward(self, x):
-        return self.net(x)
+        hidden = self.backbone(x)
+        residual = self.skip(x)
+        return self.head(hidden + 0.10 * residual)
+
+
+class BinaryFocalLossWithLogits(nn.Module):
+    def __init__(self, gamma: float = DEFAULT_FOCAL_GAMMA, pos_weight: Optional[torch.Tensor] = None):
+        super().__init__()
+        self.gamma = float(gamma)
+        self.register_buffer("pos_weight", pos_weight if pos_weight is not None else None)
+
+    def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        targets = targets.float()
+        bce_loss = F.binary_cross_entropy_with_logits(
+            logits,
+            targets,
+            reduction="none",
+            pos_weight=self.pos_weight,
+        )
+        probabilities = torch.sigmoid(logits)
+        pt = torch.where(targets > 0.5, probabilities, 1.0 - probabilities)
+        focal_weight = torch.pow(torch.clamp(1.0 - pt, min=1e-6), self.gamma)
+        return (focal_weight * bce_loss).mean()
 
 
 def load_data(
@@ -101,7 +142,7 @@ def dataset_summary(raw_df: pd.DataFrame, filtered_df: pd.DataFrame, target_colu
     positive_count = int(y_filtered.sum())
     total_count = int(len(filtered_df))
     negative_count = int(total_count - positive_count)
-    return {
+    summary = {
         "raw_rows": int(len(raw_df)),
         "filtered_rows": total_count,
         "age_range_raw": {
@@ -123,6 +164,23 @@ def dataset_summary(raw_df: pd.DataFrame, filtered_df: pd.DataFrame, target_colu
         },
         "target_column": target_column,
     }
+    if "temporal_target_threshold" in filtered_df.columns and filtered_df["temporal_target_threshold"].notna().any():
+        summary["temporal_target_threshold"] = float(filtered_df["temporal_target_threshold"].dropna().iloc[0])
+    if "temporal_future_score_threshold" in filtered_df.columns and filtered_df["temporal_future_score_threshold"].notna().any():
+        summary["temporal_future_score_threshold"] = float(filtered_df["temporal_future_score_threshold"].dropna().iloc[0])
+    if "progression_score" in filtered_df.columns and filtered_df["progression_score"].notna().any():
+        summary["progression_score_quantiles"] = {
+            "q50": round(float(filtered_df["progression_score"].quantile(0.50)), 4),
+            "q75": round(float(filtered_df["progression_score"].quantile(0.75)), 4),
+            "q84": round(float(filtered_df["progression_score"].quantile(0.84)), 4),
+            "q88": round(float(filtered_df["progression_score"].quantile(0.88)), 4),
+            "q90": round(float(filtered_df["progression_score"].quantile(0.90)), 4),
+        }
+    if "temporal_consolidation_path" in filtered_df.columns:
+        summary["temporal_consolidation_count"] = int(filtered_df["temporal_consolidation_path"].astype(int).sum())
+    if "temporal_breakout_path" in filtered_df.columns:
+        summary["temporal_breakout_count"] = int(filtered_df["temporal_breakout_path"].astype(int).sum())
+    return summary
 
 
 def choose_stratify_target(y: np.ndarray) -> Optional[np.ndarray]:
@@ -192,7 +250,7 @@ def classification_metrics(
         f1 = float(f1_score(y_true, y_pred, zero_division=0))
         precision = float(precision_score(y_true, y_pred, zero_division=0))
         recall = float(recall_score(y_true, y_pred, zero_division=0))
-        cm = confusion_matrix(y_true, y_pred).tolist()
+        cm = confusion_matrix(y_true, y_pred, labels=[0, 1]).tolist()
     except Exception:
         f1 = precision = recall = ""
         cm = []
@@ -241,11 +299,81 @@ def avg_skill_scores(df: pd.DataFrame) -> np.ndarray:
     return (df.loc[:, ATTRIBUTE_FIELDS].mean(axis=1).to_numpy(dtype=np.float32) / 20.0).reshape(-1)
 
 
+def make_train_loader(X_train: np.ndarray, y_train: np.ndarray, batch_size: int = BATCH_SIZE) -> DataLoader:
+    sample_weights = np.where(y_train > 0.5, max(1.0, (len(y_train) - np.sum(y_train)) / max(np.sum(y_train), 1.0)), 1.0)
+    sampler = WeightedRandomSampler(
+        weights=torch.tensor(sample_weights, dtype=torch.float32),
+        num_samples=len(sample_weights),
+        replacement=True,
+    )
+    dataset = TensorDataset(tensor_from_array(X_train), tensor_from_array(y_train).view(-1, 1))
+    return DataLoader(dataset, batch_size=min(batch_size, len(dataset)), sampler=sampler)
+
+
+def fit_probability_calibrator(y_true: np.ndarray, y_prob: np.ndarray) -> Tuple[Optional[object], str, float]:
+    y_true = np.asarray(y_true, dtype=np.float32).reshape(-1)
+    y_prob = np.asarray(y_prob, dtype=np.float32).reshape(-1)
+    if len(np.unique(y_true)) < 2 or min(np.sum(y_true == 1), np.sum(y_true == 0)) < 10:
+        fallback_threshold, _ = select_best_threshold(y_true, y_prob)
+        return None, "none", float(fallback_threshold)
+
+    candidates: list[tuple[str, Optional[object], np.ndarray]] = [("none", None, y_prob)]
+    try:
+        isotonic = IsotonicRegression(out_of_bounds="clip", y_min=0.0, y_max=1.0)
+        isotonic.fit(y_prob, y_true)
+        iso_prob = np.clip(np.asarray(isotonic.predict(y_prob), dtype=np.float32), 0.0, 1.0)
+        candidates.append(("isotonic", isotonic, iso_prob))
+    except Exception:
+        pass
+
+    try:
+        platt = LogisticRegression(max_iter=2000, class_weight="balanced", random_state=SEED)
+        platt.fit(y_prob.reshape(-1, 1), y_true)
+        platt_prob = platt.predict_proba(y_prob.reshape(-1, 1))[:, 1].astype(np.float32)
+        candidates.append(("platt", platt, platt_prob))
+    except Exception:
+        pass
+
+    best_method = "none"
+    best_calibrator = None
+    best_prob = y_prob
+    best_threshold, best_metrics = select_best_threshold(y_true, y_prob)
+    best_score = (float(best_metrics["f1"] or 0.0), float(best_metrics["pr_auc"] or 0.0), -(float(brier_score_loss(y_true, y_prob))))
+
+    for method, calibrator, calibrated_prob in candidates[1:]:
+        threshold, metrics = select_best_threshold(y_true, calibrated_prob)
+        score = (
+            float(metrics["f1"] or 0.0),
+            float(metrics["pr_auc"] or 0.0),
+            -(float(brier_score_loss(y_true, calibrated_prob))),
+        )
+        if score > best_score:
+            best_method = method
+            best_calibrator = calibrator
+            best_prob = calibrated_prob
+            best_threshold = threshold
+            best_metrics = metrics
+            best_score = score
+
+    return best_calibrator, best_method, float(best_threshold)
+
+
+def apply_probability_calibrator(calibrator: Optional[object], y_prob: np.ndarray) -> np.ndarray:
+    if calibrator is None:
+        return np.asarray(y_prob, dtype=np.float32).reshape(-1)
+    try:
+        if hasattr(calibrator, "predict_proba"):
+            return calibrator.predict_proba(np.asarray(y_prob).reshape(-1, 1))[:, 1].astype(np.float32)
+        return np.clip(np.asarray(calibrator.predict(y_prob), dtype=np.float32), 0.0, 1.0)
+    except Exception:
+        return np.asarray(y_prob, dtype=np.float32).reshape(-1)
+
+
 def train_model(
     features_df: pd.DataFrame,
     y: np.ndarray,
     epochs: int = 30,
-    lr: float = 1e-3,
+    lr: float = 5e-4,
     patience: int = 8,
 ):
     """Entrena la red y devuelve modelo, preprocesador y metadata completa."""
@@ -271,22 +399,29 @@ def train_model(
     X_val = transform_features(X_val_df, preprocessor)
     X_test = transform_features(X_test_df, preprocessor)
 
-    X_train_tensor = tensor_from_array(X_train)
-    y_train_tensor = tensor_from_array(y_train).view(-1, 1)
     X_val_tensor = tensor_from_array(X_val)
     X_test_tensor = tensor_from_array(X_test)
+    train_loader = make_train_loader(X_train, y_train)
 
     positive_count = float(np.sum(y_train))
     negative_count = float(len(y_train) - positive_count)
-    pos_weight_value = negative_count / positive_count if positive_count > 0 else 1.0
+    pos_weight_value = np.sqrt(negative_count / positive_count) if positive_count > 0 else 1.0
     pos_weight = torch.tensor([pos_weight_value], dtype=torch.float32)
 
     model = PlayerNet(input_dim=preprocessor_input_dim(preprocessor))
-    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
-    optimizer = optim.Adam(model.parameters(), lr=lr)
+    if DEFAULT_LOSS_KIND == "focal":
+        criterion = BinaryFocalLossWithLogits(gamma=DEFAULT_FOCAL_GAMMA, pos_weight=pos_weight)
+        loss_name = f"BinaryFocalLossWithLogits(gamma={DEFAULT_FOCAL_GAMMA})"
+    else:
+        criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+        loss_name = "BCEWithLogitsLoss"
+    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=DEFAULT_WEIGHT_DECAY)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max", factor=0.5, patience=3)
 
     best_state = None
     best_threshold = 0.5
+    best_calibrator = None
+    best_calibration_method = "none"
     best_epoch = 1
     best_monitor = (-1.0, -1.0)
     best_val_metrics: Dict[str, object] = classification_metrics(y_val, np.zeros(len(y_val)), 0.5)
@@ -295,26 +430,35 @@ def train_model(
 
     for epoch in range(epochs):
         model.train()
-        optimizer.zero_grad()
-        logits = model(X_train_tensor)
-        loss = criterion(logits, y_train_tensor)
-        loss.backward()
-        optimizer.step()
+        batch_losses = []
+        for batch_features, batch_targets in train_loader:
+            optimizer.zero_grad()
+            logits = model(batch_features)
+            loss = criterion(logits, batch_targets)
+            loss.backward()
+            nn.utils.clip_grad_norm_(model.parameters(), max_norm=2.0)
+            optimizer.step()
+            batch_losses.append(float(loss.item()))
 
         model.eval()
         with torch.no_grad():
             val_logits = model(X_val_tensor).cpu().numpy().reshape(-1)
-        val_prob = sigmoid_numpy(val_logits)
-        threshold, val_metrics = select_best_threshold(y_val, val_prob)
+        raw_val_prob = sigmoid_numpy(val_logits)
+        calibrator, calibration_method, threshold = fit_probability_calibrator(y_val, raw_val_prob)
+        val_prob = apply_probability_calibrator(calibrator, raw_val_prob)
+        val_metrics = classification_metrics(y_val, val_prob, threshold)
         monitor_pr_auc = float(val_metrics["pr_auc"] or 0.0)
         monitor_f1 = float(val_metrics["f1"] or 0.0)
+        scheduler.step(monitor_pr_auc)
         history.append(
             {
                 "epoch": epoch + 1,
-                "loss": float(loss.item()),
+                "loss": float(np.mean(batch_losses) if batch_losses else 0.0),
                 "val_pr_auc": monitor_pr_auc,
                 "val_f1": monitor_f1,
                 "threshold": float(threshold),
+                "calibration_method": calibration_method,
+                "learning_rate": float(optimizer.param_groups[0]["lr"]),
             }
         )
 
@@ -323,6 +467,8 @@ def train_model(
             best_monitor = (monitor_pr_auc, monitor_f1)
             best_state = copy.deepcopy(model.state_dict())
             best_threshold = float(threshold)
+            best_calibrator = calibrator
+            best_calibration_method = calibration_method
             best_epoch = epoch + 1
             best_val_metrics = val_metrics
             epochs_without_improvement = 0
@@ -331,8 +477,9 @@ def train_model(
 
         if (epoch + 1) % 5 == 0 or epoch == 0:
             print(
-                f"Epoca {epoch + 1}/{epochs}, perdida: {loss.item():.4f}, "
-                f"val_pr_auc: {monitor_pr_auc:.4f}, val_f1: {monitor_f1:.4f}, threshold: {threshold:.2f}"
+                f"Epoca {epoch + 1}/{epochs}, perdida: {np.mean(batch_losses) if batch_losses else 0.0:.4f}, "
+                f"val_pr_auc: {monitor_pr_auc:.4f}, val_f1: {monitor_f1:.4f}, threshold: {threshold:.2f}, "
+                f"calibracion: {calibration_method}"
             )
 
         if epochs_without_improvement >= patience:
@@ -345,19 +492,28 @@ def train_model(
 
     with torch.no_grad():
         test_logits = model(X_test_tensor).cpu().numpy().reshape(-1)
-    test_prob = sigmoid_numpy(test_logits)
+    raw_test_prob = sigmoid_numpy(test_logits)
+    test_prob = apply_probability_calibrator(best_calibrator, raw_test_prob)
     test_metrics = classification_metrics(y_test, test_prob, best_threshold)
 
-    baseline_model = LogisticRegression(
-        max_iter=2000,
-        class_weight="balanced",
-        random_state=SEED,
-    )
-    baseline_model.fit(X_train, y_train)
-    baseline_val_prob = baseline_model.predict_proba(X_val)[:, 1]
-    baseline_threshold, baseline_val_metrics = select_best_threshold(y_val, baseline_val_prob)
-    baseline_test_prob = baseline_model.predict_proba(X_test)[:, 1]
-    baseline_test_metrics = classification_metrics(y_test, baseline_test_prob, baseline_threshold)
+    baseline_method = "logistic_regression_balanced"
+    if len(np.unique(y_train)) < 2:
+        baseline_constant_prob = np.full(len(X_val), float(np.mean(y_train)), dtype=np.float32)
+        baseline_threshold, baseline_val_metrics = select_best_threshold(y_val, baseline_constant_prob)
+        baseline_test_prob = np.full(len(X_test), float(np.mean(y_train)), dtype=np.float32)
+        baseline_test_metrics = classification_metrics(y_test, baseline_test_prob, baseline_threshold)
+        baseline_method = "constant_single_class_fallback"
+    else:
+        baseline_model = LogisticRegression(
+            max_iter=2000,
+            class_weight="balanced",
+            random_state=SEED,
+        )
+        baseline_model.fit(X_train, y_train)
+        baseline_val_prob = baseline_model.predict_proba(X_val)[:, 1]
+        baseline_threshold, baseline_val_metrics = select_best_threshold(y_val, baseline_val_prob)
+        baseline_test_prob = baseline_model.predict_proba(X_test)[:, 1]
+        baseline_test_metrics = classification_metrics(y_test, baseline_test_prob, baseline_threshold)
 
     avg_skill_val_prob = avg_skill_scores(X_val_df)
     avg_skill_threshold, avg_skill_val_metrics = select_best_threshold(y_val, avg_skill_val_prob)
@@ -398,9 +554,13 @@ def train_model(
             "epochs_trained": int(history[-1]["epoch"]) if history else 0,
             "learning_rate": float(lr),
             "patience": int(patience),
+            "batch_size": int(min(BATCH_SIZE, len(X_train_df))) if len(X_train_df) else 0,
+            "optimizer": "AdamW",
+            "weight_decay": float(DEFAULT_WEIGHT_DECAY),
+            "dropout": float(DEFAULT_DROPOUT),
             "age_min": int(EVAL_MIN_AGE),
             "age_max": int(EVAL_MAX_AGE),
-            "loss": "BCEWithLogitsLoss",
+            "loss": loss_name,
             "target_type": "temporal_progression",
             "pos_weight": float(pos_weight_value),
             "test_size": float(DEFAULT_TEST_SIZE),
@@ -417,12 +577,19 @@ def train_model(
         "pytorch": {
             "best_epoch": int(best_epoch),
             "selected_threshold": float(best_threshold),
+            "calibration_method": best_calibration_method,
             "validation": best_val_metrics,
             "test": test_metrics,
             "history": history,
         },
+        "calibration": {
+            "method": best_calibration_method,
+            "brier_validation": float(brier_score_loss(y_val, val_prob)) if len(y_val) else "",
+            "brier_test": float(brier_score_loss(y_test, test_prob)) if len(y_test) else "",
+        },
         "baselines": {
             "logistic_regression_balanced": {
+                "method": baseline_method,
                 "selected_threshold": float(baseline_threshold),
                 "validation": baseline_val_metrics,
                 "test": baseline_test_metrics,
@@ -434,11 +601,17 @@ def train_model(
             },
         },
     }
-    return model, preprocessor, metadata
+    return model, preprocessor, best_calibrator, metadata
 
 
 def save_model(model: nn.Module, path: str) -> None:
     torch.save(model.state_dict(), path)
+
+
+def save_calibrator(calibrator: Optional[object], path: str) -> None:
+    if calibrator is None:
+        return
+    dump(calibrator, path)
 
 
 def save_metadata(metadata: Dict[str, object], path: str) -> None:
@@ -449,19 +622,23 @@ def main(
     db_url: str,
     model_out: str,
     preprocessor_out: str,
+    calibrator_out: str,
     metadata_out: str,
     epochs: int,
     lr: float,
     patience: int = 8,
 ) -> None:
     feature_df, y, data_summary = load_data(db_url)
-    model, preprocessor, metadata = train_model(feature_df, y, epochs=epochs, lr=lr, patience=patience)
+    model, preprocessor, calibrator, metadata = train_model(feature_df, y, epochs=epochs, lr=lr, patience=patience)
     metadata["dataset_summary"] = data_summary
     save_model(model, model_out)
     save_preprocessor(preprocessor, preprocessor_out)
+    save_calibrator(calibrator, calibrator_out)
     save_metadata(metadata, metadata_out)
     print(f"Modelo guardado en {model_out}")
     print(f"Preprocesador guardado en {preprocessor_out}")
+    if calibrator is not None:
+        print(f"Calibrador guardado en {calibrator_out}")
     print(f"Metadata guardada en {metadata_out}")
 
     try:
@@ -472,6 +649,7 @@ def main(
             "lr": float(lr),
             "model_path": model_out,
             "preprocessor_path": preprocessor_out,
+            "calibration_method": metadata["calibration"]["method"],
             "accuracy": metadata["pytorch"]["test"]["accuracy"],
             "roc_auc": metadata["pytorch"]["test"]["roc_auc"],
             "pr_auc": metadata["pytorch"]["test"]["pr_auc"],
@@ -480,6 +658,7 @@ def main(
             "recall": metadata["pytorch"]["test"]["recall"],
             "train_size": metadata["dataset"]["train_size"],
             "test_size": metadata["dataset"]["test_size"],
+            "target_positive_rate": data_summary["class_distribution"]["positive_rate"],
         }
         log_experiment(row)
     except Exception as exc:
@@ -495,6 +674,7 @@ def log_experiment(row: dict) -> None:
         "lr",
         "model_path",
         "preprocessor_path",
+        "calibration_method",
         "accuracy",
         "roc_auc",
         "pr_auc",
@@ -503,6 +683,7 @@ def log_experiment(row: dict) -> None:
         "recall",
         "train_size",
         "test_size",
+        "target_positive_rate",
     ]
     write_header = not os.path.exists(exp_path)
     with open(exp_path, "a", newline="", encoding="utf-8") as file_obj:
@@ -528,13 +709,28 @@ if __name__ == "__main__":
         help="Ruta de salida del preprocesador",
     )
     parser.add_argument(
+        "--calibrator-out",
+        type=str,
+        default="probability_calibrator.joblib",
+        help="Ruta de salida del calibrador de probabilidades",
+    )
+    parser.add_argument(
         "--metadata-out",
         type=str,
         default="training_metadata.json",
         help="Ruta de salida de metadata del entrenamiento",
     )
     parser.add_argument("--epochs", type=int, default=30, help="Numero de epocas")
-    parser.add_argument("--lr", type=float, default=1e-3, help="Tasa de aprendizaje")
+    parser.add_argument("--lr", type=float, default=5e-4, help="Tasa de aprendizaje")
     parser.add_argument("--patience", type=int, default=8, help="Paciencia para early stopping")
     args = parser.parse_args()
-    main(args.db_url, args.model_out, args.preprocessor_out, args.metadata_out, args.epochs, args.lr, args.patience)
+    main(
+        args.db_url,
+        args.model_out,
+        args.preprocessor_out,
+        args.calibrator_out,
+        args.metadata_out,
+        args.epochs,
+        args.lr,
+        args.patience,
+    )

@@ -89,6 +89,7 @@ def build_evidence_markdown(metadata: dict) -> str:
 - Rama analizada: `{git_branch()}`
 - Cambio estructural ya incorporado: pipeline compartido de preprocesamiento con `pandas`, `ColumnTransformer`, `SimpleImputer`, `MinMaxScaler`, `OneHotEncoder` y persistencia en `preprocessor.joblib`.
 - Artefactos actuales del entrenamiento: `model.pt`, `preprocessor.joblib`, `training_metadata.json` y `experiments.csv`.
+- Artefacto adicional actual: `probability_calibrator.joblib`.
 - El objetivo del producto se mantiene acotado a scouting juvenil de 12 a 18 anos para clubes formativos.
 
 ## Diagnostico previo verificado antes de endurecer el entrenamiento
@@ -106,8 +107,11 @@ def build_evidence_markdown(metadata: dict) -> str:
 - Se reemplazo `BCELoss` por `BCEWithLogitsLoss`.
 - Se elimino la `Sigmoid` final de `PlayerNet` y ahora se trabaja con logits; la probabilidad se recupera con `torch.sigmoid(...)` solo en evaluacion e inferencia.
 - Se incorporo manejo explicito del desbalance con `pos_weight`.
+- Se agrego muestreo balanceado por mini-batch con `WeightedRandomSampler`.
 - Se cambio el split a `train / validation / test` con seleccion del threshold en validacion.
 - Se agrego early stopping sobre `PR-AUC` con desempate por `F1` positiva.
+- Se incorporo calibracion de probabilidades con seleccion automatica entre `none`, `isotonic` y `platt`.
+- Se adopto `AdamW` como optimizador base.
 - El entrenamiento ahora se alinea por defecto al alcance real del MVP: edades 12-18.
 - La generacion sintetica de `potential_label` ahora usa score ponderado por posicion, ajuste etario, componente mental y ruido controlado.
 - Se formalizo `LogisticRegression(class_weight="balanced")` como baseline obligatorio de comparacion.
@@ -138,8 +142,10 @@ def build_evidence_markdown(metadata: dict) -> str:
 - El entrenamiento ya no usa `potential_label` como target principal.
 - Ahora el target es `temporal_target_label`, derivado de un corte observado/futuro por jugador:
 - las features se construyen sobre la parte observada de la trayectoria
-- el target se marca positivo cuando el tramo futuro muestra crecimiento tecnico y mejora o consolidacion de rendimiento
+- el target se recalibra con umbrales explicitos de progresion y rendimiento futuro
+- el target positivo ahora admite dos caminos: consolidacion y breakout
 - el dataset temporal usa atributos anclados en el punto de corte para evitar fuga de informacion desde el estado final del jugador
+- `generate_data.py` ahora admite `--reset` para regenerar la base sintetica de entrenamiento desde cero de forma reproducible
 
 ## Resultado actual del entrenamiento mejorado
 - Fecha de corrida registrada: `{metadata["timestamp"]}`
@@ -149,6 +155,11 @@ def build_evidence_markdown(metadata: dict) -> str:
 - Split efectivo: train {metadata["dataset"]["train_size"]}, validation {metadata["dataset"]["validation_size"]}, test {metadata["dataset"]["test_size"]}.
 - `pos_weight` utilizado: {metadata["config"]["pos_weight"]:.4f}.
 - Early stopping: mejor epoca {metadata["pytorch"]["best_epoch"]} y threshold elegido {metadata["pytorch"]["selected_threshold"]:.3f}.
+- Metodo de calibracion seleccionado: `{metadata["pytorch"]["calibration_method"]}`.
+- Threshold de progresion del target: {format_metric(dataset_summary.get("temporal_target_threshold"))}.
+- Threshold de rendimiento futuro del target: {format_metric(dataset_summary.get("temporal_future_score_threshold"))}.
+- Casos positivos por via de consolidacion: {dataset_summary.get("temporal_consolidation_count", "N/D")}.
+- Casos positivos por via de breakout: {dataset_summary.get("temporal_breakout_count", "N/D")}.
 
 ## Metricas del modelo PyTorch actual
 - Validacion: accuracy {format_metric(pytorch_val["accuracy"])}, ROC-AUC {format_metric(pytorch_val["roc_auc"])}, PR-AUC {format_metric(pytorch_val["pr_auc"])}, F1 {format_metric(pytorch_val["f1"])}, precision {format_metric(pytorch_val["precision"])}, recall {format_metric(pytorch_val["recall"])}.
@@ -165,7 +176,9 @@ def build_evidence_markdown(metadata: dict) -> str:
 - El entrenamiento ya no usa solo foto fija: aprende con rendimiento historico y con evolucion tecnica de `PlayerAttributeHistory`.
 - El entrenamiento ahora tambien incorpora contexto de partido y senal cualitativa sintetica del scout.
 - El problema de entrenamiento ahora es metodologicamente mas realista porque el target representa progresion futura y no un booleano estatico sintetico.
-- El cambio de target volvio el problema mucho mas desbalanceado y exigente: la tasa positiva actual es {dataset_summary["class_distribution"]["positive_rate"]:.2%}.
+- El target temporal ya no depende de una sola puerta monotona: mezcla consolidacion y breakout con umbrales explicitados en metadata.
+- La calibracion de probabilidades si quedo implementada y en la corrida actual el metodo elegido fue `{metadata["pytorch"]["calibration_method"]}`.
+- El cambio de target mantiene un problema exigente y todavia desbalanceado: la tasa positiva actual es {dataset_summary["class_distribution"]["positive_rate"]:.2%}.
 - La alineacion del dataset a 12-18, el entrenamiento endurecido y las features longitudinales mejoraron fuerte la defendibilidad metodologica respecto al diagnostico previo.
 - Aun asi, el baseline `LogisticRegression(class_weight="balanced")` sigue superando a la MLP en ROC-AUC, PR-AUC y F1.
 - El baseline simple por promedio de atributos ya no explica bien el target frente al nuevo pipeline, lo que indica que la etiqueta sintetica quedo menos trivial que antes.
@@ -174,13 +187,13 @@ def build_evidence_markdown(metadata: dict) -> str:
 ## Limites que todavia no estan resueltos
 - Los partidos sinteticos todavia no representan encuentros compartidos entre varios jugadores del mismo plantel.
 - Los `ScoutReport` actuales siguen siendo sinteticos, no manuales ni cargados por usuarios reales.
-- Aunque el target ya es temporal, sus umbrales todavia son sinteticos y pueden requerir recalibracion.
-- No se implemento calibracion de probabilidades.
+- Aunque el target ya es temporal y esta mejor calibrado, sus umbrales siguen siendo sinteticos y pueden requerir otro ajuste.
+- La calibracion de probabilidades existe, pero por ahora no alcanza para que PyTorch supere al baseline lineal.
 - La evidencia actual sigue basada en datos sinteticos; no hay una validacion externa con datos reales.
 - La MLP mejoro, pero todavia no justifica por rendimiento reemplazar al baseline lineal como referencia formal.
 
 ## Pruebas ejecutadas
-- `pytest -q`: 33 tests aprobados.
+- `pytest -q`: 35 tests aprobados.
 - Cobertura nueva o reforzada:
 - persistencia del `preprocessor.joblib`
 - consistencia entre inferencia individual y batch
@@ -194,9 +207,9 @@ def build_evidence_markdown(metadata: dict) -> str:
 
 ## Procedimiento reproducible
 - Regenerar dataset de entrenamiento:
-- `python scouting_app/generate_data.py --num-players 20000 --db-url sqlite:///players_training.db --seed 42`
+- `python scouting_app/generate_data.py --num-players 20000 --db-url sqlite:///players_training.db --seed 42 --min-age 12 --max-age 18 --reset`
 - Reentrenar artefactos:
-- `python scouting_app/train_model.py --db-url sqlite:///players_training.db --model-out scouting_app/model.pt --preprocessor-out scouting_app/preprocessor.joblib --metadata-out scouting_app/training_metadata.json --epochs 30 --lr 1e-3 --patience 8`
+- `python scouting_app/train_model.py --db-url sqlite:///players_training.db --model-out scouting_app/model.pt --preprocessor-out scouting_app/preprocessor.joblib --calibrator-out scouting_app/probability_calibrator.joblib --metadata-out scouting_app/training_metadata.json --epochs 45 --lr 5e-4 --patience 10`
 - Ejecutar tests:
 - `python -m pytest -q`
 """

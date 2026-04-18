@@ -15,6 +15,7 @@ from sqlalchemy.orm import sessionmaker, load_only
 import numpy as np
 import pandas as pd
 import torch
+from joblib import load as joblib_load
 from models import (
     Base,
     Match,
@@ -504,6 +505,8 @@ def update_database_pipeline(limit: int = EVAL_POOL_MAX, sync_shortlist: bool = 
         MODEL_PATH,
         "--preprocessor-out",
         PREPROCESSOR_PATH,
+        "--calibrator-out",
+        CALIBRATOR_PATH,
         "--metadata-out",
         TRAINING_METADATA_PATH,
         "--epochs",
@@ -551,10 +554,15 @@ def update_database_pipeline(limit: int = EVAL_POOL_MAX, sync_shortlist: bool = 
         db.close()
 
     try:
-        global model, preprocessor
-        model, preprocessor = load_runtime_artifacts(MODEL_PATH, PREPROCESSOR_PATH, allow_retrain=False)
+        global model, preprocessor, probability_calibrator
+        model, preprocessor, probability_calibrator = load_runtime_artifacts(
+            MODEL_PATH,
+            PREPROCESSOR_PATH,
+            CALIBRATOR_PATH,
+            allow_retrain=False,
+        )
         invalidate_dashboard_cache()
-        overall_logs.append("Modelo y preprocesador recargados en memoria; cache del dashboard invalidado.")
+        overall_logs.append("Modelo, preprocesador y calibrador recargados en memoria; cache del dashboard invalidado.")
     except Exception as exc:
         overall_logs.append(f"No se pudieron recargar los artefactos del modelo despues del entrenamiento: {exc}")
         return False, overall_logs
@@ -778,11 +786,33 @@ def load_model_state(model_path: str, input_dim: int) -> PlayerNet:
     return model
 
 
+def load_probability_calibrator(calibrator_path: str):
+    if not os.path.exists(calibrator_path):
+        return None
+    try:
+        return joblib_load(calibrator_path)
+    except Exception:
+        return None
+
+
+def apply_probability_calibrator(calibrator, probabilities: List[float]) -> np.ndarray:
+    raw = np.asarray(probabilities, dtype=np.float32).reshape(-1)
+    if calibrator is None:
+        return raw
+    try:
+        if hasattr(calibrator, "predict_proba"):
+            return calibrator.predict_proba(raw.reshape(-1, 1))[:, 1].astype(np.float32)
+        return np.clip(np.asarray(calibrator.predict(raw), dtype=np.float32), 0.0, 1.0)
+    except Exception:
+        return raw
+
+
 def load_runtime_artifacts(
     model_path: str,
     preprocessor_path: str,
+    calibrator_path: Optional[str] = None,
     allow_retrain: bool = True,
-) -> Tuple[Optional[PlayerNet], Optional[object]]:
+) -> Tuple[Optional[PlayerNet], Optional[object], Optional[object]]:
     def retrain_or_raise(message: str, original_exc: Optional[Exception] = None):
         if not allow_retrain:
             if original_exc is not None:
@@ -814,17 +844,20 @@ def load_runtime_artifacts(
         preprocessor = load_saved_preprocessor(preprocessor_path)
         input_dim = preprocessor_input_dim(preprocessor)
         model = load_model_state(model_path, input_dim)
-    return model, preprocessor
+    calibrator = load_probability_calibrator(calibrator_path) if calibrator_path else None
+    return model, preprocessor, calibrator
 
 
 MODEL_PATH = os.path.join(BASE_DIR, "model.pt")
 PREPROCESSOR_PATH = os.path.join(BASE_DIR, "preprocessor.joblib")
+CALIBRATOR_PATH = os.path.join(BASE_DIR, "probability_calibrator.joblib")
 TRAINING_METADATA_PATH = os.path.join(BASE_DIR, "training_metadata.json")
 try:
-    model, preprocessor = load_runtime_artifacts(MODEL_PATH, PREPROCESSOR_PATH)
+    model, preprocessor, probability_calibrator = load_runtime_artifacts(MODEL_PATH, PREPROCESSOR_PATH, CALIBRATOR_PATH)
 except FileNotFoundError:
     model = None
     preprocessor = None
+    probability_calibrator = None
     print("Advertencia: modelo o preprocesador no encontrados.")
 
 def legacy_health_endpoint():
@@ -1066,7 +1099,8 @@ def batch_project_players(
                 )
             )
         )
-    base_probs = np.asarray(probs_tensor.detach().cpu().numpy()).reshape(-1).tolist()
+    raw_base_probs = np.asarray(probs_tensor.detach().cpu().numpy()).reshape(-1).tolist()
+    base_probs = apply_probability_calibrator(probability_calibrator, raw_base_probs).tolist()
 
     projections: Dict[int, Dict[str, object]] = {}
     for idx, player in enumerate(players):
