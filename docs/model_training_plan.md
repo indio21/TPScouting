@@ -11,10 +11,11 @@
 - `BCEWithLogitsLoss` en lugar de `BCELoss`.
 - Modelo sin `Sigmoid` final y trabajo con logits.
 - `pos_weight` aplicado por defecto para desbalance.
+- `shuffle` por defecto en lugar de doble rebalanceo fijo.
 - Split `train / validation / test`.
 - Seleccion de threshold por validacion.
 - Early stopping sobre `PR-AUC` con desempate por `F1`.
-- Resultado: PyTorch dejo de colapsar y alcanzo F1 0.4231 en test.
+- Resultado: PyTorch dejo de colapsar y alcanzo F1 0.3768 en test.
 
 ### Etapa 2 completada: alinear dataset al alcance real 12-18
 - Generacion sintetica por defecto restringida a 12-18.
@@ -31,7 +32,7 @@
 - Baseline obligatorio: `LogisticRegression(class_weight="balanced")`.
 - Comparacion bajo el mismo split y el mismo preprocesamiento.
 - Persistencia de metadata en `training_metadata.json`.
-- Estado actual: el baseline sigue mejor que PyTorch en test con F1 0.4409 vs 0.4231.
+- Estado actual: PyTorch supera al baseline en F1 operativa con 0.3768 vs 0.3659, pero sigue por debajo en `PR-AUC`.
 
 ### Etapa 5 completada en nivel MVP
 - Se persisten threshold, metricas, tamanos de split, seed y configuracion.
@@ -42,7 +43,7 @@
 - Se sintetizo historial de `PlayerStat` en la base de entrenamiento.
 - Se integraron features de `PlayerAttributeHistory` al entrenamiento e inferencia.
 - La base de entrenamiento ahora representa trayectoria tecnica del jugador, no solo foto fija.
-- Resultado actual: PyTorch queda en F1 0.4231 y PR-AUC 0.3279.
+- Resultado actual: PyTorch queda en F1 0.3768 y PR-AUC 0.2371.
 - Aun asi, el baseline lineal balanceado sigue siendo superior.
 
 ### Etapa 7 completada: contexto de partido y ScoutReport
@@ -50,21 +51,34 @@
 - El generador sintetico ahora crea partidos con contexto y participacion puntual del jugador.
 - `PlayerStat` pasa a derivarse de esas participaciones.
 - Se agregaron `ScoutReport` sinteticos al esquema y al pipeline.
-- Resultado actual: PyTorch queda en F1 0.4231 y PR-AUC 0.3279.
+- Resultado actual: PyTorch queda en F1 0.3768 y PR-AUC 0.2371.
 - El baseline lineal balanceado sigue siendo superior.
 
 ### Etapa 8 completada: target temporal de progresion
 - El entrenamiento deja de usar `potential_label` como target principal.
 - Las features de entrenamiento se construyen en un punto de corte observado de la trayectoria.
 - El target positivo se define por crecimiento tecnico futuro y mejora o consolidacion de rendimiento futuro.
-- Resultado actual: PyTorch queda en F1 0.4231 y PR-AUC 0.3279 sobre un target con tasa positiva 3.00%.
+- Resultado actual: PyTorch queda en F1 0.3768 y PR-AUC 0.2371 sobre un target con tasa positiva 1.69%.
 - El baseline lineal balanceado sigue siendo superior.
 
+### Etapa 9 completada: senales de disponibilidad y fisico
+- Se agregaron `PhysicalAssessment` y `PlayerAvailability`.
+- El generador sintetico ahora modela maduracion corporal, fatiga, carga, lesion e inactividad.
+- Las features agregadas de disponibilidad y fisico ya entran tanto en entrenamiento como en inferencia.
+- Resultado actual: PyTorch queda en F1 0.3768 y PR-AUC 0.2371.
+- Conclusion honesta: el dataset queda metodologicamente mas rico y la arquitectura residual ya mejora el F1 operativo, pero el baseline lineal balanceado sigue arriba en ranking global.
+
+### Etapa 10 completada: bootstrap lineal y correccion residual en PyTorch
+- `PlayerNet` ahora se inicializa desde la solucion de `LogisticRegression(class_weight="balanced")`.
+- La rama lineal queda dentro del modelo PyTorch y una rama residual aprende correcciones no lineales.
+- El entrenamiento pasa a usar `pos_weight` completo y `shuffle` por defecto.
+- Resultado actual: PyTorch supera al baseline en `F1` y precision, pero no en `ROC-AUC` ni `PR-AUC`.
+
 ## Siguiente iteracion recomendada
-### Etapa 9 recomendada: recalibracion del target y senales de disponibilidad
-- Revisar los umbrales del target temporal para evitar un positivo demasiado raro o demasiado facil.
-- Evaluar si conviene sumar `Availability` o `PhysicalAssessment`.
-- Revisar si PyTorch puede justificar su complejidad frente al baseline lineal bajo este target temporal.
+### Etapa 11 recomendada: redisenar aun mas el target y la relacion partido-plantel
+- Revisar otra vez los umbrales del target temporal para evitar un positivo demasiado raro o demasiado facil.
+- Pasar de partidos por jugador a partidos compartidos por plantel si se quiere ganar realismo extra.
+- Revisar si PyTorch puede justificar su complejidad frente al baseline lineal tambien en `PR-AUC`, no solo en `F1`.
 
 ## Criterios de aceptacion para la siguiente iteracion
 - La siguiente iteracion debe mejorar o estabilizar al menos una de estas metricas de PyTorch en test sin degradar claramente las demas:

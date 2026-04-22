@@ -1,6 +1,6 @@
 # Progreso Del MVP
 
-Fecha de actualizacion: 2026-04-17
+Fecha de actualizacion: 2026-04-22
 
 Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP real del proyecto `TPScouting`.
 
@@ -221,6 +221,38 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - PyTorch: `ROC-AUC 0.9247`, `PR-AUC 0.3279`, `F1 0.4231`
 - Baseline `LogisticRegression(class_weight="balanced")`: `ROC-AUC 0.9431`, `PR-AUC 0.3923`, `F1 0.4409`
 - Conclusion honesta: esta etapa mejoro con claridad respecto del target temporal publicado antes (`F1 +0.1703`, `PR-AUC +0.0681`), pero PyTorch todavia no supera al baseline lineal balanceado.
+
+### 18. Availability, PhysicalAssessment y trayectorias mas ricas
+
+- Se agregaron dos nuevas fuentes longitudinales al esquema:
+- `PhysicalAssessment`
+- `PlayerAvailability`
+- La base sintetica de entrenamiento ahora modela:
+- evaluaciones fisicas mensuales
+- crecimiento corporal
+- velocidad y resistencia estimadas
+- disponibilidad, fatiga, carga y lesion/inactividad
+- `generate_data.py` ahora conecta tecnica, fisico, disponibilidad y rendimiento en una misma trayectoria temporal.
+- El pipeline del modelo incorpora esas nuevas features tanto en entrenamiento como en inferencia.
+- Resultado medido sobre la corrida real actual:
+- positivos del target temporal: `338`
+- tasa positiva: `1.69%`
+- PyTorch: `ROC-AUC 0.9044`, `PR-AUC 0.2029`, `F1 0.2542`
+- Baseline `LogisticRegression(class_weight="balanced")`: `ROC-AUC 0.9425`, `PR-AUC 0.2775`, `F1 0.3659`
+- Conclusion honesta: la etapa mejora la riqueza metodologica del sistema, pero en esta corrida concreta empeora frente a la etapa anterior y PyTorch sigue sin superar al baseline lineal balanceado.
+
+### 19. Reentrenamiento residual apoyado en el baseline lineal
+
+- El entrenamiento ya no usa doble rebalanceo por defecto:
+- `pos_weight` pasa a usar la razon completa de clases
+- `shuffle` queda como estrategia default de batches
+- `WeightedRandomSampler` queda como opcion
+- `PlayerNet` paso a una arquitectura residual inicializada desde la solucion de `LogisticRegression(class_weight="balanced")`.
+- La rama lineal queda dentro del modelo PyTorch y una rama residual aprende correcciones no lineales sobre esa base.
+- Resultado medido sobre la corrida real actual:
+- PyTorch: `ROC-AUC 0.9306`, `PR-AUC 0.2371`, `F1 0.3768`, `precision 0.2989`, `recall 0.5098`
+- Baseline `LogisticRegression(class_weight="balanced")`: `ROC-AUC 0.9425`, `PR-AUC 0.2775`, `F1 0.3659`
+- Conclusion honesta: PyTorch ahora supera al baseline lineal en `F1` y precision al umbral operativo elegido, pero el baseline sigue siendo superior en `ROC-AUC` y `PR-AUC`. No seria honesto afirmar que ya gano globalmente.
 
 ## Tests Ejecutados
 

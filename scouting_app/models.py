@@ -61,6 +61,16 @@ class Player(TimestampMixin, Base):
         cascade="all, delete-orphan",
     )
     scout_reports = relationship("ScoutReport", back_populates="player", cascade="all, delete-orphan")
+    physical_assessments = relationship(
+        "PhysicalAssessment",
+        back_populates="player",
+        cascade="all, delete-orphan",
+    )
+    availability_records = relationship(
+        "PlayerAvailability",
+        back_populates="player",
+        cascade="all, delete-orphan",
+    )
 
     def to_dict(self) -> dict:
         """Convierte el modelo a un diccionario útil para JSON o plantillas."""
@@ -357,5 +367,69 @@ class ScoutReport(TimestampMixin, Base):
             "mental_profile": self.mental_profile,
             "adaptability": self.adaptability,
             "observed_projection_score": self.observed_projection_score,
+            "notes": self.notes,
+        }
+
+
+class PhysicalAssessment(TimestampMixin, Base):
+    """Evaluacion fisica puntual del jugador."""
+
+    __tablename__ = "physical_assessments"
+
+    id = Column(Integer, primary_key=True)
+    player_id = Column(Integer, ForeignKey("players.id"), nullable=False)
+    assessment_date = Column(Date, nullable=False)
+    height_cm = Column(Float, nullable=True)
+    weight_kg = Column(Float, nullable=True)
+    dominant_foot = Column(String, nullable=True)
+    estimated_speed = Column(Float, nullable=True)  # escala 0-20
+    endurance = Column(Float, nullable=True)  # escala 0-20
+    in_growth_spurt = Column(Boolean, nullable=False, default=False)
+    notes = Column(Text, nullable=True)
+
+    player = relationship("Player", back_populates="physical_assessments")
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "player_id": self.player_id,
+            "assessment_date": self.assessment_date.isoformat(),
+            "height_cm": self.height_cm,
+            "weight_kg": self.weight_kg,
+            "dominant_foot": self.dominant_foot,
+            "estimated_speed": self.estimated_speed,
+            "endurance": self.endurance,
+            "in_growth_spurt": self.in_growth_spurt,
+            "notes": self.notes,
+        }
+
+
+class PlayerAvailability(TimestampMixin, Base):
+    """Disponibilidad longitudinal del jugador para entrenar y competir."""
+
+    __tablename__ = "player_availability"
+
+    id = Column(Integer, primary_key=True)
+    player_id = Column(Integer, ForeignKey("players.id"), nullable=False)
+    record_date = Column(Date, nullable=False)
+    availability_pct = Column(Float, nullable=True)  # 0-100
+    fatigue_pct = Column(Float, nullable=True)  # 0-100
+    training_load_pct = Column(Float, nullable=True)  # 0-100
+    missed_days = Column(Integer, nullable=False, default=0)
+    injury_flag = Column(Boolean, nullable=False, default=False)
+    notes = Column(Text, nullable=True)
+
+    player = relationship("Player", back_populates="availability_records")
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "player_id": self.player_id,
+            "record_date": self.record_date.isoformat(),
+            "availability_pct": self.availability_pct,
+            "fatigue_pct": self.fatigue_pct,
+            "training_load_pct": self.training_load_pct,
+            "missed_days": self.missed_days,
+            "injury_flag": self.injury_flag,
             "notes": self.notes,
         }

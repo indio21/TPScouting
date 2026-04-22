@@ -19,8 +19,10 @@ from db_utils import create_app_engine, ensure_player_columns, normalize_db_url
 from models import (
     Base,
     Match,
+    PhysicalAssessment,
     Player,
     PlayerAttributeHistory,
+    PlayerAvailability,
     PlayerMatchParticipation,
     PlayerStat,
     ScoutReport,
@@ -60,6 +62,14 @@ COMPETITION_CATEGORIES = [
     "Sub-17",
     "Reserva juvenil",
 ]
+DEVELOPMENT_ARCHETYPES = [
+    "steady_builder",
+    "late_bloomer",
+    "early_burst",
+    "setback_rebound",
+    "volatile_creator",
+]
+DOMINANT_FEET = ["Derecha", "Izquierda", "Ambos"]
 
 
 def next_identifier() -> str:
@@ -180,6 +190,12 @@ def generate_player(min_age: int = EVAL_MIN_AGE, max_age: int = EVAL_MAX_AGE) ->
 def build_development_profile(player: Player) -> Dict[str, float]:
     attrs = player_attr_map(player)
     age = int(player.age or EVAL_MAX_AGE)
+    development_archetype = random.choices(
+        DEVELOPMENT_ARCHETYPES,
+        weights=[0.32, 0.20, 0.14, 0.16, 0.18],
+        k=1,
+    )[0]
+    dominant_foot = random.choices(DOMINANT_FEET, weights=[0.68, 0.18, 0.14], k=1)[0]
     resilience = clamp(
         0.45 + attrs["determination"] / 26.0 + attrs["physical"] / 90.0 + random.uniform(-0.12, 0.12),
         0.45,
@@ -219,6 +235,39 @@ def build_development_profile(player: Player) -> Dict[str, float]:
         0.55,
         0.97,
     )
+    body_maturity = clamp(
+        0.50 + (age - EVAL_MIN_AGE) * 0.08 + attrs["physical"] / 65.0 + random.uniform(-0.10, 0.10),
+        0.45,
+        1.35,
+    )
+    injury_proneness = clamp(
+        0.18
+        + (1.0 - availability) * 0.55
+        + max(0.0, 0.95 - resilience) * 0.20
+        + random.uniform(-0.06, 0.06),
+        0.06,
+        0.72,
+    )
+    recovery_quality = clamp(
+        0.42 + resilience * 0.34 + professionalism * 0.18 + random.uniform(-0.05, 0.05),
+        0.35,
+        1.20,
+    )
+    baseline_height_cm = clamp(
+        144.0 + age * 2.6 + attrs["physical"] * 0.9 + random.uniform(-8.0, 8.0),
+        145.0,
+        196.0,
+    )
+    height_ceiling_cm = clamp(
+        baseline_height_cm + random.uniform(1.5, 8.5) * max(0.4, 1.05 - body_maturity * 0.25),
+        baseline_height_cm + 1.0,
+        200.0,
+    )
+    baseline_weight_kg = clamp(
+        37.0 + age * 1.65 + attrs["physical"] * 0.75 + random.uniform(-4.5, 4.5),
+        38.0,
+        94.0,
+    )
     snapshot_count = random.randint(6, 12)
     slump_month = random.randint(2, snapshot_count - 1) if snapshot_count >= 4 and random.random() < 0.42 else None
     return {
@@ -232,6 +281,14 @@ def build_development_profile(player: Player) -> Dict[str, float]:
         "tactical_discipline": tactical_discipline,
         "adaptability_bias": adaptability_bias,
         "professionalism": professionalism,
+        "development_archetype": development_archetype,
+        "dominant_foot": dominant_foot,
+        "body_maturity": body_maturity,
+        "injury_proneness": injury_proneness,
+        "recovery_quality": recovery_quality,
+        "baseline_height_cm": baseline_height_cm,
+        "height_ceiling_cm": height_ceiling_cm,
+        "baseline_weight_kg": baseline_weight_kg,
     }
 
 
@@ -262,6 +319,24 @@ def avg(values: List[float]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
+def trajectory_curve_multiplier(progress_fraction: float, archetype: str) -> float:
+    progress_fraction = clamp(progress_fraction, 0.0, 1.0)
+    if archetype == "late_bloomer":
+        return 0.70 + (progress_fraction**1.8) * 0.95
+    if archetype == "early_burst":
+        return 0.85 + ((1.0 - progress_fraction) ** 1.6) * 0.70
+    if archetype == "setback_rebound":
+        return 0.78 + math.sin(progress_fraction * math.pi) * 0.55
+    if archetype == "volatile_creator":
+        return 0.82 + math.sin(progress_fraction * math.pi * 2.2) * 0.22
+    return 0.88 + progress_fraction * 0.35
+
+
+def physical_growth_curve(progress_fraction: float, body_maturity: float, archetype: str) -> float:
+    base_curve = trajectory_curve_multiplier(progress_fraction, archetype)
+    return clamp(base_curve * (0.82 + body_maturity * 0.22), 0.55, 1.65)
+
+
 def adjacent_positions(position: str) -> List[str]:
     mapping = {
         "Portero": ["Portero"],
@@ -286,20 +361,29 @@ def synthetic_attribute_history(
 
     for months_back in range(snapshot_count, 0, -1):
         remaining_fraction = months_back / float(snapshot_count + 1)
-        wave = math.sin(((snapshot_count - months_back + 1) / float(snapshot_count + 1)) * math.pi)
+        progress_fraction = (snapshot_count - months_back + 1) / float(snapshot_count + 1)
+        archetype_curve = trajectory_curve_multiplier(progress_fraction, str(profile["development_archetype"]))
+        wave = math.sin(progress_fraction * math.pi)
         values: Dict[str, int] = {}
         for field in ATTRIBUTE_FIELDS:
             current_value = float(current_attrs[field])
             weight = position_weights(player.position)[field]
-            progression_component = growth_map[field] * remaining_fraction
-            curve_component = growth_map[field] * 0.10 * wave
-            noise = random.gauss(0.0, profile["volatility"] * (0.30 + weight))
+            progression_component = growth_map[field] * remaining_fraction * archetype_curve
+            curve_component = growth_map[field] * 0.10 * wave * (0.85 + profile["adaptability_bias"] * 0.08)
+            noise_scale = profile["volatility"] * (0.30 + weight) * (1.12 if profile["development_archetype"] == "volatile_creator" else 0.95)
+            noise = random.gauss(0.0, noise_scale)
             slump = 0.0
             if slump_month and months_back == slump_month:
                 slump = random.uniform(-0.9, -0.3) * (0.30 + weight) * (1.18 - profile["resilience"] * 0.14)
+                if profile["development_archetype"] == "setback_rebound":
+                    slump *= 1.25
             growth_spurt = 0.0
             if player.age <= 14 and months_back in (1, 2) and random.random() < 0.35:
                 growth_spurt = random.uniform(0.10, 0.35) * (0.25 + weight) * profile["professionalism"]
+                if profile["development_archetype"] == "late_bloomer":
+                    growth_spurt *= 1.18
+            if profile["development_archetype"] == "early_burst" and progress_fraction <= 0.30:
+                growth_spurt += random.uniform(0.05, 0.18) * (0.20 + weight)
             historical_value = current_value - progression_component + curve_component + noise + slump
             values[field] = int(round(clamp(historical_value + growth_spurt, 0.0, current_value)))
 
@@ -313,9 +397,163 @@ def synthetic_attribute_history(
     return history
 
 
+def synthetic_physical_assessments(
+    player: Player,
+    attribute_history: List[PlayerAttributeHistory],
+    profile: Dict[str, float],
+) -> List[PhysicalAssessment]:
+    if not attribute_history:
+        return []
+
+    assessments: List[PhysicalAssessment] = []
+    total_points = max(1, len(attribute_history))
+    previous_height = float(profile["baseline_height_cm"])
+    previous_weight = float(profile["baseline_weight_kg"])
+
+    for index, entry in enumerate(attribute_history):
+        progress_fraction = (index + 1) / float(total_points)
+        curve = physical_growth_curve(progress_fraction, float(profile["body_maturity"]), str(profile["development_archetype"]))
+        attrs = {field: float(getattr(entry, field) or 0) for field in ATTRIBUTE_FIELDS}
+        growth_spurt = bool(
+            player.age <= 15
+            and curve >= 1.08
+            and progress_fraction >= 0.55
+            and random.random() < 0.42
+        )
+        height_room = max(0.5, float(profile["height_ceiling_cm"]) - previous_height)
+        height_increment = clamp(
+            (height_room / max(1.0, total_points - index + 0.5)) * curve + random.uniform(-0.2, 0.45),
+            0.0,
+            2.4 if growth_spurt else 1.2,
+        )
+        height_cm = clamp(previous_height + height_increment, 145.0, float(profile["height_ceiling_cm"]))
+        weight_trend = 0.35 + attrs["physical"] * 0.08 + float(profile["body_maturity"]) * 0.45
+        if growth_spurt:
+            weight_trend *= 0.82
+        weight_kg = clamp(
+            previous_weight + random.uniform(0.1, 0.9) * curve + weight_trend * 0.08,
+            38.0,
+            95.0,
+        )
+        estimated_speed = clamp(
+            attrs["pace"] * 0.72
+            + attrs["physical"] * 0.18
+            + float(profile["adaptability_bias"]) * 1.4
+            - (0.25 if growth_spurt else 0.0)
+            + random.gauss(0.0, 0.45),
+            3.0,
+            20.0,
+        )
+        endurance = clamp(
+            attrs["physical"] * 0.62
+            + attrs["determination"] * 0.20
+            + float(profile["resilience"]) * 1.6
+            + float(profile["professionalism"]) * 0.8
+            + random.gauss(0.0, 0.45),
+            3.0,
+            20.0,
+        )
+        assessments.append(
+            PhysicalAssessment(
+                player_id=player.id,
+                assessment_date=entry.record_date,
+                height_cm=round(height_cm, 1),
+                weight_kg=round(weight_kg, 1),
+                dominant_foot=str(profile["dominant_foot"]),
+                estimated_speed=round(estimated_speed, 2),
+                endurance=round(endurance, 2),
+                in_growth_spurt=growth_spurt,
+                notes="Dato sintetico de evaluacion fisica longitudinal",
+            )
+        )
+        previous_height = height_cm
+        previous_weight = weight_kg
+
+    return assessments
+
+
+def synthetic_availability_history(
+    player: Player,
+    attribute_history: List[PlayerAttributeHistory],
+    physical_assessments: List[PhysicalAssessment],
+    profile: Dict[str, float],
+) -> List[PlayerAvailability]:
+    if not attribute_history:
+        return []
+
+    physical_map = {assessment.assessment_date: assessment for assessment in physical_assessments}
+    availability_rows: List[PlayerAvailability] = []
+    previous_fatigue = 24.0
+    previous_availability = float(profile["availability"]) * 100.0
+    total_points = max(1, len(attribute_history))
+
+    for index, entry in enumerate(attribute_history):
+        progress_fraction = (index + 1) / float(total_points)
+        attrs = {field: float(getattr(entry, field) or 0) for field in ATTRIBUTE_FIELDS}
+        physical = physical_map.get(entry.record_date)
+        growth_spurt = bool(physical.in_growth_spurt) if physical is not None else False
+        load_base = 56.0 + attrs["determination"] * 1.1 + float(profile["professionalism"]) * 9.0
+        if profile["development_archetype"] == "early_burst":
+            load_base += 4.5
+        if profile["development_archetype"] == "setback_rebound" and 0.35 <= progress_fraction <= 0.65:
+            load_base -= 6.0
+        training_load_pct = clamp(load_base + random.gauss(0.0, 6.0), 38.0, 96.0)
+        fatigue_pct = clamp(
+            previous_fatigue * 0.40
+            + training_load_pct * 0.36
+            + (18.0 if growth_spurt else 0.0)
+            + float(profile["injury_proneness"]) * 18.0
+            - float(profile["recovery_quality"]) * 12.0
+            + random.gauss(0.0, 5.0),
+            8.0,
+            92.0,
+        )
+        injury_risk = clamp(
+            float(profile["injury_proneness"]) * 0.55
+            + fatigue_pct / 180.0
+            + (0.12 if growth_spurt else 0.0)
+            - float(profile["resilience"]) * 0.08
+            + random.uniform(-0.05, 0.05),
+            0.02,
+            0.72,
+        )
+        injured = random.random() < injury_risk * (0.32 if index == total_points - 1 else 0.24)
+        missed_days = int(round(clamp(random.gauss(0.0, 1.5) + (6 if injured else 0) + max(0.0, fatigue_pct - 70.0) / 8.0, 0.0, 18.0)))
+        availability_pct = clamp(
+            previous_availability * 0.28
+            + float(profile["availability"]) * 52.0
+            + attrs["determination"] * 0.9
+            + float(profile["recovery_quality"]) * 10.0
+            - fatigue_pct * 0.34
+            - missed_days * 2.4
+            - (7.0 if injured else 0.0)
+            + random.gauss(0.0, 4.0),
+            35.0,
+            98.0,
+        )
+        availability_rows.append(
+            PlayerAvailability(
+                player_id=player.id,
+                record_date=entry.record_date,
+                availability_pct=round(availability_pct, 2),
+                fatigue_pct=round(fatigue_pct, 2),
+                training_load_pct=round(training_load_pct, 2),
+                missed_days=missed_days,
+                injury_flag=injured,
+                notes="Dato sintetico de disponibilidad mensual",
+            )
+        )
+        previous_fatigue = fatigue_pct
+        previous_availability = availability_pct
+
+    return availability_rows
+
+
 def synthetic_matches_and_stats(
     player: Player,
     attribute_history: List[PlayerAttributeHistory],
+    physical_assessments: List[PhysicalAssessment],
+    availability_history: List[PlayerAvailability],
     profile: Dict[str, float],
 ) -> tuple[List[Match], List[PlayerMatchParticipation], List[PlayerStat]]:
     if not attribute_history:
@@ -325,6 +563,8 @@ def synthetic_matches_and_stats(
     participations: List[PlayerMatchParticipation] = []
     stats: List[PlayerStat] = []
     previous_weighted_score = None
+    physical_map = {assessment.assessment_date: assessment for assessment in physical_assessments}
+    availability_map = {row.record_date: row for row in availability_history}
 
     for entry in attribute_history:
         attrs = {field: float(getattr(entry, field) or 0) for field in ATTRIBUTE_FIELDS}
@@ -332,11 +572,21 @@ def synthetic_matches_and_stats(
         avg_attr_score = sum(attrs.values()) / len(attrs)
         momentum = 0.0 if previous_weighted_score is None else weighted_score - previous_weighted_score
         previous_weighted_score = weighted_score
+        physical = physical_map.get(entry.record_date)
+        availability = availability_map.get(entry.record_date)
+        availability_pct = float(availability.availability_pct) if availability and availability.availability_pct is not None else float(profile["availability"]) * 100.0
+        fatigue_pct = float(availability.fatigue_pct) if availability and availability.fatigue_pct is not None else 28.0
+        training_load_pct = float(availability.training_load_pct) if availability and availability.training_load_pct is not None else 62.0
+        missed_days = int(availability.missed_days) if availability is not None else 0
+        is_injured = bool(availability.injury_flag) if availability is not None else False
+        speed_score = float(physical.estimated_speed) if physical and physical.estimated_speed is not None else attrs["pace"]
+        endurance_score = float(physical.endurance) if physical and physical.endurance is not None else attrs["physical"]
+        growth_spurt = bool(physical.in_growth_spurt) if physical is not None else False
 
-        if random.random() > profile["availability"]:
+        if is_injured or random.random() > (availability_pct / 100.0):
             continue
 
-        monthly_match_count = random.randint(1, 3)
+        monthly_match_count = max(1, min(3, random.randint(1, 3) - (1 if missed_days >= 6 else 0)))
         monthly_participations: List[PlayerMatchParticipation] = []
         alternative_positions = [value for value in adjacent_positions(player.position) if value != player.position]
 
@@ -350,8 +600,9 @@ def synthetic_matches_and_stats(
                 0.24
                 + weighted_score / 28.0
                 + momentum / 6.0
-                + profile["availability"] * 0.10
+                + (availability_pct / 100.0) * 0.12
                 + (profile["professionalism"] - 0.85) * 0.08
+                - fatigue_pct / 300.0
                 - max(0, opponent_level - 3) * 0.05,
                 0.10,
                 0.93,
@@ -365,14 +616,18 @@ def synthetic_matches_and_stats(
             minutes_base = random.randint(62, 90) if is_starter else random.randint(12, 38)
             fatigue_penalty = max(
                 0.0,
-                (1.0 - profile["availability"]) * random.uniform(0.0, 1.5) * (1.12 - profile["resilience"] * 0.10),
+                (1.0 - (availability_pct / 100.0)) * random.uniform(0.0, 1.5) * (1.12 - profile["resilience"] * 0.10)
+                + fatigue_pct / 65.0
+                + (0.45 if growth_spurt else 0.0),
             )
-            minutes_played = int(round(clamp(minutes_base - fatigue_penalty * 8, 5, 90)))
+            minutes_played = int(round(clamp(minutes_base - fatigue_penalty * 8 - missed_days * 0.8, 5, 90)))
             pass_accuracy = clamp(
                 (attrs["passing"] * 0.40 + attrs["vision"] * 0.32 + attrs["technique"] * 0.28) * 5
                 + momentum * 3.0
                 - pressure * 4.5
                 + (profile["tactical_discipline"] - 0.85) * 6.0
+                - max(0.0, training_load_pct - 78.0) * 0.10
+                - fatigue_pct * 0.06
                 + random.gauss(0.0, 5.0),
                 35.0,
                 96.0,
@@ -382,6 +637,8 @@ def synthetic_matches_and_stats(
                 + momentum * 2.4
                 - pressure * 3.4
                 + (profile["professionalism"] - 0.85) * 4.0
+                + (speed_score - attrs["pace"]) * 0.9
+                - fatigue_pct * 0.05
                 + random.gauss(0.0, 6.5),
                 18.0,
                 92.0,
@@ -391,6 +648,8 @@ def synthetic_matches_and_stats(
                 + momentum * 2.8
                 - pressure * 4.0
                 + (profile["resilience"] - 0.85) * 5.5
+                + (endurance_score - attrs["physical"]) * 0.75
+                - fatigue_pct * 0.04
                 + random.gauss(0.0, 6.0),
                 25.0,
                 95.0,
@@ -404,6 +663,9 @@ def synthetic_matches_and_stats(
                 + (0.18 if is_starter else -0.12)
                 + (profile["professionalism"] - 0.85) * 0.35
                 + (profile["adaptability_bias"] - 0.80) * (0.25 if position_played != player.position else 0.08)
+                + (availability_pct - 78.0) * 0.012
+                - fatigue_pct * 0.014
+                - (0.10 if growth_spurt else 0.0)
                 + random.gauss(0.0, 0.45),
                 1.0,
                 10.0,
@@ -478,6 +740,8 @@ def synthetic_scout_reports(
     player: Player,
     attribute_history: List[PlayerAttributeHistory],
     stats: List[PlayerStat],
+    physical_assessments: List[PhysicalAssessment],
+    availability_history: List[PlayerAvailability],
     profile: Dict[str, float],
 ) -> List[ScoutReport]:
     if not attribute_history:
@@ -485,6 +749,8 @@ def synthetic_scout_reports(
 
     report_stride = random.randint(2, 3)
     stats_by_date = {stat.record_date: stat for stat in stats}
+    physical_by_date = {assessment.assessment_date: assessment for assessment in physical_assessments}
+    availability_by_date = {row.record_date: row for row in availability_history}
     reports: List[ScoutReport] = []
     previous_weighted_score = None
 
@@ -495,7 +761,12 @@ def synthetic_scout_reports(
         attrs = {field: float(getattr(entry, field) or 0) for field in ATTRIBUTE_FIELDS}
         weighted_score = weighted_score_from_attrs(attrs, player.position)
         recent_stat = stats_by_date.get(entry.record_date)
+        physical = physical_by_date.get(entry.record_date)
+        availability = availability_by_date.get(entry.record_date)
         recent_final_score = float(recent_stat.final_score) if recent_stat and recent_stat.final_score is not None else 6.0
+        availability_pct = float(availability.availability_pct) if availability and availability.availability_pct is not None else float(profile["availability"]) * 100.0
+        fatigue_pct = float(availability.fatigue_pct) if availability and availability.fatigue_pct is not None else 24.0
+        endurance_score = float(physical.endurance) if physical and physical.endurance is not None else attrs["physical"]
         trend = 0.0 if previous_weighted_score is None else weighted_score - previous_weighted_score
         previous_weighted_score = weighted_score
 
@@ -527,9 +798,11 @@ def synthetic_scout_reports(
                 clamp(
                     attrs["determination"] * 0.62
                     + attrs["physical"] * 0.16
-                    + profile["availability"] * 4.0
+                    + (availability_pct / 100.0) * 4.0
                     + profile["resilience"] * 2.2
+                    + endurance_score * 0.10
                     + recent_final_score * 0.32
+                    - fatigue_pct * 0.03
                     + random.gauss(0.0, 1.0),
                     0.0,
                     20.0,
@@ -610,6 +883,8 @@ def main(
         session.flush()
 
         attribute_history_batch: List[PlayerAttributeHistory] = []
+        physical_assessment_batch: List[PhysicalAssessment] = []
+        availability_batch: List[PlayerAvailability] = []
         matches_batch: List[Match] = []
         participations_batch: List[PlayerMatchParticipation] = []
         stats_batch: List[PlayerStat] = []
@@ -621,12 +896,26 @@ def main(
                 entry.player_id = player.id
             attribute_history_batch.extend(attribute_history)
 
+            physical_assessments = synthetic_physical_assessments(player, attribute_history, profile)
+            availability_rows = synthetic_availability_history(player, attribute_history, physical_assessments, profile)
+            physical_assessment_batch.extend(physical_assessments)
+            availability_batch.extend(availability_rows)
+
             generated_matches, generated_participations, generated_stats = synthetic_matches_and_stats(
                 player,
                 attribute_history,
+                physical_assessments,
+                availability_rows,
                 profile,
             )
-            generated_reports = synthetic_scout_reports(player, attribute_history, generated_stats, profile)
+            generated_reports = synthetic_scout_reports(
+                player,
+                attribute_history,
+                generated_stats,
+                physical_assessments,
+                availability_rows,
+                profile,
+            )
 
             matches_batch.extend(generated_matches)
             participations_batch.extend(generated_participations)
@@ -635,6 +924,10 @@ def main(
 
         if attribute_history_batch:
             session.add_all(attribute_history_batch)
+        if physical_assessment_batch:
+            session.add_all(physical_assessment_batch)
+        if availability_batch:
+            session.add_all(availability_batch)
         if matches_batch:
             session.add_all(matches_batch)
         if participations_batch:

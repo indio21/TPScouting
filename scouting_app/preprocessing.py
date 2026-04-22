@@ -13,7 +13,16 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from sqlalchemy import select
 
-from models import Match, Player, PlayerAttributeHistory, PlayerMatchParticipation, PlayerStat, ScoutReport
+from models import (
+    Match,
+    PhysicalAssessment,
+    Player,
+    PlayerAttributeHistory,
+    PlayerAvailability,
+    PlayerMatchParticipation,
+    PlayerStat,
+    ScoutReport,
+)
 from player_logic import ATTRIBUTE_FIELDS, POSITION_CHOICES, position_weights
 
 STATS_FEATURE_COLUMNS: List[str] = [
@@ -56,11 +65,37 @@ SCOUT_REPORT_FEATURE_COLUMNS: List[str] = [
     "scout_latest_projection_score",
     "scout_projection_trend",
 ]
+PHYSICAL_FEATURE_COLUMNS: List[str] = [
+    "phys_assessment_count",
+    "phys_recent_height_cm",
+    "phys_recent_weight_kg",
+    "phys_recent_speed_score",
+    "phys_recent_endurance_score",
+    "phys_recent_bmi",
+    "phys_height_growth_365d",
+    "phys_weight_change_180d",
+    "phys_growth_spurt_rate",
+    "phys_left_footed_rate",
+    "phys_two_footed_rate",
+]
+AVAILABILITY_FEATURE_COLUMNS: List[str] = [
+    "avail_record_count",
+    "avail_avg_pct",
+    "avail_recent_pct",
+    "avail_avg_fatigue",
+    "avail_recent_fatigue",
+    "avail_avg_training_load",
+    "avail_injury_rate",
+    "avail_missed_days_avg",
+    "avail_availability_trend",
+]
 HISTORICAL_FEATURE_COLUMNS: List[str] = [
     *STATS_FEATURE_COLUMNS,
     *ATTRIBUTE_HISTORY_FEATURE_COLUMNS,
     *MATCH_FEATURE_COLUMNS,
     *SCOUT_REPORT_FEATURE_COLUMNS,
+    *PHYSICAL_FEATURE_COLUMNS,
+    *AVAILABILITY_FEATURE_COLUMNS,
 ]
 BASE_NUMERIC_FEATURE_COLUMNS: List[str] = ["age", *ATTRIBUTE_FIELDS]
 NUMERIC_FEATURE_COLUMNS: List[str] = [*BASE_NUMERIC_FEATURE_COLUMNS, *HISTORICAL_FEATURE_COLUMNS]
@@ -211,18 +246,51 @@ def scout_report_dataframe_from_engine(engine) -> pd.DataFrame:
         return pd.read_sql(query, connection)
 
 
+def physical_assessment_dataframe_from_engine(engine) -> pd.DataFrame:
+    query = select(
+        PhysicalAssessment.player_id,
+        PhysicalAssessment.assessment_date,
+        PhysicalAssessment.height_cm,
+        PhysicalAssessment.weight_kg,
+        PhysicalAssessment.dominant_foot,
+        PhysicalAssessment.estimated_speed,
+        PhysicalAssessment.endurance,
+        PhysicalAssessment.in_growth_spurt,
+    )
+    with engine.connect() as connection:
+        return pd.read_sql(query, connection)
+
+
+def availability_dataframe_from_engine(engine) -> pd.DataFrame:
+    query = select(
+        PlayerAvailability.player_id,
+        PlayerAvailability.record_date,
+        PlayerAvailability.availability_pct,
+        PlayerAvailability.fatigue_pct,
+        PlayerAvailability.training_load_pct,
+        PlayerAvailability.missed_days,
+        PlayerAvailability.injury_flag,
+    )
+    with engine.connect() as connection:
+        return pd.read_sql(query, connection)
+
+
 def training_dataframe_from_engine(engine) -> pd.DataFrame:
     players_df = player_base_dataframe_from_engine(engine)
     stats_df = stats_dataframe_from_engine(engine)
     attribute_history_df = attribute_history_dataframe_from_engine(engine)
     match_participation_df = match_participation_dataframe_from_engine(engine)
     scout_report_df = scout_report_dataframe_from_engine(engine)
+    physical_assessment_df = physical_assessment_dataframe_from_engine(engine)
+    availability_df = availability_dataframe_from_engine(engine)
     return merge_historical_features(
         players_df,
         stats_df,
         attribute_history_df,
         match_participation_df,
         scout_report_df,
+        physical_assessment_df,
+        availability_df,
     )
 
 
@@ -232,12 +300,16 @@ def temporal_training_dataframe_from_engine(engine) -> pd.DataFrame:
     attribute_history_df = attribute_history_dataframe_from_engine(engine)
     match_participation_df = match_participation_dataframe_from_engine(engine)
     scout_report_df = scout_report_dataframe_from_engine(engine)
+    physical_assessment_df = physical_assessment_dataframe_from_engine(engine)
+    availability_df = availability_dataframe_from_engine(engine)
     return build_temporal_training_dataframe(
         players_df,
         stats_df,
         attribute_history_df,
         match_participation_df,
         scout_report_df,
+        physical_assessment_df,
+        availability_df,
     )
 
 
@@ -247,6 +319,8 @@ def dataframe_from_players(
     attribute_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
     match_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
     scout_report_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
+    physical_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
+    availability_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
 ) -> pd.DataFrame:
     base_df = player_base_dataframe_from_players(players)
     rows = []
@@ -254,6 +328,8 @@ def dataframe_from_players(
     attribute_feature_map = attribute_feature_map or {}
     match_feature_map = match_feature_map or {}
     scout_report_feature_map = scout_report_feature_map or {}
+    physical_feature_map = physical_feature_map or {}
+    availability_feature_map = availability_feature_map or {}
     for row in base_df.to_dict(orient="records"):
         player_id = row["player_id"]
         rows.append(
@@ -263,6 +339,8 @@ def dataframe_from_players(
                 **attribute_history_feature_defaults(attribute_feature_map.get(player_id)),
                 **match_feature_defaults(match_feature_map.get(player_id)),
                 **scout_report_feature_defaults(scout_report_feature_map.get(player_id)),
+                **physical_feature_defaults(physical_feature_map.get(player_id)),
+                **availability_feature_defaults(availability_feature_map.get(player_id)),
             }
         )
     return pd.DataFrame(rows, columns=["player_id", *MODEL_FEATURE_COLUMNS])
@@ -358,6 +436,42 @@ def scout_report_feature_defaults(
         "scout_avg_adaptability": source.get("scout_avg_adaptability"),
         "scout_latest_projection_score": source.get("scout_latest_projection_score"),
         "scout_projection_trend": source.get("scout_projection_trend"),
+    }
+
+
+def physical_feature_defaults(
+    values: Optional[Dict[str, Optional[float]]] = None,
+) -> Dict[str, Optional[float]]:
+    source = values or {}
+    return {
+        "phys_assessment_count": source.get("phys_assessment_count"),
+        "phys_recent_height_cm": source.get("phys_recent_height_cm"),
+        "phys_recent_weight_kg": source.get("phys_recent_weight_kg"),
+        "phys_recent_speed_score": source.get("phys_recent_speed_score"),
+        "phys_recent_endurance_score": source.get("phys_recent_endurance_score"),
+        "phys_recent_bmi": source.get("phys_recent_bmi"),
+        "phys_height_growth_365d": source.get("phys_height_growth_365d"),
+        "phys_weight_change_180d": source.get("phys_weight_change_180d"),
+        "phys_growth_spurt_rate": source.get("phys_growth_spurt_rate"),
+        "phys_left_footed_rate": source.get("phys_left_footed_rate"),
+        "phys_two_footed_rate": source.get("phys_two_footed_rate"),
+    }
+
+
+def availability_feature_defaults(
+    values: Optional[Dict[str, Optional[float]]] = None,
+) -> Dict[str, Optional[float]]:
+    source = values or {}
+    return {
+        "avail_record_count": source.get("avail_record_count"),
+        "avail_avg_pct": source.get("avail_avg_pct"),
+        "avail_recent_pct": source.get("avail_recent_pct"),
+        "avail_avg_fatigue": source.get("avail_avg_fatigue"),
+        "avail_recent_fatigue": source.get("avail_recent_fatigue"),
+        "avail_avg_training_load": source.get("avail_avg_training_load"),
+        "avail_injury_rate": source.get("avail_injury_rate"),
+        "avail_missed_days_avg": source.get("avail_missed_days_avg"),
+        "avail_availability_trend": source.get("avail_availability_trend"),
     }
 
 
@@ -563,7 +677,120 @@ def aggregate_scout_report_dataframe(scout_report_df: pd.DataFrame) -> pd.DataFr
     return grouped.merge(latest_df, on="player_id", how="left").merge(trend_df, on="player_id", how="left")
 
 
-def _timestamp_cutoff_map(attribute_history_df: pd.DataFrame, stats_df: pd.DataFrame) -> Dict[int, pd.Timestamp]:
+def aggregate_physical_assessment_dataframe(physical_assessment_df: pd.DataFrame) -> pd.DataFrame:
+    if physical_assessment_df.empty:
+        return pd.DataFrame(columns=["player_id", *PHYSICAL_FEATURE_COLUMNS])
+
+    working_df = physical_assessment_df.copy()
+    working_df["assessment_date"] = pd.to_datetime(working_df["assessment_date"], errors="coerce")
+    working_df["dominant_foot"] = working_df["dominant_foot"].fillna("").astype(str).str.lower()
+    working_df["phys_left_footed_flag"] = working_df["dominant_foot"].isin(["izquierda", "left"]).astype(int)
+    working_df["phys_two_footed_flag"] = working_df["dominant_foot"].isin(["ambos", "both"]).astype(int)
+    working_df["in_growth_spurt_numeric"] = working_df["in_growth_spurt"].fillna(False).astype(int)
+    working_df["phys_recent_bmi"] = np.where(
+        (working_df["height_cm"].fillna(0) > 0) & (working_df["weight_kg"].fillna(0) > 0),
+        working_df["weight_kg"].astype(float) / np.power(working_df["height_cm"].astype(float) / 100.0, 2),
+        np.nan,
+    )
+
+    grouped = (
+        working_df.groupby("player_id", as_index=False)
+        .agg(
+            phys_assessment_count=("player_id", "size"),
+            phys_growth_spurt_rate=("in_growth_spurt_numeric", "mean"),
+            phys_left_footed_rate=("phys_left_footed_flag", "mean"),
+            phys_two_footed_rate=("phys_two_footed_flag", "mean"),
+        )
+    )
+    latest_df = (
+        working_df.sort_values(["player_id", "assessment_date"])
+        .groupby("player_id", as_index=False)
+        .tail(1)
+        .loc[:, ["player_id", "height_cm", "weight_kg", "estimated_speed", "endurance", "phys_recent_bmi"]]
+        .rename(
+            columns={
+                "height_cm": "phys_recent_height_cm",
+                "weight_kg": "phys_recent_weight_kg",
+                "estimated_speed": "phys_recent_speed_score",
+                "endurance": "phys_recent_endurance_score",
+            }
+        )
+    )
+    growth_rows = []
+    for player_id, group in working_df.groupby("player_id", sort=False):
+        ordered = group.sort_values("assessment_date").reset_index(drop=True).rename(columns={"assessment_date": "record_date"})
+        growth_rows.append(
+            {
+                "player_id": int(player_id),
+                "phys_height_growth_365d": _delta_for_window(ordered, "height_cm", 365),
+                "phys_weight_change_180d": _delta_for_window(ordered, "weight_kg", 180),
+            }
+        )
+    growth_df = pd.DataFrame(growth_rows, columns=["player_id", "phys_height_growth_365d", "phys_weight_change_180d"])
+    return (
+        grouped.merge(latest_df, on="player_id", how="left")
+        .merge(growth_df, on="player_id", how="left")
+        .loc[:, ["player_id", *PHYSICAL_FEATURE_COLUMNS]]
+    )
+
+
+def aggregate_availability_dataframe(availability_df: pd.DataFrame) -> pd.DataFrame:
+    if availability_df.empty:
+        return pd.DataFrame(columns=["player_id", *AVAILABILITY_FEATURE_COLUMNS])
+
+    working_df = availability_df.copy()
+    working_df["record_date"] = pd.to_datetime(working_df["record_date"], errors="coerce")
+    working_df["injury_numeric"] = working_df["injury_flag"].fillna(False).astype(int)
+
+    grouped = (
+        working_df.groupby("player_id", as_index=False)
+        .agg(
+            avail_record_count=("player_id", "size"),
+            avail_avg_pct=("availability_pct", "mean"),
+            avail_avg_fatigue=("fatigue_pct", "mean"),
+            avail_avg_training_load=("training_load_pct", "mean"),
+            avail_injury_rate=("injury_numeric", "mean"),
+            avail_missed_days_avg=("missed_days", "mean"),
+        )
+    )
+    latest_df = (
+        working_df.sort_values(["player_id", "record_date"])
+        .groupby("player_id", as_index=False)
+        .tail(1)
+        .loc[:, ["player_id", "availability_pct", "fatigue_pct"]]
+        .rename(
+            columns={
+                "availability_pct": "avail_recent_pct",
+                "fatigue_pct": "avail_recent_fatigue",
+            }
+        )
+    )
+    trend_rows = []
+    for player_id, group in working_df.groupby("player_id", sort=False):
+        ordered = group.sort_values("record_date").dropna(subset=["availability_pct"])
+        if len(ordered) < 2:
+            availability_trend = np.nan
+        else:
+            days = (ordered["record_date"] - ordered["record_date"].iloc[0]).dt.days.astype(float)
+            if float(days.iloc[-1]) <= 0:
+                availability_trend = np.nan
+            else:
+                availability_trend = float(np.polyfit(days.to_numpy(), ordered["availability_pct"].astype(float).to_numpy(), 1)[0])
+        trend_rows.append({"player_id": int(player_id), "avail_availability_trend": availability_trend})
+    trend_df = pd.DataFrame(trend_rows, columns=["player_id", "avail_availability_trend"])
+    return (
+        grouped.merge(latest_df, on="player_id", how="left")
+        .merge(trend_df, on="player_id", how="left")
+        .loc[:, ["player_id", *AVAILABILITY_FEATURE_COLUMNS]]
+    )
+
+
+def _timestamp_cutoff_map(
+    attribute_history_df: pd.DataFrame,
+    stats_df: pd.DataFrame,
+    physical_assessment_df: Optional[pd.DataFrame] = None,
+    availability_df: Optional[pd.DataFrame] = None,
+) -> Dict[int, pd.Timestamp]:
     date_frames: List[pd.DataFrame] = []
     if not attribute_history_df.empty:
         attr_dates = attribute_history_df.loc[:, ["player_id", "record_date"]].copy()
@@ -573,6 +800,14 @@ def _timestamp_cutoff_map(attribute_history_df: pd.DataFrame, stats_df: pd.DataF
         stat_dates = stats_df.loc[:, ["player_id", "record_date"]].copy()
         stat_dates["event_date"] = pd.to_datetime(stat_dates["record_date"], errors="coerce")
         date_frames.append(stat_dates.loc[:, ["player_id", "event_date"]])
+    if physical_assessment_df is not None and not physical_assessment_df.empty:
+        physical_dates = physical_assessment_df.loc[:, ["player_id", "assessment_date"]].copy()
+        physical_dates["event_date"] = pd.to_datetime(physical_dates["assessment_date"], errors="coerce")
+        date_frames.append(physical_dates.loc[:, ["player_id", "event_date"]])
+    if availability_df is not None and not availability_df.empty:
+        availability_dates = availability_df.loc[:, ["player_id", "record_date"]].copy()
+        availability_dates["event_date"] = pd.to_datetime(availability_dates["record_date"], errors="coerce")
+        date_frames.append(availability_dates.loc[:, ["player_id", "event_date"]])
     if not date_frames:
         return {}
 
@@ -685,6 +920,48 @@ def _future_match_target_metrics(
     return grouped
 
 
+def _future_availability_target_metrics(
+    availability_df: pd.DataFrame,
+    cutoff_map: Dict[int, pd.Timestamp],
+) -> pd.DataFrame:
+    if availability_df.empty or not cutoff_map:
+        return pd.DataFrame(
+            columns=[
+                "player_id",
+                "future_availability_pct",
+                "future_fatigue_pct",
+                "future_training_load_pct",
+                "future_injury_rate",
+                "future_missed_days_avg",
+            ]
+        )
+
+    future_availability_df = _filter_rows_by_cutoff(availability_df, "player_id", "record_date", cutoff_map, False)
+    if future_availability_df.empty:
+        return pd.DataFrame(
+            columns=[
+                "player_id",
+                "future_availability_pct",
+                "future_fatigue_pct",
+                "future_training_load_pct",
+                "future_injury_rate",
+                "future_missed_days_avg",
+            ]
+        )
+
+    future_availability_df["injury_numeric"] = future_availability_df["injury_flag"].fillna(False).astype(int)
+    return (
+        future_availability_df.groupby("player_id", as_index=False)
+        .agg(
+            future_availability_pct=("availability_pct", "mean"),
+            future_fatigue_pct=("fatigue_pct", "mean"),
+            future_training_load_pct=("training_load_pct", "mean"),
+            future_injury_rate=("injury_numeric", "mean"),
+            future_missed_days_avg=("missed_days", "mean"),
+        )
+    )
+
+
 def _temporal_anchor_players_dataframe(
     players_df: pd.DataFrame,
     attribute_history_df: pd.DataFrame,
@@ -757,6 +1034,7 @@ def _temporal_target_dataframe(
     attribute_history_df: pd.DataFrame,
     cutoff_map: Dict[int, pd.Timestamp],
     match_participation_df: Optional[pd.DataFrame] = None,
+    availability_df: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     if players_df.empty or not cutoff_map:
         return pd.DataFrame(
@@ -774,6 +1052,11 @@ def _temporal_target_dataframe(
                 "observed_final_score",
                 "future_final_score",
                 "final_score_growth",
+                "future_availability_pct",
+                "future_fatigue_pct",
+                "future_training_load_pct",
+                "future_injury_rate",
+                "future_missed_days_avg",
             ]
         )
 
@@ -801,6 +1084,14 @@ def _temporal_target_dataframe(
     future_match_metrics_map = {
         int(row["player_id"]): row
         for row in future_match_metrics_df.to_dict(orient="records")
+    }
+    future_availability_metrics_df = _future_availability_target_metrics(
+        availability_df if availability_df is not None else pd.DataFrame(),
+        cutoff_map,
+    )
+    future_availability_metrics_map = {
+        int(row["player_id"]): row
+        for row in future_availability_metrics_df.to_dict(orient="records")
     }
 
     rows = []
@@ -841,6 +1132,12 @@ def _temporal_target_dataframe(
         future_high_difficulty_score = float(match_metrics.get("future_high_difficulty_score")) if match_metrics.get("future_high_difficulty_score") is not None else np.nan
         future_natural_position_rate = float(match_metrics.get("future_natural_position_rate")) if match_metrics.get("future_natural_position_rate") is not None else np.nan
         future_match_entry_count = float(match_metrics.get("future_match_entry_count")) if match_metrics.get("future_match_entry_count") is not None else np.nan
+        availability_metrics = future_availability_metrics_map.get(player_id, {})
+        future_availability_pct = float(availability_metrics.get("future_availability_pct")) if availability_metrics.get("future_availability_pct") is not None else np.nan
+        future_fatigue_pct = float(availability_metrics.get("future_fatigue_pct")) if availability_metrics.get("future_fatigue_pct") is not None else np.nan
+        future_training_load_pct = float(availability_metrics.get("future_training_load_pct")) if availability_metrics.get("future_training_load_pct") is not None else np.nan
+        future_injury_rate = float(availability_metrics.get("future_injury_rate")) if availability_metrics.get("future_injury_rate") is not None else np.nan
+        future_missed_days_avg = float(availability_metrics.get("future_missed_days_avg")) if availability_metrics.get("future_missed_days_avg") is not None else np.nan
 
         growth_component = _sigmoid_component(weighted_score_growth, center=0.14, scale=0.22)
         future_level_component = _sigmoid_component(future_weighted_score, center=12.7, scale=0.65)
@@ -863,16 +1160,30 @@ def _temporal_target_dataframe(
             0.75 * _sigmoid_component(future_natural_position_rate, center=0.62, scale=0.18)
             + 0.25 * _sigmoid_component(future_natural_position_rate, center=0.88, scale=0.08)
         )
+        availability_component = (
+            _sigmoid_component(future_availability_pct, center=78.0, scale=7.5)
+            * _sigmoid_component(
+                100.0 - future_fatigue_pct if not np.isnan(future_fatigue_pct) else np.nan,
+                center=45.0,
+                scale=14.0,
+            )
+            * _sigmoid_component(
+                1.0 - future_injury_rate if not np.isnan(future_injury_rate) else np.nan,
+                center=0.82,
+                scale=0.12,
+            )
+        )
         breakout_component = growth_component * max(performance_component, challenge_component) * max(consistency_component, 0.15)
         stability_penalty = _sigmoid_component(observed_weighted_volatility, center=0.24, scale=0.08)
         progression_score = (
-            0.20 * growth_component
-            + 0.16 * future_level_component
-            + 0.18 * performance_component
+            0.18 * growth_component
+            + 0.15 * future_level_component
+            + 0.17 * performance_component
             + 0.14 * challenge_component
-            + 0.12 * consistency_component
+            + 0.10 * consistency_component
             + 0.08 * role_component
-            + 0.22 * breakout_component
+            + 0.09 * availability_component
+            + 0.19 * breakout_component
             - 0.10 * stability_penalty
         )
 
@@ -891,6 +1202,11 @@ def _temporal_target_dataframe(
                 "observed_final_score": observed_final_score,
                 "future_final_score": future_final_score,
                 "final_score_growth": final_score_growth,
+                "future_availability_pct": future_availability_pct,
+                "future_fatigue_pct": future_fatigue_pct,
+                "future_training_load_pct": future_training_load_pct,
+                "future_injury_rate": future_injury_rate,
+                "future_missed_days_avg": future_missed_days_avg,
                 "future_minutes_per_match": future_minutes_per_match,
                 "future_start_rate": future_start_rate,
                 "future_avg_opponent_level": future_avg_opponent_level,
@@ -909,9 +1225,12 @@ def _temporal_target_dataframe(
     breakout_growth_threshold = float(target_df["weighted_score_growth"].dropna().quantile(0.88))
     breakout_final_growth_threshold = float(target_df["final_score_growth"].dropna().quantile(0.88))
     breakout_difficulty_threshold = float(target_df["future_high_difficulty_score"].dropna().quantile(0.80))
+    availability_threshold = float(target_df["future_availability_pct"].dropna().quantile(0.48))
+    low_fatigue_threshold = float(target_df["future_fatigue_pct"].dropna().quantile(0.58))
+    injury_threshold = float(target_df["future_injury_rate"].dropna().quantile(0.70))
 
-    target_threshold = max(progression_quantile_threshold, 0.40)
-    future_score_threshold = max(future_final_quantile_threshold, 5.25)
+    target_threshold = max(progression_quantile_threshold, 0.37)
+    future_score_threshold = max(future_final_quantile_threshold, 4.60)
     target_df["temporal_target_threshold"] = target_threshold
     target_df["temporal_future_score_threshold"] = future_score_threshold
     consolidation_mask = (
@@ -919,6 +1238,9 @@ def _temporal_target_dataframe(
         & (target_df["future_final_score"].fillna(0.0) >= future_score_threshold)
         & (target_df["future_natural_position_rate"].fillna(0.0) >= 0.65)
         & (target_df["observed_weighted_volatility"].fillna(99.0) <= volatility_threshold)
+        & (target_df["future_availability_pct"].fillna(0.0) >= max(availability_threshold, 70.0))
+        & (target_df["future_fatigue_pct"].fillna(100.0) <= min(low_fatigue_threshold, 40.0))
+        & (target_df["future_injury_rate"].fillna(1.0) <= max(injury_threshold, 0.28))
         & (
             (target_df["future_minutes_per_match"].fillna(0.0) >= 42.0)
             | (target_df["future_start_rate"].fillna(0.0) >= 0.40)
@@ -929,6 +1251,8 @@ def _temporal_target_dataframe(
         & (target_df["final_score_growth"].fillna(-99.0) >= breakout_final_growth_threshold)
         & (target_df["future_high_difficulty_score"].fillna(0.0) >= breakout_difficulty_threshold)
         & (target_df["future_start_rate"].fillna(0.0) >= 0.45)
+        & (target_df["future_availability_pct"].fillna(0.0) >= 62.0)
+        & (target_df["future_injury_rate"].fillna(1.0) <= 0.28)
     )
     target_df["temporal_consolidation_path"] = consolidation_mask
     target_df["temporal_breakout_path"] = breakout_mask
@@ -942,8 +1266,15 @@ def build_temporal_training_dataframe(
     attribute_history_df: pd.DataFrame,
     match_participation_df: Optional[pd.DataFrame] = None,
     scout_report_df: Optional[pd.DataFrame] = None,
+    physical_assessment_df: Optional[pd.DataFrame] = None,
+    availability_df: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
-    cutoff_map = _timestamp_cutoff_map(attribute_history_df, stats_df)
+    cutoff_map = _timestamp_cutoff_map(
+        attribute_history_df,
+        stats_df,
+        physical_assessment_df=physical_assessment_df,
+        availability_df=availability_df,
+    )
     if not cutoff_map:
         empty_columns = [
             "player_id",
@@ -964,6 +1295,11 @@ def build_temporal_training_dataframe(
             "observed_final_score",
             "future_final_score",
             "final_score_growth",
+            "future_availability_pct",
+            "future_fatigue_pct",
+            "future_training_load_pct",
+            "future_injury_rate",
+            "future_missed_days_avg",
             "future_minutes_per_match",
             "future_start_rate",
             "future_avg_opponent_level",
@@ -990,12 +1326,28 @@ def build_temporal_training_dataframe(
         cutoff_map,
         True,
     )
+    observed_physical_df = _filter_rows_by_cutoff(
+        physical_assessment_df if physical_assessment_df is not None else pd.DataFrame(),
+        "player_id",
+        "assessment_date",
+        cutoff_map,
+        True,
+    )
+    observed_availability_df = _filter_rows_by_cutoff(
+        availability_df if availability_df is not None else pd.DataFrame(),
+        "player_id",
+        "record_date",
+        cutoff_map,
+        True,
+    )
     features_df = merge_historical_features(
         anchor_players_df,
         observed_stats_df,
         observed_attr_df,
         observed_match_df,
         observed_scout_df,
+        observed_physical_df,
+        observed_availability_df,
     )
     target_df = _temporal_target_dataframe(
         players_df,
@@ -1003,6 +1355,7 @@ def build_temporal_training_dataframe(
         attribute_history_df,
         cutoff_map,
         match_participation_df=match_participation_df,
+        availability_df=availability_df,
     )
     if target_df.empty:
         return target_df
@@ -1016,6 +1369,8 @@ def merge_historical_features(
     attribute_history_df: Optional[pd.DataFrame] = None,
     match_participation_df: Optional[pd.DataFrame] = None,
     scout_report_df: Optional[pd.DataFrame] = None,
+    physical_assessment_df: Optional[pd.DataFrame] = None,
+    availability_df: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     merged = players_df.copy()
     stats_features_df = aggregate_stats_dataframe(stats_df)
@@ -1032,6 +1387,14 @@ def merge_historical_features(
     scout_report_df = scout_report_df if scout_report_df is not None else pd.DataFrame()
     scout_features_df = aggregate_scout_report_dataframe(scout_report_df)
     merged = merged.merge(scout_features_df, on="player_id", how="left")
+
+    physical_assessment_df = physical_assessment_df if physical_assessment_df is not None else pd.DataFrame()
+    physical_features_df = aggregate_physical_assessment_dataframe(physical_assessment_df)
+    merged = merged.merge(physical_features_df, on="player_id", how="left")
+
+    availability_df = availability_df if availability_df is not None else pd.DataFrame()
+    availability_features_df = aggregate_availability_dataframe(availability_df)
+    merged = merged.merge(availability_features_df, on="player_id", how="left")
 
     for column in HISTORICAL_FEATURE_COLUMNS:
         if column not in merged.columns:

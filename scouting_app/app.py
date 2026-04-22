@@ -19,10 +19,12 @@ from joblib import load as joblib_load
 from models import (
     Base,
     Match,
+    PhysicalAssessment,
     Player,
     Coach,
     Director,
     User,
+    PlayerAvailability,
     PlayerStat,
     PlayerAttributeHistory,
     PlayerMatchParticipation,
@@ -34,13 +36,17 @@ from functools import wraps
 from db_utils import normalize_db_url, create_app_engine, ensure_player_columns
 from preprocessing import (
     aggregate_attribute_history_dataframe,
+    aggregate_availability_dataframe,
     aggregate_match_participation_dataframe,
+    aggregate_physical_assessment_dataframe,
     aggregate_scout_report_dataframe,
     aggregate_stats_dataframe,
+    availability_feature_defaults,
     attribute_history_feature_defaults,
     dataframe_from_players,
     load_preprocessor as load_saved_preprocessor,
     match_feature_defaults,
+    physical_feature_defaults,
     player_base_dataframe_from_players,
     preprocessor_input_dim,
     scout_report_feature_defaults,
@@ -1045,12 +1051,69 @@ def fetch_player_scout_report_feature_map(player_ids: List[int]) -> Dict[int, Di
     return feature_map
 
 
+def fetch_player_physical_feature_map(player_ids: List[int]) -> Dict[int, Dict[str, Optional[float]]]:
+    if not player_ids:
+        return {}
+    query = (
+        select(
+            PhysicalAssessment.player_id,
+            PhysicalAssessment.assessment_date,
+            PhysicalAssessment.height_cm,
+            PhysicalAssessment.weight_kg,
+            PhysicalAssessment.dominant_foot,
+            PhysicalAssessment.estimated_speed,
+            PhysicalAssessment.endurance,
+            PhysicalAssessment.in_growth_spurt,
+        )
+        .where(PhysicalAssessment.player_id.in_(player_ids))
+    )
+    with engine.connect() as connection:
+        physical_df = pd.read_sql(query, connection)
+    aggregated_df = aggregate_physical_assessment_dataframe(physical_df)
+    if aggregated_df.empty:
+        return {}
+    feature_map: Dict[int, Dict[str, Optional[float]]] = {}
+    for row in aggregated_df.to_dict(orient="records"):
+        player_id = int(row["player_id"])
+        feature_map[player_id] = physical_feature_defaults(row)
+    return feature_map
+
+
+def fetch_player_availability_feature_map(player_ids: List[int]) -> Dict[int, Dict[str, Optional[float]]]:
+    if not player_ids:
+        return {}
+    query = (
+        select(
+            PlayerAvailability.player_id,
+            PlayerAvailability.record_date,
+            PlayerAvailability.availability_pct,
+            PlayerAvailability.fatigue_pct,
+            PlayerAvailability.training_load_pct,
+            PlayerAvailability.missed_days,
+            PlayerAvailability.injury_flag,
+        )
+        .where(PlayerAvailability.player_id.in_(player_ids))
+    )
+    with engine.connect() as connection:
+        availability_df = pd.read_sql(query, connection)
+    aggregated_df = aggregate_availability_dataframe(availability_df)
+    if aggregated_df.empty:
+        return {}
+    feature_map: Dict[int, Dict[str, Optional[float]]] = {}
+    for row in aggregated_df.to_dict(orient="records"):
+        player_id = int(row["player_id"])
+        feature_map[player_id] = availability_feature_defaults(row)
+    return feature_map
+
+
 def players_to_model_tensor(
     players: List[Player],
     stats_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
     attribute_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
     match_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
     scout_report_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
+    physical_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
+    availability_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
 ) -> torch.Tensor:
     if preprocessor is None:
         raise RuntimeError("No hay preprocesador cargado para inferencia.")
@@ -1059,12 +1122,16 @@ def players_to_model_tensor(
     attribute_feature_map = attribute_feature_map or fetch_player_attribute_feature_map(players)
     match_feature_map = match_feature_map or fetch_player_match_feature_map(players)
     scout_report_feature_map = scout_report_feature_map or fetch_player_scout_report_feature_map(player_ids)
+    physical_feature_map = physical_feature_map or fetch_player_physical_feature_map(player_ids)
+    availability_feature_map = availability_feature_map or fetch_player_availability_feature_map(player_ids)
     features_df = dataframe_from_players(
         players,
         stats_feature_map=stats_feature_map,
         attribute_feature_map=attribute_feature_map,
         match_feature_map=match_feature_map,
         scout_report_feature_map=scout_report_feature_map,
+        physical_feature_map=physical_feature_map,
+        availability_feature_map=availability_feature_map,
     )
     features_array = transform_features(features_df, preprocessor)
     return torch.tensor(features_array, dtype=torch.float32)
@@ -1077,6 +1144,8 @@ def batch_project_players(
     attribute_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
     match_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
     scout_report_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
+    physical_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
+    availability_feature_map: Optional[Dict[int, Dict[str, Optional[float]]]] = None,
 ) -> Dict[int, Dict[str, object]]:
     if not players or model is None or preprocessor is None:
         return {}
@@ -1087,6 +1156,8 @@ def batch_project_players(
     attribute_feature_map = attribute_feature_map or fetch_player_attribute_feature_map(players)
     match_feature_map = match_feature_map or fetch_player_match_feature_map(players)
     scout_report_feature_map = scout_report_feature_map or fetch_player_scout_report_feature_map(player_ids)
+    physical_feature_map = physical_feature_map or fetch_player_physical_feature_map(player_ids)
+    availability_feature_map = availability_feature_map or fetch_player_availability_feature_map(player_ids)
     with torch.no_grad():
         probs_tensor = torch.sigmoid(
             model(
@@ -1096,6 +1167,8 @@ def batch_project_players(
                     attribute_feature_map=attribute_feature_map,
                     match_feature_map=match_feature_map,
                     scout_report_feature_map=scout_report_feature_map,
+                    physical_feature_map=physical_feature_map,
+                    availability_feature_map=availability_feature_map,
                 )
             )
         )

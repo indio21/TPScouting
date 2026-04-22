@@ -22,11 +22,12 @@
 - Se reemplazo `BCELoss` por `BCEWithLogitsLoss`.
 - Se elimino la `Sigmoid` final de `PlayerNet` y ahora se trabaja con logits; la probabilidad se recupera con `torch.sigmoid(...)` solo en evaluacion e inferencia.
 - Se incorporo manejo explicito del desbalance con `pos_weight`.
-- Se agrego muestreo balanceado por mini-batch con `WeightedRandomSampler`.
+- El entrenamiento paso a usar `shuffle` por defecto y deja `WeightedRandomSampler` como opcion, evitando el doble rebalanceo por defecto.
 - Se cambio el split a `train / validation / test` con seleccion del threshold en validacion.
 - Se agrego early stopping sobre `PR-AUC` con desempate por `F1` positiva.
 - Se incorporo calibracion de probabilidades con seleccion automatica entre `none`, `isotonic` y `platt`.
 - Se adopto `AdamW` como optimizador base.
+- `PlayerNet` ya no es una MLP plana: ahora arranca desde la solucion de `LogisticRegression(class_weight="balanced")` y aprende una correccion residual no lineal encima.
 - El entrenamiento ahora se alinea por defecto al alcance real del MVP: edades 12-18.
 - La generacion sintetica de `potential_label` ahora usa score ponderado por posicion, ajuste etario, componente mental y ruido controlado.
 - Se formalizo `LogisticRegression(class_weight="balanced")` como baseline obligatorio de comparacion.
@@ -54,6 +55,12 @@
 - cantidad de reportes
 - medias de toma de decisiones, lectura tactica, perfil mental y adaptabilidad
 - ultima proyeccion observada por scout
+- Se agregaron `PhysicalAssessment` y `PlayerAvailability` al esquema sintetico.
+- El pipeline ahora incorpora senales de:
+- altura y peso recientes
+- crecimiento corporal
+- velocidad y resistencia estimadas
+- disponibilidad, fatiga, carga de trabajo y tasa de lesion
 - El entrenamiento ya no usa `potential_label` como target principal.
 - Ahora el target es `temporal_target_label`, derivado de un corte observado/futuro por jugador:
 - las features se construyen sobre la parte observada de la trayectoria
@@ -63,49 +70,53 @@
 - `generate_data.py` ahora admite `--reset` para regenerar la base sintetica de entrenamiento desde cero de forma reproducible
 
 ## Resultado actual del entrenamiento mejorado
-- Fecha de corrida registrada: `2026-04-18T03:05:47.143763`
+- Fecha de corrida registrada: `2026-04-22T00:48:09.395350`
 - Dataset actual: 20000 jugadores dentro del rango 12-17.
-- Distribucion actual de clases: 599 positivos y 19401 negativos.
-- Tasa positiva actual: 3.00%.
+- Distribucion actual de clases: 338 positivos y 19662 negativos.
+- Tasa positiva actual: 1.69%.
 - Split efectivo: train 14000, validation 3000, test 3000.
-- `pos_weight` utilizado: 5.6932.
-- Early stopping: mejor epoca 1 y threshold elegido 0.175.
+- `pos_weight` utilizado: 58.3220.
+- Estrategia de desbalance activa: `pos_weight_strategy=full_ratio` y `sampler_strategy=shuffle`.
+- Early stopping: mejor epoca 3 y threshold elegido 0.150.
 - Metodo de calibracion seleccionado: `isotonic`.
-- Threshold de progresion del target: 0.4051.
-- Threshold de rendimiento futuro del target: 5.2500.
-- Casos positivos por via de consolidacion: 542.
-- Casos positivos por via de breakout: 66.
+- Threshold de progresion del target: 0.3700.
+- Threshold de rendimiento futuro del target: 4.6600.
+- Casos positivos por via de consolidacion: 310.
+- Casos positivos por via de breakout: 28.
 
 ## Metricas del modelo PyTorch actual
-- Validacion: accuracy 0.9570, ROC-AUC 0.9543, PR-AUC 0.3558, F1 0.4317, precision 0.3577, recall 0.5444.
-- Test: accuracy 0.9600, ROC-AUC 0.9247, PR-AUC 0.3279, F1 0.4231, precision 0.3729, recall 0.4889.
-- Matriz de confusion PyTorch en test: [[2836, 74], [46, 44]].
+- Validacion: accuracy 0.9710, ROC-AUC 0.9485, PR-AUC 0.2305, F1 0.3040, precision 0.2568, recall 0.3725.
+- Test: accuracy 0.9713, ROC-AUC 0.9306, PR-AUC 0.2371, F1 0.3768, precision 0.2989, recall 0.5098.
+- Matriz de confusion PyTorch en test: [[2888, 61], [25, 26]].
 
 ## Baselines actuales bajo el mismo split y preprocesamiento
-- `LogisticRegression(class_weight="balanced")`: accuracy 0.9527, ROC-AUC 0.9431, PR-AUC 0.3923, F1 0.4409, precision 0.3415, recall 0.6222.
-- Baseline simple por promedio de atributos: accuracy 0.9547, ROC-AUC 0.9137, PR-AUC 0.2876, F1 0.3061.
+- `LogisticRegression(class_weight="balanced")`: accuracy 0.9653, ROC-AUC 0.9425, PR-AUC 0.2775, F1 0.3659, precision 0.2655, recall 0.5882.
+- Baseline simple por promedio de atributos: accuracy 0.9690, ROC-AUC 0.9004, PR-AUC 0.1993, F1 0.2560.
 
 ## Hallazgos verificados
 - El nuevo preprocesamiento compartido con `pandas` y `scikit-learn` quedo implementado y funcionando tanto en entrenamiento como en inferencia.
-- La MLP actual ya no colapsa a todo negativo: paso de F1 0.0000 a F1 0.4231 y de PR-AUC 0.0915 a PR-AUC 0.3279.
+- La MLP actual ya no colapsa a todo negativo: paso de F1 0.0000 a F1 0.3768 y de PR-AUC 0.0915 a PR-AUC 0.2371.
 - El entrenamiento ya no usa solo foto fija: aprende con rendimiento historico y con evolucion tecnica de `PlayerAttributeHistory`.
 - El entrenamiento ahora tambien incorpora contexto de partido y senal cualitativa sintetica del scout.
+- El entrenamiento ahora tambien incorpora maduracion fisica y disponibilidad longitudinal.
 - El problema de entrenamiento ahora es metodologicamente mas realista porque el target representa progresion futura y no un booleano estatico sintetico.
 - El target temporal ya no depende de una sola puerta monotona: mezcla consolidacion y breakout con umbrales explicitados en metadata.
 - La calibracion de probabilidades si quedo implementada y en la corrida actual el metodo elegido fue `isotonic`.
-- El cambio de target mantiene un problema exigente y todavia desbalanceado: la tasa positiva actual es 3.00%.
+- El cambio de target mantiene un problema exigente y todavia desbalanceado: la tasa positiva actual es 1.69%.
 - La alineacion del dataset a 12-18, el entrenamiento endurecido y las features longitudinales mejoraron fuerte la defendibilidad metodologica respecto al diagnostico previo.
-- Aun asi, el baseline `LogisticRegression(class_weight="balanced")` sigue superando a la MLP en ROC-AUC, PR-AUC y F1.
+- PyTorch ahora supera al baseline `LogisticRegression(class_weight="balanced")` en `F1` y precision al threshold operativo seleccionado.
+- El baseline `LogisticRegression(class_weight="balanced")` sigue superando a PyTorch en `ROC-AUC` y `PR-AUC`.
 - El baseline simple por promedio de atributos ya no explica bien el target frente al nuevo pipeline, lo que indica que la etiqueta sintetica quedo menos trivial que antes.
-- La senal del dataset existe, pero la red PyTorch todavia no demuestra una ventaja clara sobre el baseline lineal balanceado.
+- La senal del dataset existe y la arquitectura residual acorta la brecha, pero PyTorch todavia no demuestra una ventaja global clara sobre el baseline lineal balanceado.
 
 ## Limites que todavia no estan resueltos
 - Los partidos sinteticos todavia no representan encuentros compartidos entre varios jugadores del mismo plantel.
 - Los `ScoutReport` actuales siguen siendo sinteticos, no manuales ni cargados por usuarios reales.
 - Aunque el target ya es temporal y esta mejor calibrado, sus umbrales siguen siendo sinteticos y pueden requerir otro ajuste.
-- La calibracion de probabilidades existe, pero por ahora no alcanza para que PyTorch supere al baseline lineal.
+- La calibracion de probabilidades existe, pero por ahora no alcanza para que PyTorch gane tambien en `PR-AUC`.
+- La nueva senal de disponibilidad y fisico mejora la riqueza del problema, y la arquitectura residual si mejora el comportamiento operativo, pero no cambia aun el orden global por ranking.
 - La evidencia actual sigue basada en datos sinteticos; no hay una validacion externa con datos reales.
-- La MLP mejoro, pero todavia no justifica por rendimiento reemplazar al baseline lineal como referencia formal.
+- La arquitectura residual mejora, pero todavia no justifica por rendimiento global reemplazar al baseline lineal como referencia formal.
 
 ## Pruebas ejecutadas
 - `pytest -q`: 35 tests aprobados.

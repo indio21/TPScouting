@@ -107,11 +107,12 @@ def build_evidence_markdown(metadata: dict) -> str:
 - Se reemplazo `BCELoss` por `BCEWithLogitsLoss`.
 - Se elimino la `Sigmoid` final de `PlayerNet` y ahora se trabaja con logits; la probabilidad se recupera con `torch.sigmoid(...)` solo en evaluacion e inferencia.
 - Se incorporo manejo explicito del desbalance con `pos_weight`.
-- Se agrego muestreo balanceado por mini-batch con `WeightedRandomSampler`.
+- El entrenamiento paso a usar `shuffle` por defecto y deja `WeightedRandomSampler` como opcion, evitando el doble rebalanceo por defecto.
 - Se cambio el split a `train / validation / test` con seleccion del threshold en validacion.
 - Se agrego early stopping sobre `PR-AUC` con desempate por `F1` positiva.
 - Se incorporo calibracion de probabilidades con seleccion automatica entre `none`, `isotonic` y `platt`.
 - Se adopto `AdamW` como optimizador base.
+- `PlayerNet` ya no es una MLP plana: ahora arranca desde la solucion de `LogisticRegression(class_weight="balanced")` y aprende una correccion residual no lineal encima.
 - El entrenamiento ahora se alinea por defecto al alcance real del MVP: edades 12-18.
 - La generacion sintetica de `potential_label` ahora usa score ponderado por posicion, ajuste etario, componente mental y ruido controlado.
 - Se formalizo `LogisticRegression(class_weight="balanced")` como baseline obligatorio de comparacion.
@@ -139,6 +140,12 @@ def build_evidence_markdown(metadata: dict) -> str:
 - cantidad de reportes
 - medias de toma de decisiones, lectura tactica, perfil mental y adaptabilidad
 - ultima proyeccion observada por scout
+- Se agregaron `PhysicalAssessment` y `PlayerAvailability` al esquema sintetico.
+- El pipeline ahora incorpora senales de:
+- altura y peso recientes
+- crecimiento corporal
+- velocidad y resistencia estimadas
+- disponibilidad, fatiga, carga de trabajo y tasa de lesion
 - El entrenamiento ya no usa `potential_label` como target principal.
 - Ahora el target es `temporal_target_label`, derivado de un corte observado/futuro por jugador:
 - las features se construyen sobre la parte observada de la trayectoria
@@ -154,6 +161,7 @@ def build_evidence_markdown(metadata: dict) -> str:
 - Tasa positiva actual: {dataset_summary["class_distribution"]["positive_rate"]:.2%}.
 - Split efectivo: train {metadata["dataset"]["train_size"]}, validation {metadata["dataset"]["validation_size"]}, test {metadata["dataset"]["test_size"]}.
 - `pos_weight` utilizado: {metadata["config"]["pos_weight"]:.4f}.
+- Estrategia de desbalance activa: `pos_weight_strategy={metadata["config"].get("pos_weight_strategy", "N/D")}` y `sampler_strategy={metadata["config"].get("sampler_strategy", "N/D")}`.
 - Early stopping: mejor epoca {metadata["pytorch"]["best_epoch"]} y threshold elegido {metadata["pytorch"]["selected_threshold"]:.3f}.
 - Metodo de calibracion seleccionado: `{metadata["pytorch"]["calibration_method"]}`.
 - Threshold de progresion del target: {format_metric(dataset_summary.get("temporal_target_threshold"))}.
@@ -175,22 +183,25 @@ def build_evidence_markdown(metadata: dict) -> str:
 - La MLP actual ya no colapsa a todo negativo: paso de F1 0.0000 a F1 {format_metric(pytorch_test["f1"])} y de PR-AUC 0.0915 a PR-AUC {format_metric(pytorch_test["pr_auc"])}.
 - El entrenamiento ya no usa solo foto fija: aprende con rendimiento historico y con evolucion tecnica de `PlayerAttributeHistory`.
 - El entrenamiento ahora tambien incorpora contexto de partido y senal cualitativa sintetica del scout.
+- El entrenamiento ahora tambien incorpora maduracion fisica y disponibilidad longitudinal.
 - El problema de entrenamiento ahora es metodologicamente mas realista porque el target representa progresion futura y no un booleano estatico sintetico.
 - El target temporal ya no depende de una sola puerta monotona: mezcla consolidacion y breakout con umbrales explicitados en metadata.
 - La calibracion de probabilidades si quedo implementada y en la corrida actual el metodo elegido fue `{metadata["pytorch"]["calibration_method"]}`.
 - El cambio de target mantiene un problema exigente y todavia desbalanceado: la tasa positiva actual es {dataset_summary["class_distribution"]["positive_rate"]:.2%}.
 - La alineacion del dataset a 12-18, el entrenamiento endurecido y las features longitudinales mejoraron fuerte la defendibilidad metodologica respecto al diagnostico previo.
-- Aun asi, el baseline `LogisticRegression(class_weight="balanced")` sigue superando a la MLP en ROC-AUC, PR-AUC y F1.
+- PyTorch ahora supera al baseline `LogisticRegression(class_weight="balanced")` en `F1` y precision al threshold operativo seleccionado.
+- El baseline `LogisticRegression(class_weight="balanced")` sigue superando a PyTorch en `ROC-AUC` y `PR-AUC`.
 - El baseline simple por promedio de atributos ya no explica bien el target frente al nuevo pipeline, lo que indica que la etiqueta sintetica quedo menos trivial que antes.
-- La senal del dataset existe, pero la red PyTorch todavia no demuestra una ventaja clara sobre el baseline lineal balanceado.
+- La senal del dataset existe y la arquitectura residual acorta la brecha, pero PyTorch todavia no demuestra una ventaja global clara sobre el baseline lineal balanceado.
 
 ## Limites que todavia no estan resueltos
 - Los partidos sinteticos todavia no representan encuentros compartidos entre varios jugadores del mismo plantel.
 - Los `ScoutReport` actuales siguen siendo sinteticos, no manuales ni cargados por usuarios reales.
 - Aunque el target ya es temporal y esta mejor calibrado, sus umbrales siguen siendo sinteticos y pueden requerir otro ajuste.
-- La calibracion de probabilidades existe, pero por ahora no alcanza para que PyTorch supere al baseline lineal.
+- La calibracion de probabilidades existe, pero por ahora no alcanza para que PyTorch gane tambien en `PR-AUC`.
+- La nueva senal de disponibilidad y fisico mejora la riqueza del problema, y la arquitectura residual si mejora el comportamiento operativo, pero no cambia aun el orden global por ranking.
 - La evidencia actual sigue basada en datos sinteticos; no hay una validacion externa con datos reales.
-- La MLP mejoro, pero todavia no justifica por rendimiento reemplazar al baseline lineal como referencia formal.
+- La arquitectura residual mejora, pero todavia no justifica por rendimiento global reemplazar al baseline lineal como referencia formal.
 
 ## Pruebas ejecutadas
 - `pytest -q`: 35 tests aprobados.
@@ -232,6 +243,7 @@ def build_plan_markdown(metadata: dict) -> str:
 - `BCEWithLogitsLoss` en lugar de `BCELoss`.
 - Modelo sin `Sigmoid` final y trabajo con logits.
 - `pos_weight` aplicado por defecto para desbalance.
+- `shuffle` por defecto en lugar de doble rebalanceo fijo.
 - Split `train / validation / test`.
 - Seleccion de threshold por validacion.
 - Early stopping sobre `PR-AUC` con desempate por `F1`.
@@ -252,7 +264,7 @@ def build_plan_markdown(metadata: dict) -> str:
 - Baseline obligatorio: `LogisticRegression(class_weight="balanced")`.
 - Comparacion bajo el mismo split y el mismo preprocesamiento.
 - Persistencia de metadata en `training_metadata.json`.
-- Estado actual: el baseline sigue mejor que PyTorch en test con F1 {format_metric(baseline_lr["f1"])} vs {format_metric(pytorch_test["f1"])}.
+- Estado actual: PyTorch supera al baseline en F1 operativa con {format_metric(pytorch_test["f1"])} vs {format_metric(baseline_lr["f1"])}, pero sigue por debajo en `PR-AUC`.
 
 ### Etapa 5 completada en nivel MVP
 - Se persisten threshold, metricas, tamanos de split, seed y configuracion.
@@ -281,11 +293,24 @@ def build_plan_markdown(metadata: dict) -> str:
 - Resultado actual: PyTorch queda en F1 {format_metric(pytorch_test["f1"])} y PR-AUC {format_metric(pytorch_test["pr_auc"])} sobre un target con tasa positiva {dataset_summary["class_distribution"]["positive_rate"]:.2%}.
 - El baseline lineal balanceado sigue siendo superior.
 
+### Etapa 9 completada: senales de disponibilidad y fisico
+- Se agregaron `PhysicalAssessment` y `PlayerAvailability`.
+- El generador sintetico ahora modela maduracion corporal, fatiga, carga, lesion e inactividad.
+- Las features agregadas de disponibilidad y fisico ya entran tanto en entrenamiento como en inferencia.
+- Resultado actual: PyTorch queda en F1 {format_metric(pytorch_test["f1"])} y PR-AUC {format_metric(pytorch_test["pr_auc"])}.
+- Conclusion honesta: el dataset queda metodologicamente mas rico y la arquitectura residual ya mejora el F1 operativo, pero el baseline lineal balanceado sigue arriba en ranking global.
+
+### Etapa 10 completada: bootstrap lineal y correccion residual en PyTorch
+- `PlayerNet` ahora se inicializa desde la solucion de `LogisticRegression(class_weight="balanced")`.
+- La rama lineal queda dentro del modelo PyTorch y una rama residual aprende correcciones no lineales.
+- El entrenamiento pasa a usar `pos_weight` completo y `shuffle` por defecto.
+- Resultado actual: PyTorch supera al baseline en `F1` y precision, pero no en `ROC-AUC` ni `PR-AUC`.
+
 ## Siguiente iteracion recomendada
-### Etapa 9 recomendada: recalibracion del target y senales de disponibilidad
-- Revisar los umbrales del target temporal para evitar un positivo demasiado raro o demasiado facil.
-- Evaluar si conviene sumar `Availability` o `PhysicalAssessment`.
-- Revisar si PyTorch puede justificar su complejidad frente al baseline lineal bajo este target temporal.
+### Etapa 11 recomendada: redisenar aun mas el target y la relacion partido-plantel
+- Revisar otra vez los umbrales del target temporal para evitar un positivo demasiado raro o demasiado facil.
+- Pasar de partidos por jugador a partidos compartidos por plantel si se quiere ganar realismo extra.
+- Revisar si PyTorch puede justificar su complejidad frente al baseline lineal tambien en `PR-AUC`, no solo en `F1`.
 
 ## Criterios de aceptacion para la siguiente iteracion
 - La siguiente iteracion debe mejorar o estabilizar al menos una de estas metricas de PyTorch en test sin degradar claramente las demas:

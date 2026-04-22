@@ -675,6 +675,44 @@ def test_prepare_input_includes_historical_features(app_module, db):
                 observed_projection_score=7.2,
                 notes="Reporte dos",
             ),
+            app_module.PhysicalAssessment(
+                player_id=player.id,
+                assessment_date=date(2026, 2, 20),
+                height_cm=171.5,
+                weight_kg=64.0,
+                dominant_foot="Izquierda",
+                estimated_speed=13.8,
+                endurance=12.4,
+                in_growth_spurt=True,
+            ),
+            app_module.PhysicalAssessment(
+                player_id=player.id,
+                assessment_date=date(2026, 4, 12),
+                height_cm=173.0,
+                weight_kg=65.2,
+                dominant_foot="Izquierda",
+                estimated_speed=14.3,
+                endurance=13.1,
+                in_growth_spurt=False,
+            ),
+            app_module.PlayerAvailability(
+                player_id=player.id,
+                record_date=date(2026, 2, 20),
+                availability_pct=76.0,
+                fatigue_pct=34.0,
+                training_load_pct=71.0,
+                missed_days=2,
+                injury_flag=False,
+            ),
+            app_module.PlayerAvailability(
+                player_id=player.id,
+                record_date=date(2026, 4, 12),
+                availability_pct=84.0,
+                fatigue_pct=26.0,
+                training_load_pct=68.0,
+                missed_days=0,
+                injury_flag=False,
+            ),
         ]
     )
     db.commit()
@@ -683,6 +721,8 @@ def test_prepare_input_includes_historical_features(app_module, db):
     attr_feature_map = app_module.fetch_player_attribute_feature_map([player])
     match_feature_map = app_module.fetch_player_match_feature_map([player])
     scout_feature_map = app_module.fetch_player_scout_report_feature_map([player.id])
+    physical_feature_map = app_module.fetch_player_physical_feature_map([player.id])
+    availability_feature_map = app_module.fetch_player_availability_feature_map([player.id])
     assert stats_feature_map[player.id]["stats_entry_count"] == 2
     assert round(float(stats_feature_map[player.id]["avg_final_score_hist"]), 2) == 6.75
     assert round(float(stats_feature_map[player.id]["avg_pass_accuracy_hist"]), 2) == 75.0
@@ -695,6 +735,10 @@ def test_prepare_input_includes_historical_features(app_module, db):
     assert round(float(match_feature_map[player.id]["match_natural_position_rate"]), 2) == 0.5
     assert scout_feature_map[player.id]["scout_report_count"] == 2
     assert round(float(scout_feature_map[player.id]["scout_latest_projection_score"]), 2) == 7.2
+    assert physical_feature_map[player.id]["phys_assessment_count"] == 2
+    assert round(float(physical_feature_map[player.id]["phys_recent_height_cm"]), 1) == 173.0
+    assert round(float(availability_feature_map[player.id]["avail_recent_pct"]), 2) == 84.0
+    assert round(float(availability_feature_map[player.id]["avail_injury_rate"]), 2) == 0.0
 
     single_tensor = app_module.prepare_input(player).detach().cpu().numpy()
     batch_tensor = app_module.players_to_model_tensor(
@@ -703,6 +747,8 @@ def test_prepare_input_includes_historical_features(app_module, db):
         attribute_feature_map=attr_feature_map,
         match_feature_map=match_feature_map,
         scout_report_feature_map=scout_feature_map,
+        physical_feature_map=physical_feature_map,
+        availability_feature_map=availability_feature_map,
     ).detach().cpu().numpy()
     assert single_tensor[0].tolist() == batch_tensor[0].tolist()
 
@@ -919,6 +965,44 @@ def test_training_dataframe_merges_historical_features(tmp_path, scouting_app_di
                     adaptability=13,
                     observed_projection_score=7.9,
                 ),
+                models_module.PhysicalAssessment(
+                    player_id=player.id,
+                    assessment_date=date(2026, 3, 20),
+                    height_cm=172.4,
+                    weight_kg=64.1,
+                    dominant_foot="Derecha",
+                    estimated_speed=13.2,
+                    endurance=12.7,
+                    in_growth_spurt=True,
+                ),
+                models_module.PhysicalAssessment(
+                    player_id=player.id,
+                    assessment_date=date(2026, 4, 18),
+                    height_cm=173.2,
+                    weight_kg=65.0,
+                    dominant_foot="Derecha",
+                    estimated_speed=13.8,
+                    endurance=13.3,
+                    in_growth_spurt=False,
+                ),
+                models_module.PlayerAvailability(
+                    player_id=player.id,
+                    record_date=date(2026, 3, 20),
+                    availability_pct=74.0,
+                    fatigue_pct=36.0,
+                    training_load_pct=72.0,
+                    missed_days=2,
+                    injury_flag=False,
+                ),
+                models_module.PlayerAvailability(
+                    player_id=player.id,
+                    record_date=date(2026, 4, 18),
+                    availability_pct=86.0,
+                    fatigue_pct=24.0,
+                    training_load_pct=69.0,
+                    missed_days=0,
+                    injury_flag=False,
+                ),
             ]
         )
         session.commit()
@@ -942,6 +1026,10 @@ def test_training_dataframe_merges_historical_features(tmp_path, scouting_app_di
     assert round(float(row["match_natural_position_rate"]), 2) == 0.5
     assert int(row["scout_report_count"]) == 2
     assert round(float(row["scout_latest_projection_score"]), 2) == 7.9
+    assert int(row["phys_assessment_count"]) == 2
+    assert round(float(row["phys_recent_bmi"]), 2) > 20.0
+    assert round(float(row["avail_recent_pct"]), 2) == 86.0
+    assert float(row["avail_availability_trend"]) > 0
 
 
 def test_temporal_training_dataframe_uses_future_progression_target(tmp_path, scouting_app_dir, monkeypatch):
@@ -1117,6 +1205,42 @@ def test_temporal_training_dataframe_uses_future_progression_target(tmp_path, sc
                     shot_accuracy=38.0,
                     duels_won_pct=61.0,
                 ),
+                models_module.PlayerAvailability(
+                    player_id=player.id,
+                    record_date=date(2025, 8, 1),
+                    availability_pct=72.0,
+                    fatigue_pct=34.0,
+                    training_load_pct=68.0,
+                    missed_days=1,
+                    injury_flag=False,
+                ),
+                models_module.PlayerAvailability(
+                    player_id=player.id,
+                    record_date=date(2025, 10, 1),
+                    availability_pct=76.0,
+                    fatigue_pct=31.0,
+                    training_load_pct=71.0,
+                    missed_days=1,
+                    injury_flag=False,
+                ),
+                models_module.PlayerAvailability(
+                    player_id=player.id,
+                    record_date=date(2026, 1, 1),
+                    availability_pct=82.0,
+                    fatigue_pct=28.0,
+                    training_load_pct=73.0,
+                    missed_days=0,
+                    injury_flag=False,
+                ),
+                models_module.PlayerAvailability(
+                    player_id=player.id,
+                    record_date=date(2026, 3, 1),
+                    availability_pct=88.0,
+                    fatigue_pct=22.0,
+                    training_load_pct=69.0,
+                    missed_days=0,
+                    injury_flag=False,
+                ),
             ]
         )
         session.commit()
@@ -1131,6 +1255,7 @@ def test_temporal_training_dataframe_uses_future_progression_target(tmp_path, sc
     assert float(row["weighted_score_growth"]) > 0
     assert float(row["future_final_score"]) > float(row["observed_final_score"])
     assert float(row["attr_history_entry_count"]) >= 2
+    assert float(row["future_availability_pct"]) >= 80.0
 
 
 def test_generate_data_creates_match_context_and_scout_reports(tmp_path, scouting_app_dir, monkeypatch):
@@ -1152,6 +1277,8 @@ def test_generate_data_creates_match_context_and_scout_reports(tmp_path, scoutin
     try:
         assert session.query(models_module.Player).count() == 12
         assert session.query(models_module.PlayerAttributeHistory).count() > 0
+        assert session.query(models_module.PhysicalAssessment).count() > 0
+        assert session.query(models_module.PlayerAvailability).count() > 0
         assert session.query(models_module.Match).count() > 0
         assert session.query(models_module.PlayerMatchParticipation).count() > 0
         assert session.query(models_module.PlayerStat).count() > 0

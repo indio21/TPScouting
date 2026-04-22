@@ -56,6 +56,8 @@ DEFAULT_WEIGHT_DECAY = float(os.environ.get("TRAIN_WEIGHT_DECAY", "0.0005"))
 DEFAULT_DROPOUT = float(os.environ.get("TRAIN_DROPOUT", "0.15"))
 DEFAULT_LOSS_KIND = os.environ.get("TRAIN_LOSS_KIND", "bce").strip().lower()
 DEFAULT_FOCAL_GAMMA = float(os.environ.get("TRAIN_FOCAL_GAMMA", "1.5"))
+DEFAULT_SAMPLER_STRATEGY = os.environ.get("TRAIN_SAMPLER_STRATEGY", "shuffle").strip().lower()
+DEFAULT_LINEAR_PRIOR_STRENGTH = float(os.environ.get("TRAIN_LINEAR_PRIOR_STRENGTH", "0.0001"))
 
 random.seed(SEED)
 np.random.seed(SEED)
@@ -69,27 +71,36 @@ torch.backends.cudnn.benchmark = False
 class PlayerNet(nn.Module):
     def __init__(self, input_dim: int, dropout: float = DEFAULT_DROPOUT):
         super().__init__()
-        self.backbone = nn.Sequential(
-            nn.Linear(input_dim, 192),
-            nn.BatchNorm1d(192),
-            nn.SiLU(),
-            nn.Dropout(dropout),
-            nn.Linear(192, 128),
+        self.wide = nn.Linear(input_dim, 1)
+        self.base_scale = nn.Parameter(torch.tensor([1.0], dtype=torch.float32))
+        self.base_bias = nn.Parameter(torch.tensor([0.0], dtype=torch.float32))
+        self.residual = nn.Sequential(
+            nn.Linear(input_dim, 128),
             nn.BatchNorm1d(128),
-            nn.SiLU(),
-            nn.Dropout(max(0.05, dropout - 0.02)),
+            nn.GELU(),
+            nn.Dropout(max(0.05, dropout - 0.03)),
             nn.Linear(128, 64),
             nn.BatchNorm1d(64),
-            nn.SiLU(),
-            nn.Dropout(max(0.05, dropout - 0.05)),
+            nn.GELU(),
+            nn.Dropout(max(0.05, dropout - 0.06)),
+            nn.Linear(64, 1),
         )
-        self.skip = nn.Linear(input_dim, 64)
-        self.head = nn.Linear(64, 1)
+        # Empezamos desde la solucion lineal y dejamos que la rama residual aprenda solo
+        # donde haya interacciones no lineales utiles.
+        nn.init.zeros_(self.residual[-1].weight)
+        nn.init.zeros_(self.residual[-1].bias)
 
     def forward(self, x):
-        hidden = self.backbone(x)
-        residual = self.skip(x)
-        return self.head(hidden + 0.10 * residual)
+        base_logit = self.wide(x)
+        residual_logit = self.residual(x)
+        return self.base_scale * base_logit + self.base_bias + residual_logit
+
+    def initialize_from_linear_model(self, linear_model: LogisticRegression) -> None:
+        with torch.no_grad():
+            coef = torch.tensor(linear_model.coef_, dtype=torch.float32)
+            intercept = torch.tensor(linear_model.intercept_, dtype=torch.float32)
+            self.wide.weight.copy_(coef)
+            self.wide.bias.copy_(intercept.reshape(-1))
 
 
 class BinaryFocalLossWithLogits(nn.Module):
@@ -299,15 +310,27 @@ def avg_skill_scores(df: pd.DataFrame) -> np.ndarray:
     return (df.loc[:, ATTRIBUTE_FIELDS].mean(axis=1).to_numpy(dtype=np.float32) / 20.0).reshape(-1)
 
 
-def make_train_loader(X_train: np.ndarray, y_train: np.ndarray, batch_size: int = BATCH_SIZE) -> DataLoader:
-    sample_weights = np.where(y_train > 0.5, max(1.0, (len(y_train) - np.sum(y_train)) / max(np.sum(y_train), 1.0)), 1.0)
-    sampler = WeightedRandomSampler(
-        weights=torch.tensor(sample_weights, dtype=torch.float32),
-        num_samples=len(sample_weights),
-        replacement=True,
-    )
+def make_train_loader(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    batch_size: int = BATCH_SIZE,
+    strategy: str = DEFAULT_SAMPLER_STRATEGY,
+) -> DataLoader:
     dataset = TensorDataset(tensor_from_array(X_train), tensor_from_array(y_train).view(-1, 1))
-    return DataLoader(dataset, batch_size=min(batch_size, len(dataset)), sampler=sampler)
+    normalized_strategy = (strategy or "shuffle").strip().lower()
+    if normalized_strategy == "weighted":
+        sample_weights = np.where(
+            y_train > 0.5,
+            max(1.0, (len(y_train) - np.sum(y_train)) / max(np.sum(y_train), 1.0)),
+            1.0,
+        )
+        sampler = WeightedRandomSampler(
+            weights=torch.tensor(sample_weights, dtype=torch.float32),
+            num_samples=len(sample_weights),
+            replacement=True,
+        )
+        return DataLoader(dataset, batch_size=min(batch_size, len(dataset)), sampler=sampler)
+    return DataLoader(dataset, batch_size=min(batch_size, len(dataset)), shuffle=True)
 
 
 def fit_probability_calibrator(y_true: np.ndarray, y_prob: np.ndarray) -> Tuple[Optional[object], str, float]:
@@ -405,10 +428,32 @@ def train_model(
 
     positive_count = float(np.sum(y_train))
     negative_count = float(len(y_train) - positive_count)
-    pos_weight_value = np.sqrt(negative_count / positive_count) if positive_count > 0 else 1.0
+    pos_weight_value = (negative_count / positive_count) if positive_count > 0 else 1.0
     pos_weight = torch.tensor([pos_weight_value], dtype=torch.float32)
 
+    baseline_method = "logistic_regression_balanced"
+    if len(np.unique(y_train)) < 2:
+        baseline_model = None
+        baseline_constant_prob = np.full(len(X_val), float(np.mean(y_train)), dtype=np.float32)
+        baseline_threshold, baseline_val_metrics = select_best_threshold(y_val, baseline_constant_prob)
+        baseline_test_prob = np.full(len(X_test), float(np.mean(y_train)), dtype=np.float32)
+        baseline_test_metrics = classification_metrics(y_test, baseline_test_prob, baseline_threshold)
+        baseline_method = "constant_single_class_fallback"
+    else:
+        baseline_model = LogisticRegression(
+            max_iter=2000,
+            class_weight="balanced",
+            random_state=SEED,
+        )
+        baseline_model.fit(X_train, y_train)
+        baseline_val_prob = baseline_model.predict_proba(X_val)[:, 1]
+        baseline_threshold, baseline_val_metrics = select_best_threshold(y_val, baseline_val_prob)
+        baseline_test_prob = baseline_model.predict_proba(X_test)[:, 1]
+        baseline_test_metrics = classification_metrics(y_test, baseline_test_prob, baseline_threshold)
+
     model = PlayerNet(input_dim=preprocessor_input_dim(preprocessor))
+    if baseline_model is not None:
+        model.initialize_from_linear_model(baseline_model)
     if DEFAULT_LOSS_KIND == "focal":
         criterion = BinaryFocalLossWithLogits(gamma=DEFAULT_FOCAL_GAMMA, pos_weight=pos_weight)
         loss_name = f"BinaryFocalLossWithLogits(gamma={DEFAULT_FOCAL_GAMMA})"
@@ -417,6 +462,8 @@ def train_model(
         loss_name = "BCEWithLogitsLoss"
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=DEFAULT_WEIGHT_DECAY)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max", factor=0.5, patience=3)
+    wide_reference_weight = model.wide.weight.detach().clone()
+    wide_reference_bias = model.wide.bias.detach().clone()
 
     best_state = None
     best_threshold = 0.5
@@ -435,7 +482,13 @@ def train_model(
             optimizer.zero_grad()
             logits = model(batch_features)
             loss = criterion(logits, batch_targets)
-            loss.backward()
+            prior_penalty = DEFAULT_LINEAR_PRIOR_STRENGTH * (
+                torch.mean((model.wide.weight - wide_reference_weight) ** 2)
+                + torch.mean((model.wide.bias - wide_reference_bias) ** 2)
+                + torch.mean((model.base_scale - 1.0) ** 2)
+                + torch.mean(model.base_bias**2)
+            )
+            (loss + prior_penalty).backward()
             nn.utils.clip_grad_norm_(model.parameters(), max_norm=2.0)
             optimizer.step()
             batch_losses.append(float(loss.item()))
@@ -496,25 +549,6 @@ def train_model(
     test_prob = apply_probability_calibrator(best_calibrator, raw_test_prob)
     test_metrics = classification_metrics(y_test, test_prob, best_threshold)
 
-    baseline_method = "logistic_regression_balanced"
-    if len(np.unique(y_train)) < 2:
-        baseline_constant_prob = np.full(len(X_val), float(np.mean(y_train)), dtype=np.float32)
-        baseline_threshold, baseline_val_metrics = select_best_threshold(y_val, baseline_constant_prob)
-        baseline_test_prob = np.full(len(X_test), float(np.mean(y_train)), dtype=np.float32)
-        baseline_test_metrics = classification_metrics(y_test, baseline_test_prob, baseline_threshold)
-        baseline_method = "constant_single_class_fallback"
-    else:
-        baseline_model = LogisticRegression(
-            max_iter=2000,
-            class_weight="balanced",
-            random_state=SEED,
-        )
-        baseline_model.fit(X_train, y_train)
-        baseline_val_prob = baseline_model.predict_proba(X_val)[:, 1]
-        baseline_threshold, baseline_val_metrics = select_best_threshold(y_val, baseline_val_prob)
-        baseline_test_prob = baseline_model.predict_proba(X_test)[:, 1]
-        baseline_test_metrics = classification_metrics(y_test, baseline_test_prob, baseline_threshold)
-
     avg_skill_val_prob = avg_skill_scores(X_val_df)
     avg_skill_threshold, avg_skill_val_metrics = select_best_threshold(y_val, avg_skill_val_prob)
     avg_skill_test_prob = avg_skill_scores(X_test_df)
@@ -563,6 +597,10 @@ def train_model(
             "loss": loss_name,
             "target_type": "temporal_progression",
             "pos_weight": float(pos_weight_value),
+            "pos_weight_strategy": "full_ratio",
+            "sampler_strategy": DEFAULT_SAMPLER_STRATEGY,
+            "linear_bootstrap": bool(baseline_model is not None),
+            "linear_prior_strength": float(DEFAULT_LINEAR_PRIOR_STRENGTH),
             "test_size": float(DEFAULT_TEST_SIZE),
             "validation_size_on_train_pool": float(DEFAULT_VAL_SIZE),
         },
