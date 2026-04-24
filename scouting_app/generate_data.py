@@ -68,7 +68,10 @@ DEVELOPMENT_ARCHETYPES = [
     "early_burst",
     "setback_rebound",
     "volatile_creator",
+    "consistent_ceiling",
+    "fatigue_limited",
 ]
+DEVELOPMENT_ARCHETYPE_WEIGHTS = [0.24, 0.18, 0.13, 0.14, 0.13, 0.11, 0.07]
 DOMINANT_FEET = ["Derecha", "Izquierda", "Ambos"]
 
 
@@ -192,7 +195,7 @@ def build_development_profile(player: Player) -> Dict[str, float]:
     age = int(player.age or EVAL_MAX_AGE)
     development_archetype = random.choices(
         DEVELOPMENT_ARCHETYPES,
-        weights=[0.32, 0.20, 0.14, 0.16, 0.18],
+        weights=DEVELOPMENT_ARCHETYPE_WEIGHTS,
         k=1,
     )[0]
     dominant_foot = random.choices(DOMINANT_FEET, weights=[0.68, 0.18, 0.14], k=1)[0]
@@ -253,6 +256,95 @@ def build_development_profile(player: Player) -> Dict[str, float]:
         0.35,
         1.20,
     )
+    pressure_resistance = clamp(
+        0.38
+        + attrs["determination"] / 34.0
+        + attrs["vision"] / 90.0
+        + resilience * 0.24
+        + random.uniform(-0.08, 0.08),
+        0.35,
+        1.45,
+    )
+    confidence_baseline = clamp(
+        0.40
+        + attrs["technique"] / 58.0
+        + attrs["determination"] / 95.0
+        + professionalism * 0.18
+        + random.uniform(-0.08, 0.08),
+        0.35,
+        1.35,
+    )
+    coachability = clamp(
+        0.40
+        + tactical_discipline * 0.26
+        + professionalism * 0.22
+        + attrs["vision"] / 120.0
+        + random.uniform(-0.07, 0.07),
+        0.35,
+        1.35,
+    )
+    fatigue_sensitivity = clamp(
+        0.16
+        + injury_proneness * 0.42
+        + max(0.0, 0.98 - recovery_quality) * 0.16
+        + random.uniform(-0.04, 0.04),
+        0.08,
+        0.75,
+    )
+    adaptation_speed = clamp(
+        0.42
+        + adaptability_bias * 0.26
+        + coachability * 0.18
+        + random.uniform(-0.06, 0.06),
+        0.35,
+        1.30,
+    )
+    plateau_risk = clamp(
+        0.18
+        + max(0.0, 0.98 - professionalism) * 0.30
+        + (0.10 if development_archetype == "early_burst" else 0.0)
+        + random.uniform(-0.04, 0.05),
+        0.08,
+        0.68,
+    )
+    trajectory_strength = clamp(
+        0.72
+        + resilience * 0.12
+        + professionalism * 0.16
+        + coachability * 0.10
+        + random.uniform(-0.08, 0.10),
+        0.55,
+        1.35,
+    )
+    adversity_timing = clamp(random.uniform(0.34, 0.62), 0.28, 0.70)
+    adversity_severity = clamp(
+        0.18
+        + injury_proneness * 0.26
+        + fatigue_sensitivity * 0.20
+        + random.uniform(-0.05, 0.07),
+        0.06,
+        0.62,
+    )
+    if development_archetype == "consistent_ceiling":
+        growth_factor *= 0.84
+        volatility = clamp(volatility * 0.68, 0.05, 0.34)
+        plateau_risk = clamp(plateau_risk + 0.07, 0.08, 0.72)
+        trajectory_strength = clamp(trajectory_strength * 0.86, 0.50, 1.15)
+    elif development_archetype == "fatigue_limited":
+        availability = clamp(availability - 0.05, 0.48, 0.94)
+        fatigue_sensitivity = clamp(fatigue_sensitivity + 0.13, 0.12, 0.86)
+        injury_proneness = clamp(injury_proneness + 0.06, 0.08, 0.78)
+        adversity_severity = clamp(adversity_severity + 0.12, 0.12, 0.72)
+    elif development_archetype == "late_bloomer":
+        trajectory_strength = clamp(trajectory_strength + 0.12, 0.60, 1.45)
+        adversity_timing = clamp(random.uniform(0.54, 0.74), 0.48, 0.80)
+    elif development_archetype == "early_burst":
+        plateau_risk = clamp(plateau_risk + 0.08, 0.10, 0.78)
+        adversity_timing = clamp(random.uniform(0.58, 0.78), 0.50, 0.84)
+    elif development_archetype == "setback_rebound":
+        adversity_severity = clamp(adversity_severity + 0.10, 0.12, 0.74)
+    elif development_archetype == "volatile_creator":
+        volatility = clamp(volatility * 1.18, 0.10, 0.52)
     baseline_height_cm = clamp(
         144.0 + age * 2.6 + attrs["physical"] * 0.9 + random.uniform(-8.0, 8.0),
         145.0,
@@ -286,6 +378,15 @@ def build_development_profile(player: Player) -> Dict[str, float]:
         "body_maturity": body_maturity,
         "injury_proneness": injury_proneness,
         "recovery_quality": recovery_quality,
+        "pressure_resistance": pressure_resistance,
+        "confidence_baseline": confidence_baseline,
+        "coachability": coachability,
+        "fatigue_sensitivity": fatigue_sensitivity,
+        "adaptation_speed": adaptation_speed,
+        "plateau_risk": plateau_risk,
+        "trajectory_strength": trajectory_strength,
+        "adversity_timing": adversity_timing,
+        "adversity_severity": adversity_severity,
         "baseline_height_cm": baseline_height_cm,
         "height_ceiling_cm": height_ceiling_cm,
         "baseline_weight_kg": baseline_weight_kg,
@@ -319,6 +420,113 @@ def avg(values: List[float]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
+def smoothstep(value: float, lower: float, upper: float) -> float:
+    if upper <= lower:
+        return 1.0 if value >= upper else 0.0
+    x = clamp((value - lower) / (upper - lower), 0.0, 1.0)
+    return x * x * (3.0 - 2.0 * x)
+
+
+def trajectory_state(progress_fraction: float, profile: Dict[str, float]) -> Dict[str, float]:
+    """Estado latente del mes: modela trayectoria juvenil sin mirar el target."""
+    progress_fraction = clamp(progress_fraction, 0.0, 1.0)
+    archetype = str(profile.get("development_archetype", "steady_builder"))
+    strength = float(profile.get("trajectory_strength", 1.0))
+    severity = float(profile.get("adversity_severity", 0.20))
+    timing = float(profile.get("adversity_timing", 0.50))
+    resilience = float(profile.get("resilience", 0.85))
+    plateau_risk = float(profile.get("plateau_risk", 0.20))
+    fatigue_sensitivity = float(profile.get("fatigue_sensitivity", 0.24))
+
+    state = {
+        "growth_boost": 0.0,
+        "performance_shift": 0.0,
+        "availability_shift": 0.0,
+        "fatigue_shift": 0.0,
+        "confidence_shift": 0.0,
+        "trust_shift": 0.0,
+        "scout_shift": 0.0,
+        "volatility_multiplier": 1.0,
+    }
+
+    if archetype == "late_bloomer":
+        surge = smoothstep(progress_fraction, 0.50, 0.92)
+        early_penalty = 1.0 - surge
+        state["growth_boost"] = (-0.10 * early_penalty + 0.34 * surge) * strength
+        state["performance_shift"] = -0.10 * early_penalty + 0.26 * surge
+        state["confidence_shift"] = -0.05 * early_penalty + 0.15 * surge
+        state["trust_shift"] = 0.14 * surge
+        state["scout_shift"] = 0.20 * surge
+        state["volatility_multiplier"] = 0.96 + 0.12 * surge
+    elif archetype == "early_burst":
+        early_gain = 1.0 - smoothstep(progress_fraction, 0.30, 0.62)
+        plateau = smoothstep(progress_fraction, 0.58, 0.94)
+        state["growth_boost"] = 0.27 * early_gain * strength - 0.22 * plateau * plateau_risk
+        state["performance_shift"] = 0.18 * early_gain - 0.20 * plateau * plateau_risk
+        state["availability_shift"] = -5.0 * plateau * plateau_risk
+        state["fatigue_shift"] = 8.0 * plateau * plateau_risk
+        state["trust_shift"] = -0.10 * plateau * plateau_risk
+        state["scout_shift"] = -0.14 * plateau * plateau_risk
+        state["volatility_multiplier"] = 0.92 + 0.24 * plateau
+    elif archetype == "setback_rebound":
+        setback = math.exp(-((progress_fraction - timing) ** 2) / (2.0 * 0.11**2))
+        rebound = smoothstep(progress_fraction, timing + 0.08, 0.95)
+        rebound_quality = clamp(0.55 + resilience * 0.35, 0.55, 1.15)
+        state["growth_boost"] = -0.34 * severity * setback + 0.30 * rebound * rebound_quality
+        state["performance_shift"] = -0.34 * severity * setback + 0.28 * rebound * rebound_quality
+        state["availability_shift"] = -12.0 * severity * setback + 5.0 * rebound
+        state["fatigue_shift"] = 17.0 * severity * setback - 5.0 * rebound
+        state["confidence_shift"] = -0.18 * severity * setback + 0.18 * rebound
+        state["trust_shift"] = -0.15 * severity * setback + 0.14 * rebound
+        state["scout_shift"] = -0.22 * severity * setback + 0.24 * rebound
+        state["volatility_multiplier"] = 1.0 + 0.34 * setback
+    elif archetype == "volatile_creator":
+        oscillation = math.sin(progress_fraction * math.pi * 3.0 + strength)
+        positive_wave = max(0.0, oscillation)
+        negative_wave = max(0.0, -oscillation)
+        state["growth_boost"] = 0.12 * oscillation
+        state["performance_shift"] = 0.22 * oscillation
+        state["availability_shift"] = -2.0 * negative_wave
+        state["fatigue_shift"] = 4.0 * negative_wave
+        state["confidence_shift"] = 0.11 * oscillation
+        state["trust_shift"] = 0.08 * oscillation
+        state["scout_shift"] = 0.12 * positive_wave - 0.08 * negative_wave
+        state["volatility_multiplier"] = 1.22
+    elif archetype == "consistent_ceiling":
+        late_plateau = smoothstep(progress_fraction, 0.64, 0.96)
+        state["growth_boost"] = 0.08 * progress_fraction - 0.10 * late_plateau
+        state["performance_shift"] = 0.05 * progress_fraction - 0.05 * late_plateau
+        state["availability_shift"] = 3.0
+        state["fatigue_shift"] = -4.0
+        state["confidence_shift"] = 0.04
+        state["trust_shift"] = 0.07
+        state["scout_shift"] = 0.04
+        state["volatility_multiplier"] = 0.68
+    elif archetype == "fatigue_limited":
+        load_phase = smoothstep(progress_fraction, 0.45, 0.95)
+        fatigue_drag = load_phase * fatigue_sensitivity
+        state["growth_boost"] = 0.08 * progress_fraction - 0.22 * fatigue_drag
+        state["performance_shift"] = 0.08 * progress_fraction - 0.30 * fatigue_drag
+        state["availability_shift"] = -10.0 * fatigue_drag
+        state["fatigue_shift"] = 20.0 * fatigue_drag
+        state["confidence_shift"] = -0.10 * fatigue_drag
+        state["trust_shift"] = -0.10 * fatigue_drag
+        state["scout_shift"] = -0.13 * fatigue_drag
+        state["volatility_multiplier"] = 0.98 + 0.28 * load_phase
+    else:
+        state["growth_boost"] = (progress_fraction - 0.45) * 0.12 * strength
+        state["performance_shift"] = (progress_fraction - 0.45) * 0.08
+        state["availability_shift"] = 1.5 * progress_fraction
+        state["fatigue_shift"] = -2.0 * progress_fraction
+        state["confidence_shift"] = 0.05 * progress_fraction
+        state["trust_shift"] = 0.05 * progress_fraction
+        state["scout_shift"] = 0.06 * progress_fraction
+        state["volatility_multiplier"] = 0.88
+
+    state["volatility_multiplier"] = clamp(state["volatility_multiplier"], 0.55, 1.55)
+    return state
+
+
 def trajectory_curve_multiplier(progress_fraction: float, archetype: str) -> float:
     progress_fraction = clamp(progress_fraction, 0.0, 1.0)
     if archetype == "late_bloomer":
@@ -329,6 +537,10 @@ def trajectory_curve_multiplier(progress_fraction: float, archetype: str) -> flo
         return 0.78 + math.sin(progress_fraction * math.pi) * 0.55
     if archetype == "volatile_creator":
         return 0.82 + math.sin(progress_fraction * math.pi * 2.2) * 0.22
+    if archetype == "consistent_ceiling":
+        return 0.78 + progress_fraction * 0.20
+    if archetype == "fatigue_limited":
+        return 0.92 + progress_fraction * 0.16 - smoothstep(progress_fraction, 0.58, 0.95) * 0.24
     return 0.88 + progress_fraction * 0.35
 
 
@@ -348,6 +560,40 @@ def adjacent_positions(position: str) -> List[str]:
     return mapping.get(position, [position])
 
 
+def position_synergy_score(position: str, attrs: Dict[str, float]) -> float:
+    if position == "Mediocampista":
+        raw = (
+            attrs["passing"] * attrs["vision"]
+            + attrs["vision"] * attrs["technique"]
+            + attrs["passing"] * attrs["determination"]
+        ) / (20.0 * 20.0 * 3.0)
+    elif position == "Delantero":
+        raw = (
+            attrs["shooting"] * attrs["technique"]
+            + attrs["pace"] * attrs["dribbling"]
+            + attrs["shooting"] * attrs["determination"]
+        ) / (20.0 * 20.0 * 3.0)
+    elif position == "Defensa":
+        raw = (
+            attrs["defending"] * attrs["tackling"]
+            + attrs["physical"] * attrs["determination"]
+            + attrs["defending"] * attrs["vision"]
+        ) / (20.0 * 20.0 * 3.0)
+    elif position == "Lateral":
+        raw = (
+            attrs["pace"] * attrs["dribbling"]
+            + attrs["passing"] * attrs["vision"]
+            + attrs["physical"] * attrs["determination"]
+        ) / (20.0 * 20.0 * 3.0)
+    else:
+        raw = (
+            attrs["vision"] * attrs["determination"]
+            + attrs["physical"] * attrs["tackling"]
+            + attrs["passing"] * attrs["technique"]
+        ) / (20.0 * 20.0 * 3.0)
+    return clamp(raw, 0.0, 1.15)
+
+
 def synthetic_attribute_history(
     player: Player,
     profile: Dict[str, float],
@@ -362,7 +608,9 @@ def synthetic_attribute_history(
     for months_back in range(snapshot_count, 0, -1):
         remaining_fraction = months_back / float(snapshot_count + 1)
         progress_fraction = (snapshot_count - months_back + 1) / float(snapshot_count + 1)
+        trajectory = trajectory_state(progress_fraction, profile)
         archetype_curve = trajectory_curve_multiplier(progress_fraction, str(profile["development_archetype"]))
+        archetype_curve = clamp(archetype_curve * (1.0 + trajectory["growth_boost"]), 0.35, 1.90)
         wave = math.sin(progress_fraction * math.pi)
         values: Dict[str, int] = {}
         for field in ATTRIBUTE_FIELDS:
@@ -370,7 +618,12 @@ def synthetic_attribute_history(
             weight = position_weights(player.position)[field]
             progression_component = growth_map[field] * remaining_fraction * archetype_curve
             curve_component = growth_map[field] * 0.10 * wave * (0.85 + profile["adaptability_bias"] * 0.08)
-            noise_scale = profile["volatility"] * (0.30 + weight) * (1.12 if profile["development_archetype"] == "volatile_creator" else 0.95)
+            noise_scale = (
+                profile["volatility"]
+                * trajectory["volatility_multiplier"]
+                * (0.30 + weight)
+                * (1.12 if profile["development_archetype"] == "volatile_creator" else 0.95)
+            )
             noise = random.gauss(0.0, noise_scale)
             slump = 0.0
             if slump_month and months_back == slump_month:
@@ -384,7 +637,8 @@ def synthetic_attribute_history(
                     growth_spurt *= 1.18
             if profile["development_archetype"] == "early_burst" and progress_fraction <= 0.30:
                 growth_spurt += random.uniform(0.05, 0.18) * (0.20 + weight)
-            historical_value = current_value - progression_component + curve_component + noise + slump
+            trajectory_level = trajectory["growth_boost"] * growth_map[field] * (0.08 + weight * 0.10)
+            historical_value = current_value - progression_component + curve_component + trajectory_level + noise + slump
             values[field] = int(round(clamp(historical_value + growth_spurt, 0.0, current_value)))
 
         history.append(
@@ -489,12 +743,16 @@ def synthetic_availability_history(
 
     for index, entry in enumerate(attribute_history):
         progress_fraction = (index + 1) / float(total_points)
+        trajectory = trajectory_state(progress_fraction, profile)
         attrs = {field: float(getattr(entry, field) or 0) for field in ATTRIBUTE_FIELDS}
         physical = physical_map.get(entry.record_date)
         growth_spurt = bool(physical.in_growth_spurt) if physical is not None else False
         load_base = 56.0 + attrs["determination"] * 1.1 + float(profile["professionalism"]) * 9.0
+        load_base += trajectory["performance_shift"] * 5.0
         if profile["development_archetype"] == "early_burst":
             load_base += 4.5
+            if progress_fraction >= 0.60:
+                load_base += float(profile["plateau_risk"]) * 6.0
         if profile["development_archetype"] == "setback_rebound" and 0.35 <= progress_fraction <= 0.65:
             load_base -= 6.0
         training_load_pct = clamp(load_base + random.gauss(0.0, 6.0), 38.0, 96.0)
@@ -503,7 +761,9 @@ def synthetic_availability_history(
             + training_load_pct * 0.36
             + (18.0 if growth_spurt else 0.0)
             + float(profile["injury_proneness"]) * 18.0
+            + float(profile["fatigue_sensitivity"]) * 12.0
             - float(profile["recovery_quality"]) * 12.0
+            + trajectory["fatigue_shift"]
             + random.gauss(0.0, 5.0),
             8.0,
             92.0,
@@ -524,9 +784,12 @@ def synthetic_availability_history(
             + float(profile["availability"]) * 52.0
             + attrs["determination"] * 0.9
             + float(profile["recovery_quality"]) * 10.0
+            + (4.0 if profile["development_archetype"] == "late_bloomer" and progress_fraction >= 0.60 else 0.0)
             - fatigue_pct * 0.34
             - missed_days * 2.4
             - (7.0 if injured else 0.0)
+            - float(profile["plateau_risk"]) * max(0.0, progress_fraction - 0.55) * 12.0
+            + trajectory["availability_shift"]
             + random.gauss(0.0, 4.0),
             35.0,
             98.0,
@@ -563,13 +826,35 @@ def synthetic_matches_and_stats(
     participations: List[PlayerMatchParticipation] = []
     stats: List[PlayerStat] = []
     previous_weighted_score = None
+    confidence_state = clamp(float(profile["confidence_baseline"]), 0.35, 1.45)
+    coach_trust_state = clamp(
+        0.45 + float(profile["coachability"]) * 0.34 + float(profile["professionalism"]) * 0.22,
+        0.35,
+        1.50,
+    )
+    recent_role_fit = 0.82
+    previous_month_avg_score = 6.10
     physical_map = {assessment.assessment_date: assessment for assessment in physical_assessments}
     availability_map = {row.record_date: row for row in availability_history}
 
-    for entry in attribute_history:
+    for entry_index, entry in enumerate(attribute_history):
+        progress_fraction = (entry_index + 1) / float(max(1, len(attribute_history)))
+        trajectory = trajectory_state(progress_fraction, profile)
         attrs = {field: float(getattr(entry, field) or 0) for field in ATTRIBUTE_FIELDS}
         weighted_score = weighted_score_from_attrs(attrs, player.position)
         avg_attr_score = sum(attrs.values()) / len(attrs)
+        synergy_score = position_synergy_score(player.position, attrs)
+        decision_profile = clamp(
+            (
+                attrs["vision"] * 0.38
+                + attrs["technique"] * 0.28
+                + attrs["determination"] * 0.20
+                + attrs["passing"] * 0.14
+            )
+            / 20.0,
+            0.0,
+            1.25,
+        )
         momentum = 0.0 if previous_weighted_score is None else weighted_score - previous_weighted_score
         previous_weighted_score = weighted_score
         physical = physical_map.get(entry.record_date)
@@ -584,10 +869,13 @@ def synthetic_matches_and_stats(
         growth_spurt = bool(physical.in_growth_spurt) if physical is not None else False
 
         if is_injured or random.random() > (availability_pct / 100.0):
+            confidence_state = clamp(confidence_state - 0.05, 0.35, 1.45)
+            coach_trust_state = clamp(coach_trust_state - 0.04, 0.35, 1.50)
             continue
 
         monthly_match_count = max(1, min(3, random.randint(1, 3) - (1 if missed_days >= 6 else 0)))
         monthly_participations: List[PlayerMatchParticipation] = []
+        monthly_role_fits: List[float] = []
         alternative_positions = [value for value in adjacent_positions(player.position) if value != player.position]
 
         for match_idx in range(monthly_match_count):
@@ -596,12 +884,29 @@ def synthetic_matches_and_stats(
             pressure = (opponent_level - 3) * 0.22 + (-0.10 if venue == "Visitante" else 0.06)
             pressure -= (profile["resilience"] - 0.85) * 0.18
             pressure -= (profile["tactical_discipline"] - 0.80) * 0.10
+            pressure_response = clamp(
+                0.34
+                + float(profile["pressure_resistance"]) * 0.38
+                + confidence_state * 0.18
+                + coach_trust_state * 0.14
+                + decision_profile * 0.20
+                + trajectory["performance_shift"] * 0.18
+                - float(profile["fatigue_sensitivity"]) * max(0.0, fatigue_pct - 48.0) / 70.0
+                - (0.06 if growth_spurt else 0.0),
+                0.15,
+                1.65,
+            )
             starter_probability = clamp(
-                0.24
-                + weighted_score / 28.0
-                + momentum / 6.0
+                0.18
+                + weighted_score / 36.0
+                + momentum / 7.0
+                + synergy_score * 0.16
+                + confidence_state * 0.08
+                + coach_trust_state * 0.12
+                + decision_profile * 0.08
+                + trajectory["trust_shift"] * 0.16
                 + (availability_pct / 100.0) * 0.12
-                + (profile["professionalism"] - 0.85) * 0.08
+                + (profile["professionalism"] - 0.85) * 0.05
                 - fatigue_pct / 300.0
                 - max(0, opponent_level - 3) * 0.05,
                 0.10,
@@ -612,20 +917,33 @@ def synthetic_matches_and_stats(
                 position_played = random.choice(alternative_positions)
             else:
                 position_played = player.position
+            role_fit = 1.0 if position_played == player.position else clamp(
+                0.56
+                + float(profile["adaptation_speed"]) * 0.26
+                + recent_role_fit * 0.10
+                - max(0.0, opponent_level - 3) * 0.04,
+                0.35,
+                1.05,
+            )
+            monthly_role_fits.append(role_fit)
 
             minutes_base = random.randint(62, 90) if is_starter else random.randint(12, 38)
             fatigue_penalty = max(
                 0.0,
                 (1.0 - (availability_pct / 100.0)) * random.uniform(0.0, 1.5) * (1.12 - profile["resilience"] * 0.10)
                 + fatigue_pct / 65.0
+                + float(profile["fatigue_sensitivity"]) * 0.55
                 + (0.45 if growth_spurt else 0.0),
             )
             minutes_played = int(round(clamp(minutes_base - fatigue_penalty * 8 - missed_days * 0.8, 5, 90)))
             pass_accuracy = clamp(
-                (attrs["passing"] * 0.40 + attrs["vision"] * 0.32 + attrs["technique"] * 0.28) * 5
+                (attrs["passing"] * 0.34 + attrs["vision"] * 0.28 + attrs["technique"] * 0.20) * 5
+                + synergy_score * 8.0
+                + pressure_response * max(0.0, opponent_level - 3.0) * 1.8
                 + momentum * 3.0
                 - pressure * 4.5
                 + (profile["tactical_discipline"] - 0.85) * 6.0
+                + (role_fit - 0.75) * 8.0
                 - max(0.0, training_load_pct - 78.0) * 0.10
                 - fatigue_pct * 0.06
                 + random.gauss(0.0, 5.0),
@@ -633,10 +951,13 @@ def synthetic_matches_and_stats(
                 96.0,
             )
             shot_accuracy = clamp(
-                (attrs["shooting"] * 0.58 + attrs["technique"] * 0.24 + attrs["vision"] * 0.18) * 5
+                (attrs["shooting"] * 0.45 + attrs["technique"] * 0.24 + attrs["vision"] * 0.12) * 5
+                + synergy_score * 9.0
+                + pressure_response * max(0.0, opponent_level - 3.0) * 1.4
                 + momentum * 2.4
                 - pressure * 3.4
                 + (profile["professionalism"] - 0.85) * 4.0
+                + (confidence_state - 0.80) * 4.8
                 + (speed_score - attrs["pace"]) * 0.9
                 - fatigue_pct * 0.05
                 + random.gauss(0.0, 6.5),
@@ -644,27 +965,41 @@ def synthetic_matches_and_stats(
                 92.0,
             )
             duels_won_pct = clamp(
-                (attrs["defending"] * 0.40 + attrs["physical"] * 0.34 + attrs["tackling"] * 0.26) * 5
+                (attrs["defending"] * 0.34 + attrs["physical"] * 0.28 + attrs["tackling"] * 0.18) * 5
+                + synergy_score * 8.0
+                + pressure_response * max(0.0, opponent_level - 3.0) * 1.8
                 + momentum * 2.8
                 - pressure * 4.0
                 + (profile["resilience"] - 0.85) * 5.5
+                + (role_fit - 0.75) * 6.0
                 + (endurance_score - attrs["physical"]) * 0.75
                 - fatigue_pct * 0.04
                 + random.gauss(0.0, 6.0),
                 25.0,
                 95.0,
             )
+            challenge_bonus = max(0.0, opponent_level - 3.0) * (pressure_response - 0.78) * 0.34
             final_score = clamp(
-                (weighted_score / 20.0) * 5.5
-                + (avg_attr_score / 20.0) * 1.8
+                3.75
+                + (weighted_score / 20.0) * 3.8
+                + synergy_score * 1.30
+                + decision_profile * 0.65
                 + momentum * 0.55
+                + challenge_bonus
                 - pressure
-                + profile["form_bias"]
+                + profile["form_bias"] * 0.85
                 + (0.18 if is_starter else -0.12)
-                + (profile["professionalism"] - 0.85) * 0.35
-                + (profile["adaptability_bias"] - 0.80) * (0.25 if position_played != player.position else 0.08)
-                + (availability_pct - 78.0) * 0.012
-                - fatigue_pct * 0.014
+                + (previous_month_avg_score - 6.15) * 0.18
+                + (coach_trust_state - 0.82) * 0.30
+                + (confidence_state - 0.80) * 0.36
+                + (role_fit - 0.75) * 0.44
+                + (profile["adaptability_bias"] - 0.80) * (0.12 if position_played != player.position else 0.05)
+                + (availability_pct - 78.0) * 0.008
+                + trajectory["performance_shift"] * 0.45
+                + trajectory["confidence_shift"] * 0.24
+                + trajectory["trust_shift"] * 0.20
+                - fatigue_pct * (0.010 + float(profile["fatigue_sensitivity"]) * 0.006)
+                - float(profile["plateau_risk"]) * max(0.0, progress_fraction - 0.62) * 0.60
                 - (0.10 if growth_spurt else 0.0)
                 + random.gauss(0.0, 0.45),
                 1.0,
@@ -711,9 +1046,47 @@ def synthetic_matches_and_stats(
             matches.append(match)
             participations.append(participation)
             monthly_participations.append(participation)
+            confidence_state = clamp(
+                confidence_state * 0.92 + (final_score - 6.35) * 0.020 + challenge_bonus * 0.03,
+                0.35,
+                1.45,
+            )
+            coach_trust_state = clamp(
+                coach_trust_state * 0.94
+                + (0.030 if is_starter else -0.010)
+                + (final_score - 6.40) * 0.016
+                + (role_fit - 0.75) * 0.030,
+                0.35,
+                1.50,
+            )
 
         if not monthly_participations:
             continue
+
+        monthly_avg_score = avg([float(item.final_score or 0.0) for item in monthly_participations])
+        confidence_state = clamp(
+            confidence_state * 0.72
+            + float(profile["confidence_baseline"]) * 0.18
+            + (monthly_avg_score - 6.30) * 0.11
+            + momentum * 0.08
+            + trajectory["confidence_shift"] * 0.20
+            - (0.05 if missed_days >= 6 else 0.0)
+            + (0.04 if profile["development_archetype"] == "late_bloomer" and progress_fraction >= 0.58 else 0.0),
+            0.35,
+            1.45,
+        )
+        coach_trust_state = clamp(
+            coach_trust_state * 0.70
+            + float(profile["coachability"]) * 0.16
+            + (monthly_avg_score - 6.25) * 0.10
+            + (availability_pct - 75.0) / 250.0
+            + trajectory["trust_shift"] * 0.18
+            - float(profile["plateau_risk"]) * max(0.0, progress_fraction - 0.65) * 0.08,
+            0.35,
+            1.50,
+        )
+        recent_role_fit = clamp(avg(monthly_role_fits), 0.35, 1.05) if monthly_role_fits else recent_role_fit
+        previous_month_avg_score = monthly_avg_score
 
         stats.append(
             PlayerStat(
@@ -758,6 +1131,8 @@ def synthetic_scout_reports(
         if idx != len(attribute_history) - 1 and ((idx + 1) % report_stride != 0):
             continue
 
+        progress_fraction = (idx + 1) / float(max(1, len(attribute_history)))
+        trajectory = trajectory_state(progress_fraction, profile)
         attrs = {field: float(getattr(entry, field) or 0) for field in ATTRIBUTE_FIELDS}
         weighted_score = weighted_score_from_attrs(attrs, player.position)
         recent_stat = stats_by_date.get(entry.record_date)
@@ -800,8 +1175,11 @@ def synthetic_scout_reports(
                     + attrs["physical"] * 0.16
                     + (availability_pct / 100.0) * 4.0
                     + profile["resilience"] * 2.2
+                    + profile["pressure_resistance"] * 1.6
                     + endurance_score * 0.10
                     + recent_final_score * 0.32
+                    + trajectory["confidence_shift"] * 1.1
+                    - profile["plateau_risk"] * 2.0
                     - fatigue_pct * 0.03
                     + random.gauss(0.0, 1.0),
                     0.0,
@@ -817,6 +1195,7 @@ def synthetic_scout_reports(
                     + attrs["pace"] * 0.14
                     + attrs["physical"] * 0.14
                     + profile["adaptability_bias"] * 2.4
+                    + profile["coachability"] * 1.5
                     + recent_final_score * 0.28
                     + random.gauss(0.0, 1.1),
                     0.0,
@@ -825,11 +1204,17 @@ def synthetic_scout_reports(
             )
         )
         observed_projection_score = clamp(
-            (weighted_score / 20.0) * 6.0
+            2.75
+            + (weighted_score / 20.0) * 5.2
             + age_potential_bonus(player.age) * 0.30
             + trend * 0.75
             + (recent_final_score - 6.0) * 0.35
             + (profile["professionalism"] - 0.85) * 0.45
+            + (profile["pressure_resistance"] - 0.85) * 0.35
+            + (profile["coachability"] - 0.85) * 0.28
+            + trajectory["scout_shift"]
+            + trajectory["performance_shift"] * 0.18
+            - max(0.0, fatigue_pct - 65.0) * 0.01
             + random.gauss(0.0, 0.35),
             1.0,
             10.0,

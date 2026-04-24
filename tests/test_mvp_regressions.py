@@ -768,6 +768,7 @@ def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir
     preprocessor_path = tmp_path / "preprocessor.joblib"
     calibrator_path = tmp_path / "probability_calibrator.joblib"
     metadata_path = tmp_path / "training_metadata.json"
+    splits_path = tmp_path / "training_splits.json"
     train_module.main(
         db_url,
         str(model_path),
@@ -782,13 +783,151 @@ def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir
     assert model_path.exists()
     assert preprocessor_path.exists()
     assert metadata_path.exists()
+    assert splits_path.exists()
 
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    splits = json.loads(splits_path.read_text(encoding="utf-8"))
     assert metadata["dataset_summary"]["age_range_filtered"]["min"] >= 12
     assert metadata["dataset_summary"]["age_range_filtered"]["max"] <= 18
     assert metadata["dataset"]["validation_size"] > 0
     assert 0.0 <= metadata["pytorch"]["selected_threshold"] <= 1.0
     assert metadata["dataset_summary"]["target_column"] == "temporal_target_label"
+    assert metadata["artifacts"]["splits_path"] == str(splits_path.resolve())
+    assert len(splits["train_player_ids"]) > 0
+    assert len(splits["validation_player_ids"]) > 0
+    assert len(splits["test_player_ids"]) > 0
+
+
+def test_temporal_training_dataframe_cache_reuses_cached_artifact(tmp_path, scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    preprocessing_module = importlib.import_module("preprocessing")
+    generate_module = importlib.import_module("generate_data")
+    db_utils_module = importlib.import_module("db_utils")
+
+    db_path = tmp_path / "temporal_cache.db"
+    db_url = f"sqlite:///{db_path.as_posix()}"
+    cache_path = tmp_path / "temporal_training_dataframe.joblib"
+    generate_module.main(40, db_url, seed=42, min_age=12, max_age=18)
+
+    normalized_db_url = db_utils_module.normalize_db_url(db_url, base_dir=str(scouting_app_dir))
+    engine = db_utils_module.create_app_engine(normalized_db_url)
+    first_df = preprocessing_module.temporal_training_dataframe_from_engine(
+        engine,
+        use_cache=True,
+        cache_path=str(cache_path),
+    )
+    assert cache_path.exists()
+
+    def fail_if_rebuilt(*args, **kwargs):
+        raise AssertionError("No deberia reconstruirse el dataframe temporal cuando el cache sigue valido.")
+
+    monkeypatch.setattr(preprocessing_module, "build_temporal_training_dataframe", fail_if_rebuilt)
+    second_df = preprocessing_module.temporal_training_dataframe_from_engine(
+        engine,
+        use_cache=True,
+        cache_path=str(cache_path),
+    )
+    assert second_df.equals(first_df)
+
+
+def test_temporal_training_dataframe_cache_invalidates_when_db_changes(tmp_path, scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    preprocessing_module = importlib.import_module("preprocessing")
+    generate_module = importlib.import_module("generate_data")
+    db_utils_module = importlib.import_module("db_utils")
+
+    db_path = tmp_path / "temporal_cache_refresh.db"
+    db_url = f"sqlite:///{db_path.as_posix()}"
+    cache_path = tmp_path / "temporal_training_dataframe.joblib"
+
+    generate_module.main(30, db_url, seed=42, min_age=12, max_age=18, reset_existing=True)
+    normalized_db_url = db_utils_module.normalize_db_url(db_url, base_dir=str(scouting_app_dir))
+    engine = db_utils_module.create_app_engine(normalized_db_url)
+    first_df = preprocessing_module.temporal_training_dataframe_from_engine(
+        engine,
+        use_cache=True,
+        cache_path=str(cache_path),
+    )
+    assert len(first_df) == 30
+
+    generate_module.main(45, db_url, seed=42, min_age=12, max_age=18, reset_existing=True)
+    engine = db_utils_module.create_app_engine(normalized_db_url)
+    second_df = preprocessing_module.temporal_training_dataframe_from_engine(
+        engine,
+        use_cache=True,
+        cache_path=str(cache_path),
+    )
+    assert len(second_df) == 45
+
+
+def test_evaluate_saved_model_uses_persisted_splits_and_rejects_missing_players(tmp_path, scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    train_module = importlib.import_module("train_model")
+    generate_module = importlib.import_module("generate_data")
+    evaluate_module = importlib.import_module("evaluate_saved_model")
+
+    db_path = tmp_path / "evaluate_pipeline.db"
+    db_url = f"sqlite:///{db_path.as_posix()}"
+    generate_module.main(140, db_url, seed=42, min_age=12, max_age=18)
+
+    model_path = tmp_path / "model.pt"
+    preprocessor_path = tmp_path / "preprocessor.joblib"
+    calibrator_path = tmp_path / "probability_calibrator.joblib"
+    metadata_path = tmp_path / "training_metadata.json"
+    splits_path = tmp_path / "training_splits.json"
+
+    train_module.main(
+        db_url,
+        str(model_path),
+        str(preprocessor_path),
+        str(calibrator_path),
+        str(metadata_path),
+        epochs=3,
+        lr=1e-3,
+        patience=2,
+        splits_out=str(splits_path),
+    )
+
+    results = evaluate_module.evaluate_saved_model(
+        db_url=db_url,
+        model_path=str(model_path),
+        preprocessor_path=str(preprocessor_path),
+        splits_path=str(splits_path),
+        metadata_path=str(metadata_path),
+        calibrator_path=str(calibrator_path),
+        use_cache=True,
+    )
+    assert results["splits"]["train_size"] > 0
+    assert results["splits"]["validation_size"] > 0
+    assert results["splits"]["test_size"] > 0
+    assert results["pytorch"]["raw_test"]["pr_auc"] >= 0.0
+    assert results["baseline_logistic"]["test"]["pr_auc"] >= 0.0
+
+    broken_splits_path = tmp_path / "broken_training_splits.json"
+    broken_splits = json.loads(splits_path.read_text(encoding="utf-8"))
+    broken_splits["test_player_ids"].append(99999999)
+    broken_splits_path.write_text(json.dumps(broken_splits, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    try:
+        evaluate_module.evaluate_saved_model(
+            db_url=db_url,
+            model_path=str(model_path),
+            preprocessor_path=str(preprocessor_path),
+            splits_path=str(broken_splits_path),
+            metadata_path=str(metadata_path),
+            calibrator_path=str(calibrator_path),
+            use_cache=True,
+        )
+    except ValueError as exc:
+        assert "faltan 1 player_id" in str(exc)
+    else:
+        raise AssertionError("La evaluacion deberia fallar si los splits no coinciden con el dataframe actual.")
 
 def test_training_dataframe_merges_historical_features(tmp_path, scouting_app_dir, monkeypatch):
     monkeypatch.syspath_prepend(str(scouting_app_dir))
@@ -1240,6 +1379,26 @@ def test_temporal_training_dataframe_uses_future_progression_target(tmp_path, sc
                     training_load_pct=69.0,
                     missed_days=0,
                     injury_flag=False,
+                ),
+                models_module.ScoutReport(
+                    player_id=player.id,
+                    report_date=date(2025, 10, 5),
+                    decision_making=13,
+                    tactical_reading=13,
+                    mental_profile=14,
+                    adaptability=12,
+                    observed_projection_score=6.7,
+                    notes="Seguimiento observado",
+                ),
+                models_module.ScoutReport(
+                    player_id=player.id,
+                    report_date=date(2026, 3, 12),
+                    decision_making=16,
+                    tactical_reading=15,
+                    mental_profile=16,
+                    adaptability=14,
+                    observed_projection_score=8.1,
+                    notes="Seguimiento futuro",
                 ),
             ]
         )

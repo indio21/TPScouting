@@ -58,6 +58,7 @@ DEFAULT_LOSS_KIND = os.environ.get("TRAIN_LOSS_KIND", "bce").strip().lower()
 DEFAULT_FOCAL_GAMMA = float(os.environ.get("TRAIN_FOCAL_GAMMA", "1.5"))
 DEFAULT_SAMPLER_STRATEGY = os.environ.get("TRAIN_SAMPLER_STRATEGY", "shuffle").strip().lower()
 DEFAULT_LINEAR_PRIOR_STRENGTH = float(os.environ.get("TRAIN_LINEAR_PRIOR_STRENGTH", "0.0001"))
+DEFAULT_SPLITS_FILENAME = "training_splits.json"
 
 random.seed(SEED)
 np.random.seed(SEED)
@@ -127,13 +128,15 @@ def load_data(
     db_url: str,
     age_min: int = EVAL_MIN_AGE,
     age_max: int = EVAL_MAX_AGE,
+    use_cache: bool = True,
+    cache_path: Optional[str] = None,
 ) -> Tuple[pd.DataFrame, np.ndarray, Dict[str, object]]:
     """Carga jugadores y devuelve features, etiquetas y resumen del dataset."""
     normalized_db_url = normalize_db_url(db_url, base_dir=os.path.dirname(os.path.abspath(__file__)))
     engine = create_app_engine(normalized_db_url)
     Base.metadata.create_all(engine)
     ensure_player_columns(engine)
-    raw_df = temporal_training_dataframe_from_engine(engine)
+    raw_df = temporal_training_dataframe_from_engine(engine, use_cache=use_cache, cache_path=cache_path)
     if raw_df.empty:
         raise ValueError("No hay jugadores disponibles para entrenar el modelo.")
 
@@ -176,9 +179,9 @@ def dataset_summary(raw_df: pd.DataFrame, filtered_df: pd.DataFrame, target_colu
         "target_column": target_column,
     }
     if "temporal_target_threshold" in filtered_df.columns and filtered_df["temporal_target_threshold"].notna().any():
-        summary["temporal_target_threshold"] = float(filtered_df["temporal_target_threshold"].dropna().iloc[0])
+        summary["temporal_target_threshold"] = float(filtered_df["temporal_target_threshold"].dropna().median())
     if "temporal_future_score_threshold" in filtered_df.columns and filtered_df["temporal_future_score_threshold"].notna().any():
-        summary["temporal_future_score_threshold"] = float(filtered_df["temporal_future_score_threshold"].dropna().iloc[0])
+        summary["temporal_future_score_threshold"] = float(filtered_df["temporal_future_score_threshold"].dropna().median())
     if "progression_score" in filtered_df.columns and filtered_df["progression_score"].notna().any():
         summary["progression_score_quantiles"] = {
             "q50": round(float(filtered_df["progression_score"].quantile(0.50)), 4),
@@ -186,11 +189,16 @@ def dataset_summary(raw_df: pd.DataFrame, filtered_df: pd.DataFrame, target_colu
             "q84": round(float(filtered_df["progression_score"].quantile(0.84)), 4),
             "q88": round(float(filtered_df["progression_score"].quantile(0.88)), 4),
             "q90": round(float(filtered_df["progression_score"].quantile(0.90)), 4),
+            "q92": round(float(filtered_df["progression_score"].quantile(0.92)), 4),
         }
     if "temporal_consolidation_path" in filtered_df.columns:
         summary["temporal_consolidation_count"] = int(filtered_df["temporal_consolidation_path"].astype(int).sum())
     if "temporal_breakout_path" in filtered_df.columns:
         summary["temporal_breakout_count"] = int(filtered_df["temporal_breakout_path"].astype(int).sum())
+    if "temporal_quality_gate" in filtered_df.columns:
+        summary["temporal_quality_gate_count"] = int(filtered_df["temporal_quality_gate"].astype(int).sum())
+    if "temporal_target_candidate" in filtered_df.columns:
+        summary["temporal_target_candidate_count"] = int(filtered_df["temporal_target_candidate"].astype(int).sum())
     return summary
 
 
@@ -219,6 +227,38 @@ def safe_train_test_split(*arrays, test_size: float, stratify: Optional[np.ndarr
             random_state=random_state,
             stratify=None,
         )
+
+
+def build_split_artifact(
+    train_df: pd.DataFrame,
+    val_df: pd.DataFrame,
+    test_df: pd.DataFrame,
+    y_train: np.ndarray,
+    y_val: np.ndarray,
+    y_test: np.ndarray,
+) -> Dict[str, object]:
+    return {
+        "version": 1,
+        "seed": int(SEED),
+        "train_player_ids": train_df["player_id"].astype(int).tolist(),
+        "validation_player_ids": val_df["player_id"].astype(int).tolist(),
+        "test_player_ids": test_df["player_id"].astype(int).tolist(),
+        "train_positive_rate": round(float(np.mean(y_train)), 4) if len(y_train) else 0.0,
+        "validation_positive_rate": round(float(np.mean(y_val)), 4) if len(y_val) else 0.0,
+        "test_positive_rate": round(float(np.mean(y_test)), 4) if len(y_test) else 0.0,
+    }
+
+
+def save_split_artifact(split_artifact: Dict[str, object], path: str) -> None:
+    Path(path).write_text(json.dumps(split_artifact, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def load_split_artifact(path: str) -> Dict[str, object]:
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def default_splits_output_path(metadata_out: str) -> str:
+    return str(Path(metadata_out).resolve().with_name(DEFAULT_SPLITS_FILENAME))
 
 
 def classification_metrics(
@@ -399,7 +439,7 @@ def train_model(
     lr: float = 5e-4,
     patience: int = 8,
 ):
-    """Entrena la red y devuelve modelo, preprocesador y metadata completa."""
+    """Entrena la red y devuelve modelo, preprocesador, calibrador, metadata y splits."""
     splits = safe_train_test_split(
         features_df,
         y,
@@ -416,6 +456,7 @@ def train_model(
         stratify=choose_stratify_target(y_train_val),
     )
     X_train_df, X_val_df, y_train, y_val = splits
+    split_artifact = build_split_artifact(X_train_df, X_val_df, X_test_df, y_train, y_val, y_test)
 
     preprocessor = build_preprocessor()
     X_train, preprocessor = fit_transform_features(X_train_df, preprocessor)
@@ -544,8 +585,16 @@ def train_model(
     model.eval()
 
     with torch.no_grad():
+        val_logits = model(X_val_tensor).cpu().numpy().reshape(-1)
+    raw_val_prob = sigmoid_numpy(val_logits)
+    raw_val_threshold, raw_val_metrics = select_best_threshold(y_val, raw_val_prob)
+    val_prob = apply_probability_calibrator(best_calibrator, raw_val_prob)
+    calibrated_val_metrics = classification_metrics(y_val, val_prob, best_threshold)
+
+    with torch.no_grad():
         test_logits = model(X_test_tensor).cpu().numpy().reshape(-1)
     raw_test_prob = sigmoid_numpy(test_logits)
+    raw_test_metrics = classification_metrics(y_test, raw_test_prob, raw_val_threshold)
     test_prob = apply_probability_calibrator(best_calibrator, raw_test_prob)
     test_metrics = classification_metrics(y_test, test_prob, best_threshold)
 
@@ -616,14 +665,23 @@ def train_model(
             "best_epoch": int(best_epoch),
             "selected_threshold": float(best_threshold),
             "calibration_method": best_calibration_method,
-            "validation": best_val_metrics,
+            "validation": calibrated_val_metrics,
             "test": test_metrics,
+            "raw_validation": raw_val_metrics,
+            "raw_validation_threshold": float(raw_val_threshold),
+            "raw_test": raw_test_metrics,
             "history": history,
         },
         "calibration": {
             "method": best_calibration_method,
             "brier_validation": float(brier_score_loss(y_val, val_prob)) if len(y_val) else "",
             "brier_test": float(brier_score_loss(y_test, test_prob)) if len(y_test) else "",
+        },
+        "splits": {
+            "version": int(split_artifact["version"]),
+            "train_count": int(len(split_artifact["train_player_ids"])),
+            "validation_count": int(len(split_artifact["validation_player_ids"])),
+            "test_count": int(len(split_artifact["test_player_ids"])),
         },
         "baselines": {
             "logistic_regression_balanced": {
@@ -639,7 +697,7 @@ def train_model(
             },
         },
     }
-    return model, preprocessor, best_calibrator, metadata
+    return model, preprocessor, best_calibrator, metadata, split_artifact
 
 
 def save_model(model: nn.Module, path: str) -> None:
@@ -665,18 +723,35 @@ def main(
     epochs: int,
     lr: float,
     patience: int = 8,
+    splits_out: Optional[str] = None,
 ) -> None:
     feature_df, y, data_summary = load_data(db_url)
-    model, preprocessor, calibrator, metadata = train_model(feature_df, y, epochs=epochs, lr=lr, patience=patience)
+    model, preprocessor, calibrator, metadata, split_artifact = train_model(
+        feature_df,
+        y,
+        epochs=epochs,
+        lr=lr,
+        patience=patience,
+    )
     metadata["dataset_summary"] = data_summary
+    resolved_splits_out = splits_out or default_splits_output_path(metadata_out)
+    metadata["artifacts"] = {
+        "model_path": str(Path(model_out).resolve()),
+        "preprocessor_path": str(Path(preprocessor_out).resolve()),
+        "calibrator_path": str(Path(calibrator_out).resolve()),
+        "metadata_path": str(Path(metadata_out).resolve()),
+        "splits_path": str(Path(resolved_splits_out).resolve()),
+    }
     save_model(model, model_out)
     save_preprocessor(preprocessor, preprocessor_out)
     save_calibrator(calibrator, calibrator_out)
+    save_split_artifact(split_artifact, resolved_splits_out)
     save_metadata(metadata, metadata_out)
     print(f"Modelo guardado en {model_out}")
     print(f"Preprocesador guardado en {preprocessor_out}")
     if calibrator is not None:
         print(f"Calibrador guardado en {calibrator_out}")
+    print(f"Splits guardados en {resolved_splits_out}")
     print(f"Metadata guardada en {metadata_out}")
 
     try:
@@ -758,6 +833,12 @@ if __name__ == "__main__":
         default="training_metadata.json",
         help="Ruta de salida de metadata del entrenamiento",
     )
+    parser.add_argument(
+        "--splits-out",
+        type=str,
+        default=None,
+        help="Ruta de salida de splits de entrenamiento/evaluacion",
+    )
     parser.add_argument("--epochs", type=int, default=30, help="Numero de epocas")
     parser.add_argument("--lr", type=float, default=5e-4, help="Tasa de aprendizaje")
     parser.add_argument("--patience", type=int, default=8, help="Paciencia para early stopping")
@@ -771,4 +852,5 @@ if __name__ == "__main__":
         args.epochs,
         args.lr,
         args.patience,
+        args.splits_out,
     )

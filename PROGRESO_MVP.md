@@ -1,8 +1,23 @@
 # Progreso Del MVP
 
-Fecha de actualizacion: 2026-04-22
+Fecha de actualizacion: 2026-04-23
 
 Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP real del proyecto `TPScouting`.
+
+## Actualizacion 2026-04-23
+
+- Se optimizo la construccion del dataframe temporal de entrenamiento en `scouting_app/preprocessing.py`.
+- `_temporal_target_dataframe` ahora preordena y agrupa una sola vez por `player_id`, reusando mapas de observado/futuro en vez de filtrar dataframes grandes en cada iteracion.
+- Se agrego cache versionada del dataframe temporal (`temporal_training_dataframe.joblib`) con invalidacion por version, `mtime`, tamano y cantidad de jugadores de `players_training.db`.
+- Se agrego persistencia de splits `train/validation/test` en `training_splits.json` desde `scouting_app/train_model.py`.
+- Se creo `scouting_app/evaluate_saved_model.py` para reevaluar artefactos entrenados usando cache y splits guardados, sin reconstruir todo manualmente.
+- Se agregaron pruebas para cache reutilizable, invalidacion al cambiar la base, persistencia de splits y evaluacion rapida con validacion de `player_id` faltantes.
+- Medicion real sobre `scouting_app/players_training.db`:
+- `load_data(use_cache=False)`: bajo de aprox. `246.6s` a `138.3s`
+- primer `load_data(use_cache=True)` con cache invalida o inexistente: `137.2s`
+- reutilizacion de cache ya construida: `0.48s - 0.59s`
+- Estado validado: `38 passed` en `pytest -q`
+- Pendiente para la proxima sesion: reentrenar una corrida oficial del MVP para generar tambien `training_splits.json` y empezar a usar `scouting_app/evaluate_saved_model.py` sobre los artefactos reales del proyecto.
 
 ## Estado Git
 
