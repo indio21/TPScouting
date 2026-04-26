@@ -515,6 +515,8 @@ def update_database_pipeline(limit: int = EVAL_POOL_MAX, sync_shortlist: bool = 
         CALIBRATOR_PATH,
         "--metadata-out",
         TRAINING_METADATA_PATH,
+        "--splits-out",
+        TRAINING_SPLITS_PATH,
         "--epochs",
         "30",
     ]
@@ -858,13 +860,25 @@ MODEL_PATH = os.path.join(BASE_DIR, "model.pt")
 PREPROCESSOR_PATH = os.path.join(BASE_DIR, "preprocessor.joblib")
 CALIBRATOR_PATH = os.path.join(BASE_DIR, "probability_calibrator.joblib")
 TRAINING_METADATA_PATH = os.path.join(BASE_DIR, "training_metadata.json")
+TRAINING_SPLITS_PATH = os.path.join(BASE_DIR, "training_splits.json")
+AUTO_TRAIN_ON_STARTUP = (os.environ.get("AUTO_TRAIN_ON_STARTUP") or "").strip().lower() in {
+    "1", "true", "yes", "y", "si", "s", "on"
+}
 try:
-    model, preprocessor, probability_calibrator = load_runtime_artifacts(MODEL_PATH, PREPROCESSOR_PATH, CALIBRATOR_PATH)
-except FileNotFoundError:
+    model, preprocessor, probability_calibrator = load_runtime_artifacts(
+        MODEL_PATH,
+        PREPROCESSOR_PATH,
+        CALIBRATOR_PATH,
+        allow_retrain=AUTO_TRAIN_ON_STARTUP,
+    )
+except (FileNotFoundError, RuntimeError):
     model = None
     preprocessor = None
     probability_calibrator = None
-    print("Advertencia: modelo o preprocesador no encontrados.")
+    print(
+        "Advertencia: modelo o preprocesador no encontrados. "
+        "Ejecute la corrida oficial del MVP o habilite AUTO_TRAIN_ON_STARTUP=true."
+    )
 
 def legacy_health_endpoint():
     """Healthcheck básico: app viva + conectividad DB."""

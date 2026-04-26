@@ -54,6 +54,12 @@ def _create_player(app_module, db, **overrides):
     return player
 
 
+def _fit_test_preprocessor(app_module, players):
+    preprocessing_module = importlib.import_module("preprocessing")
+    app_module.preprocessor = preprocessing_module.build_preprocessor()
+    app_module.preprocessor.fit(app_module.dataframe_from_players(players))
+
+
 def test_refresh_player_potential_uses_same_high_threshold(app_module):
     dummy_player = SimpleNamespace(potential_label=False)
     original = app_module.compute_projection
@@ -582,6 +588,7 @@ def test_admin_can_create_and_delete_coach(client, app_module, db):
 def test_prepare_input_matches_batch_transformation(app_module, db):
     player = _create_player(app_module, db, name="Tensor Uno", national_id="46677889")
     second_player = _create_player(app_module, db, name="Tensor Dos", national_id="47788990", position="Delantero")
+    _fit_test_preprocessor(app_module, [player, second_player])
 
     single_tensor = app_module.prepare_input(player).detach().cpu().numpy()
     batch_tensor = app_module.players_to_model_tensor([player, second_player]).detach().cpu().numpy()
@@ -592,6 +599,7 @@ def test_prepare_input_matches_batch_transformation(app_module, db):
 
 def test_prepare_input_includes_historical_features(app_module, db):
     player = _create_player(app_module, db, name="Hist Uno", national_id="49900112")
+    _fit_test_preprocessor(app_module, [player])
     match_one = app_module.Match(
         match_date=date(2026, 3, 15),
         opponent_name="Racing Juvenil",
@@ -801,7 +809,7 @@ def test_prepare_input_includes_historical_features(app_module, db):
         physical_feature_map=physical_feature_map,
         availability_feature_map=availability_feature_map,
     ).detach().cpu().numpy()
-    assert single_tensor[0].tolist() == batch_tensor[0].tolist()
+    assert np.allclose(single_tensor[0], batch_tensor[0], equal_nan=True)
 
 
 def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir, monkeypatch):

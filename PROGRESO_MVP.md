@@ -25,6 +25,7 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Baseline `LogisticRegression(class_weight="balanced")` en test: `ROC-AUC=0.9086`, `PR-AUC=0.4728`, `F1=0.4875`, `precision=0.4520`, `recall=0.5292`.
 - Conclusion honesta: PyTorch crudo supera al baseline en `PR-AUC` y `F1`; PyTorch calibrado mejora `F1` y `recall`, pero baja `PR-AUC`. Conviene seguir evaluando crudo vs calibrado antes de decidir la version final del MVP.
 - Decision de MVP: usar la salida cruda de PyTorch como score principal de ranking/priorizacion y conservar la probabilidad calibrada como referencia secundaria documentada.
+- Decision de repo: mantener codigo, tests y documentacion en GitHub; las bases, modelos, preprocesadores, metadata, splits y experimentos pasan a ser artefactos generados localmente. Flujo documentado en `docs/flujo_reproducible_mvp.md`.
 
 ## Estado Git
 

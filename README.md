@@ -18,8 +18,9 @@ Trabajo final orientado al scouting de futbol juvenil, con una app web para:
 
 ## Estructura del proyecto
 
-- `scouting_app/`: aplicacion principal (backend, templates, logica, bases demo)
+- `scouting_app/`: aplicacion principal (backend, templates, logica y scripts operativos)
 - `tests/`: pruebas automatizadas (auth, paginas, permisos)
+- `docs/flujo_reproducible_mvp.md`: corrida oficial para regenerar datos, modelo y evaluacion
 - `render.yaml`: configuracion de deploy en Render
 - `RUNBOOK.md`: guia operativa (healthcheck, backup/restore, admin, incidentes)
 
@@ -31,6 +32,8 @@ El proyecto usa dos bases separadas. En local pueden ser SQLite y en despliegue 
 - `scouting_app/players_training.db`: base de entrenamiento (dataset sintetico para el modelo)
 
 En PostgreSQL, la app acepta URLs `postgresql://...` y `postgres://...`; internamente las normaliza para SQLAlchemy con `psycopg`.
+
+Las bases, el modelo entrenado y los artefactos de preprocesamiento son generados localmente. No son la fuente principal del repo. Para regenerarlos, seguir `docs/flujo_reproducible_mvp.md`.
 
 ## Ejecucion local
 
@@ -44,10 +47,15 @@ Abrir en navegador:
 
 - `http://127.0.0.1:5000/`
 
-## Usuario de prueba (base demo incluida)
+## Usuario local
 
-- Usuario: `admin`
-- Password: `admin`
+El usuario administrador se crea por variable de entorno o con `create_admin.py`.
+
+Ejemplo local:
+
+```bash
+APP_DB_URL="sqlite:///players_updated_v2.db" ADMIN_USERNAME="admin" ADMIN_PASSWORD="admin123" python scouting_app/create_admin.py
+```
 
 Nota: en deploy (Render) la clave de admin se configura por variable de entorno (`ADMIN_PASSWORD`).
 

@@ -21,6 +21,12 @@ Thumbs.db
 *.pt
 *.pth
 *.onnx
+*.joblib
+
+# Generated MVP runtime/training artifacts
+scouting_app/experiments.csv
+scouting_app/training_metadata.json
+scouting_app/training_splits.json
 
 # Docs/artifacts not part of app source
 *.zip
