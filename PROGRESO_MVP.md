@@ -1,6 +1,6 @@
 # Progreso Del MVP
 
-Fecha de actualizacion: 2026-04-23
+Fecha de actualizacion: 2026-04-26
 
 Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP real del proyecto `TPScouting`.
 
@@ -32,8 +32,8 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Rama local actual: `training`
 - Remoto configurado: `origin -> https://github.com/indio21/TPScouting.git`
 - Ultimo commit publicado en `main`: `bd8e4ef`
-- Ultimo commit publicado en `training`: `7df19cb`
-- Estado actual: hay cambios locales nuevos en `training` aun no publicados
+- Ultimo commit publicado en `training`: `87e9eb3`
+- Estado actual: rama `training` limpia y sincronizada con `origin/training` al cierre de la etapa de artefactos reproducibles
 
 ## Etapas Ya Trabajadas
 
