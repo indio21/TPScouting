@@ -89,8 +89,10 @@ Sincronizar base operativa demo:
 
 ```powershell
 cd C:\Tesis\TPScouting\scouting_app
-..\.venv\Scripts\python.exe sync_shortlist.py --src-db sqlite:///players_training.db --dst-db sqlite:///players_updated_v2.db --limit 100 --min-age 12 --max-age 18
+..\.venv\Scripts\python.exe sync_shortlist.py --src-db sqlite:///players_training.db --dst-db sqlite:///players_updated_v2.db --limit 100 --min-age 12 --max-age 18 --replace
 ```
+
+`--replace` reconstruye los jugadores de demo y copia datos ricos sin borrar usuarios.
 
 Crear admin:
 
@@ -226,4 +228,3 @@ cd C:\Tesis\TPScouting
 git status -sb
 git log --oneline --decorate -5
 ```
-

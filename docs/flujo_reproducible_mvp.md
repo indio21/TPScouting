@@ -68,8 +68,10 @@ Sincronizar una shortlist de hasta `100` jugadores juveniles desde la base de en
 
 ```powershell
 cd C:\Tesis\TPScouting\scouting_app
-..\.venv\Scripts\python.exe sync_shortlist.py --src-db sqlite:///players_training.db --dst-db sqlite:///players_updated_v2.db --limit 100 --min-age 12 --max-age 18
+..\.venv\Scripts\python.exe sync_shortlist.py --src-db sqlite:///players_training.db --dst-db sqlite:///players_updated_v2.db --limit 100 --min-age 12 --max-age 18 --replace
 ```
+
+`--replace` reconstruye la base operativa de jugadores para demo y copia datos deportivos ricos desde entrenamiento: stats, historial de atributos, partidos, participaciones, reportes scout, evaluaciones fisicas y disponibilidad. No elimina usuarios administradores.
 
 Crear o asegurar usuario administrador:
 
@@ -108,4 +110,3 @@ La probabilidad calibrada queda como referencia secundaria documentada porque en
 cd C:\Tesis\TPScouting
 .\.venv\Scripts\python.exe -m pytest -q
 ```
-

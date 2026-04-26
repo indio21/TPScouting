@@ -988,6 +988,58 @@ def test_evaluate_saved_model_uses_persisted_splits_and_rejects_missing_players(
     else:
         raise AssertionError("La evaluacion deberia fallar si los splits no coinciden con el dataframe actual.")
 
+
+def test_sync_shortlist_replace_copies_rich_demo_data(tmp_path, scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    generate_module = importlib.import_module("generate_data")
+    sync_module = importlib.import_module("sync_shortlist")
+    models_module = importlib.import_module("models")
+    db_utils_module = importlib.import_module("db_utils")
+
+    src_path = tmp_path / "training_source.db"
+    dst_path = tmp_path / "operational_demo.db"
+    src_url = f"sqlite:///{src_path.as_posix()}"
+    dst_url = f"sqlite:///{dst_path.as_posix()}"
+
+    generate_module.main(40, src_url, seed=42, min_age=12, max_age=18, reset_existing=True)
+
+    dst_engine = db_utils_module.create_app_engine(
+        db_utils_module.normalize_db_url(dst_url, base_dir=str(scouting_app_dir))
+    )
+    models_module.Base.metadata.create_all(dst_engine)
+    DstSession = sessionmaker(bind=dst_engine)
+    session = DstSession()
+    try:
+        session.add(
+            models_module.User(
+                username="admin",
+                password_hash="hash",
+                role="administrador",
+            )
+        )
+        session.commit()
+    finally:
+        session.close()
+
+    sync_module.sync_shortlist(src_url, dst_url, limit=12, min_age=12, max_age=18, replace=True)
+
+    session = DstSession()
+    try:
+        assert session.query(models_module.User).count() == 1
+        assert session.query(models_module.Player).count() == 12
+        assert session.query(models_module.PlayerStat).count() > 0
+        assert session.query(models_module.PlayerAttributeHistory).count() > 0
+        assert session.query(models_module.Match).count() > 0
+        assert session.query(models_module.PlayerMatchParticipation).count() > 0
+        assert session.query(models_module.ScoutReport).count() > 0
+        assert session.query(models_module.PhysicalAssessment).count() > 0
+        assert session.query(models_module.PlayerAvailability).count() > 0
+    finally:
+        session.close()
+
+
 def test_training_dataframe_merges_historical_features(tmp_path, scouting_app_dir, monkeypatch):
     monkeypatch.syspath_prepend(str(scouting_app_dir))
     monkeypatch.chdir(str(scouting_app_dir))

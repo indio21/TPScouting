@@ -27,8 +27,10 @@ Desde `scouting_app/`:
 python generate_data.py --num-players 20000 --db-url sqlite:///players_training.db --seed 42 --min-age 12 --max-age 18 --reset
 python train_model.py --db-url sqlite:///players_training.db --model-out model.pt --preprocessor-out preprocessor.joblib --calibrator-out probability_calibrator.joblib --metadata-out training_metadata.json --splits-out training_splits.json --epochs 45 --lr 5e-4 --patience 10
 python evaluate_saved_model.py --db-url sqlite:///players_training.db --metadata-path training_metadata.json
-python sync_shortlist.py --src-db sqlite:///players_training.db --dst-db sqlite:///players_updated_v2.db --limit 100 --min-age 12 --max-age 18
+python sync_shortlist.py --src-db sqlite:///players_training.db --dst-db sqlite:///players_updated_v2.db --limit 100 --min-age 12 --max-age 18 --replace
 ```
+
+`--replace` refresca los jugadores de la base operativa para demo y copia historiales deportivos completos sin borrar usuarios.
 
 ## 3) Healthcheck
 - Endpoint: `GET /health`

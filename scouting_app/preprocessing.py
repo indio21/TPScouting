@@ -458,7 +458,12 @@ def dataframe_from_players(
 
 
 def feature_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    return df.loc[:, MODEL_FEATURE_COLUMNS].copy()
+    features_df = df.loc[:, MODEL_FEATURE_COLUMNS].copy()
+    for column in NUMERIC_FEATURE_COLUMNS:
+        features_df[column] = pd.to_numeric(features_df[column], errors="coerce")
+    for column in CATEGORICAL_FEATURE_COLUMNS:
+        features_df[column] = features_df[column].astype("object")
+    return features_df
 
 
 def fit_transform_features(df: pd.DataFrame, preprocessor: ColumnTransformer | None = None):
