@@ -27,6 +27,7 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Decision de MVP: usar la salida cruda de PyTorch como score principal de ranking/priorizacion y conservar la probabilidad calibrada como referencia secundaria documentada.
 - Decision de repo: mantener codigo, tests y documentacion en GitHub; las bases, modelos, preprocesadores, metadata, splits y experimentos pasan a ser artefactos generados localmente. Flujo documentado en `docs/flujo_reproducible_mvp.md`.
 - Correccion demo 2026-04-26: se corrigio la inferencia cuando la base operativa tiene campos historicos faltantes (`None`), evitando `NaN` en PyTorch y probabilidades combinadas `0.0%`. `sync_shortlist.py --replace` ahora copia jugadores con stats, atributos, partidos, reportes scout, evaluaciones fisicas y disponibilidad para presentacion.
+- Se agrego `docs/guia_indicadores_app.md` para explicar `Rendimiento en posicion`, `Puntaje de ficha`, `Probabilidad combinada` y `Referencia calibrada`.
 
 ## Estado Git
 

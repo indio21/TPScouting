@@ -104,6 +104,8 @@ El MVP usa la salida cruda de PyTorch como score principal de ranking y prioriza
 
 La probabilidad calibrada queda como referencia secundaria documentada porque en la corrida oficial actual mejora levemente `F1` y `recall`, pero reduce `PR-AUC`.
 
+Para explicar los indicadores visibles de la app, usar `docs/guia_indicadores_app.md`.
+
 ## Validacion Rapida
 
 ```powershell

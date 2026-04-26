@@ -211,6 +211,7 @@ Resultado:
 - `README.md`
 - `RUNBOOK.md`
 - `docs/flujo_reproducible_mvp.md`
+- `docs/guia_indicadores_app.md`
 - `docs/session_2026-04-22_synthetic_redesign.md`
 - `docs/session_2026-04-22_synthetic_redesign.docx`
 
