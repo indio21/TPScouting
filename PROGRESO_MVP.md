@@ -27,17 +27,24 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Decision de MVP: usar la salida cruda de PyTorch como score principal de ranking/priorizacion y conservar la probabilidad calibrada como referencia secundaria documentada.
 - Decision de repo: mantener codigo, tests y documentacion en GitHub; las bases, modelos, preprocesadores, metadata, splits y experimentos pasan a ser artefactos generados localmente. Flujo documentado en `docs/flujo_reproducible_mvp.md`.
 - Correccion demo 2026-04-26: se corrigio la inferencia cuando la base operativa tiene campos historicos faltantes (`None`), evitando `NaN` en PyTorch y probabilidades combinadas `0.0%`. `sync_shortlist.py --replace` ahora copia jugadores con stats, atributos, partidos, reportes scout, evaluaciones fisicas y disponibilidad para presentacion.
+- Estado demo local tras la correccion: `100` jugadores, `713` stats, `908` snapshots de atributos, `1419` partidos/participaciones, `406` reportes scout, `908` evaluaciones fisicas y `908` registros de disponibilidad.
+- Validacion tras la correccion demo: `40 passed` en `pytest -q`; smoke basico `/`, `/health` y `/login` con respuesta `200`.
 - Se agrego `docs/guia_indicadores_app.md` para explicar `Rendimiento en posicion`, `Puntaje de ficha`, `Probabilidad combinada` y `Referencia calibrada`.
+- Cambio de rama 2026-04-26: `training` queda cerrada como base estable de las correcciones del MVP. Se creo y publico `reformas-finales` desde `b6c21ea` para continuar nuevas reformas sin mezclar con el cierre anterior.
 
 ## Estado Git
 
-- Rama local actual: `training`
+- Rama local actual: `reformas-finales`
 - Remoto configurado: `origin -> https://github.com/indio21/TPScouting.git`
 - Ultimo commit publicado en `main`: `bd8e4ef`
-- Ultimo commit publicado en `training`: `87e9eb3`
-- Estado actual: rama `training` limpia y sincronizada con `origin/training` al cierre de la etapa de artefactos reproducibles
+- Rama estable cerrada del MVP corregido: `training`
+- Rama activa para nuevas reformas: `reformas-finales`
+- Ultimo commit comun al crear `reformas-finales`: `b6c21ea`
+- Estado actual: `reformas-finales` limpia y sincronizada con `origin/reformas-finales`
 
 ## Etapas Ya Trabajadas
+
+Nota: las etapas numeradas conservan evidencia historica de cada corrida. El estado vigente del modelo y de la demo es el resumido en la actualizacion superior de fecha 2026-04-26.
 
 ### 1. Preparacion para PostgreSQL
 
@@ -277,12 +284,12 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Resultado medido sobre la corrida real actual:
 - PyTorch: `ROC-AUC 0.9306`, `PR-AUC 0.2371`, `F1 0.3768`, `precision 0.2989`, `recall 0.5098`
 - Baseline `LogisticRegression(class_weight="balanced")`: `ROC-AUC 0.9425`, `PR-AUC 0.2775`, `F1 0.3659`
-- Conclusion honesta: PyTorch ahora supera al baseline lineal en `F1` y precision al umbral operativo elegido, pero el baseline sigue siendo superior en `ROC-AUC` y `PR-AUC`. No seria honesto afirmar que ya gano globalmente.
+- Conclusion honesta de esa etapa: PyTorch superaba al baseline lineal en `F1` y precision al umbral operativo elegido, pero todavia no en `ROC-AUC` ni `PR-AUC`. Esta conclusion quedo superada por la corrida oficial 2026-04-26 resumida al inicio, donde PyTorch crudo pasa a superar al baseline en `PR-AUC` y `F1`.
 
 ## Tests Ejecutados
 
 - La suite automatizada actual termina pasando en esta maquina.
-- Ultimo estado validado: `35 passed`
+- Ultimo estado validado: `40 passed`
 
 ## Puntos Mejorados De Forma Clara
 

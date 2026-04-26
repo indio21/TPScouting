@@ -2,6 +2,10 @@
 
 Este runbook cubre operación mínima, backup/restore de SQLite, healthcheck y bootstrap de admin.
 
+## Estado de ramas
+- `training`: base estable cerrada del MVP corregido.
+- `reformas-finales`: rama activa para nuevas reformas.
+
 ## 1) Variables de entorno (producción)
 - `APP_SECRET_KEY` (obligatoria; no usar el default del código).
 - `APP_DB_URL` (recomendado; controla la BD operativa).
@@ -9,11 +13,11 @@ Este runbook cubre operación mínima, backup/restore de SQLite, healthcheck y b
 - `LOG_LEVEL` (`INFO`/`DEBUG`).
 
 ## 2) Arranque local
-```bash
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-pytest -q
-python scouting_app/app.py
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe scouting_app\app.py
 ```
 
 Los artefactos de datos y modelo no son fuente principal del repo. Para regenerar una corrida local completa, usar `docs/flujo_reproducible_mvp.md`.
@@ -23,11 +27,11 @@ Por defecto la app no reentrena automaticamente al iniciar si faltan `model.pt` 
 ## 2.1) Corrida oficial reproducible
 Desde `scouting_app/`:
 
-```bash
-python generate_data.py --num-players 20000 --db-url sqlite:///players_training.db --seed 42 --min-age 12 --max-age 18 --reset
-python train_model.py --db-url sqlite:///players_training.db --model-out model.pt --preprocessor-out preprocessor.joblib --calibrator-out probability_calibrator.joblib --metadata-out training_metadata.json --splits-out training_splits.json --epochs 45 --lr 5e-4 --patience 10
-python evaluate_saved_model.py --db-url sqlite:///players_training.db --metadata-path training_metadata.json
-python sync_shortlist.py --src-db sqlite:///players_training.db --dst-db sqlite:///players_updated_v2.db --limit 100 --min-age 12 --max-age 18 --replace
+```powershell
+..\.venv\Scripts\python.exe generate_data.py --num-players 20000 --db-url sqlite:///players_training.db --seed 42 --min-age 12 --max-age 18 --reset
+..\.venv\Scripts\python.exe train_model.py --db-url sqlite:///players_training.db --model-out model.pt --preprocessor-out preprocessor.joblib --calibrator-out probability_calibrator.joblib --metadata-out training_metadata.json --splits-out training_splits.json --epochs 45 --lr 5e-4 --patience 10
+..\.venv\Scripts\python.exe evaluate_saved_model.py --db-url sqlite:///players_training.db --metadata-path training_metadata.json
+..\.venv\Scripts\python.exe sync_shortlist.py --src-db sqlite:///players_training.db --dst-db sqlite:///players_updated_v2.db --limit 100 --min-age 12 --max-age 18 --replace
 ```
 
 `--replace` refresca los jugadores de la base operativa para demo y copia historiales deportivos completos sin borrar usuarios.
@@ -48,11 +52,11 @@ python sync_shortlist.py --src-db sqlite:///players_training.db --dst-db sqlite:
 Este proyecto restringe `/settings` y `/register` a rol `administrador`.
 
 Crear admin (BD operativa):
-```bash
-APP_DB_URL="sqlite:///players_updated_v2.db" \
-ADMIN_USERNAME="admin" \
-ADMIN_PASSWORD="admin123" \
-python scouting_app/create_admin.py
+```powershell
+$env:APP_DB_URL = "sqlite:///players_updated_v2.db"
+$env:ADMIN_USERNAME = "admin"
+$env:ADMIN_PASSWORD = "admin123"
+.\.venv\Scripts\python.exe .\scouting_app\create_admin.py
 ```
 
 ## 5) Backup de SQLite (operativa y entrenamiento)

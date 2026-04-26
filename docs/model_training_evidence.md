@@ -1,7 +1,9 @@
 # Evidencia tecnica del entrenamiento
 
 ## Estado actual de la rama
-- Rama analizada: `training`
+- Rama analizada: `reformas-finales`
+- Rama estable cerrada del MVP corregido: `training`.
+- Rama activa para nuevas reformas: `reformas-finales`.
 - Cambio estructural ya incorporado: pipeline compartido de preprocesamiento con `pandas`, `ColumnTransformer`, `SimpleImputer`, `MinMaxScaler`, `OneHotEncoder` y persistencia en `preprocessor.joblib`.
 - Artefactos actuales del entrenamiento: `model.pt`, `preprocessor.joblib`, `training_metadata.json` y `experiments.csv`.
 - Artefacto adicional actual: `probability_calibrator.joblib`.
@@ -70,56 +72,58 @@
 - `generate_data.py` ahora admite `--reset` para regenerar la base sintetica de entrenamiento desde cero de forma reproducible
 
 ## Resultado actual del entrenamiento mejorado
-- Fecha de corrida registrada: `2026-04-22T00:48:09.395350`
+- Fecha de corrida registrada: `2026-04-26T22:35:36.149703`
 - Dataset actual: 20000 jugadores dentro del rango 12-17.
-- Distribucion actual de clases: 338 positivos y 19662 negativos.
-- Tasa positiva actual: 1.69%.
+- Distribucion actual de clases: 1597 positivos y 18403 negativos.
+- Tasa positiva actual: 7.99%.
 - Split efectivo: train 14000, validation 3000, test 3000.
-- `pos_weight` utilizado: 58.3220.
+- `pos_weight` utilizado: 11.5224.
 - Estrategia de desbalance activa: `pos_weight_strategy=full_ratio` y `sampler_strategy=shuffle`.
-- Early stopping: mejor epoca 3 y threshold elegido 0.150.
+- Early stopping: mejor epoca 5 y threshold elegido 0.225.
 - Metodo de calibracion seleccionado: `isotonic`.
-- Threshold de progresion del target: 0.3700.
-- Threshold de rendimiento futuro del target: 4.6600.
-- Casos positivos por via de consolidacion: 310.
-- Casos positivos por via de breakout: 28.
+- Decision operativa del MVP: usar la salida cruda de PyTorch como score principal de ranking y conservar la calibrada como referencia secundaria.
+- Threshold de progresion del target: 0.3013.
+- Threshold de rendimiento futuro del target: 6.1929.
+- Casos positivos por via de consolidacion: 1333.
+- Casos positivos por via de breakout: 264.
 
 ## Metricas del modelo PyTorch actual
-- Validacion: accuracy 0.9710, ROC-AUC 0.9485, PR-AUC 0.2305, F1 0.3040, precision 0.2568, recall 0.3725.
-- Test: accuracy 0.9713, ROC-AUC 0.9306, PR-AUC 0.2371, F1 0.3768, precision 0.2989, recall 0.5098.
-- Matriz de confusion PyTorch en test: [[2888, 61], [25, 26]].
+- PyTorch crudo en validacion: accuracy 0.9110, ROC-AUC 0.9238, PR-AUC 0.5688, F1 0.5420, precision 0.4593, recall 0.6611.
+- PyTorch crudo en test: accuracy 0.9073, ROC-AUC 0.9102, PR-AUC 0.4826, F1 0.5088, precision 0.4417, recall 0.6000.
+- PyTorch calibrado en test: accuracy 0.9057, ROC-AUC 0.9084, PR-AUC 0.4617, F1 0.5162, precision 0.4377, recall 0.6292.
+- Matriz de confusion PyTorch crudo en test: [[2578, 182], [96, 144]].
 
 ## Baselines actuales bajo el mismo split y preprocesamiento
-- `LogisticRegression(class_weight="balanced")`: accuracy 0.9653, ROC-AUC 0.9425, PR-AUC 0.2775, F1 0.3659, precision 0.2655, recall 0.5882.
-- Baseline simple por promedio de atributos: accuracy 0.9690, ROC-AUC 0.9004, PR-AUC 0.1993, F1 0.2560.
+- `LogisticRegression(class_weight="balanced")`: accuracy 0.9110, ROC-AUC 0.9086, PR-AUC 0.4728, F1 0.4875, precision 0.4520, recall 0.5292.
+- Baseline simple por promedio de atributos: accuracy 0.8887, ROC-AUC 0.8298, PR-AUC 0.3298, F1 0.3792.
 
 ## Hallazgos verificados
 - El nuevo preprocesamiento compartido con `pandas` y `scikit-learn` quedo implementado y funcionando tanto en entrenamiento como en inferencia.
-- La MLP actual ya no colapsa a todo negativo: paso de F1 0.0000 a F1 0.3768 y de PR-AUC 0.0915 a PR-AUC 0.2371.
+- La MLP actual ya no colapsa a todo negativo: paso de F1 0.0000 a F1 0.5088 y de PR-AUC 0.0915 a PR-AUC 0.4826.
 - El entrenamiento ya no usa solo foto fija: aprende con rendimiento historico y con evolucion tecnica de `PlayerAttributeHistory`.
 - El entrenamiento ahora tambien incorpora contexto de partido y senal cualitativa sintetica del scout.
 - El entrenamiento ahora tambien incorpora maduracion fisica y disponibilidad longitudinal.
 - El problema de entrenamiento ahora es metodologicamente mas realista porque el target representa progresion futura y no un booleano estatico sintetico.
 - El target temporal ya no depende de una sola puerta monotona: mezcla consolidacion y breakout con umbrales explicitados en metadata.
 - La calibracion de probabilidades si quedo implementada y en la corrida actual el metodo elegido fue `isotonic`.
-- El cambio de target mantiene un problema exigente y todavia desbalanceado: la tasa positiva actual es 1.69%.
+- El cambio de target mantiene un problema exigente y todavia desbalanceado: la tasa positiva actual es 7.99%.
 - La alineacion del dataset a 12-18, el entrenamiento endurecido y las features longitudinales mejoraron fuerte la defendibilidad metodologica respecto al diagnostico previo.
-- PyTorch ahora supera al baseline `LogisticRegression(class_weight="balanced")` en `F1` y precision al threshold operativo seleccionado.
-- El baseline `LogisticRegression(class_weight="balanced")` sigue superando a PyTorch en `ROC-AUC` y `PR-AUC`.
+- PyTorch crudo ahora supera al baseline `LogisticRegression(class_weight="balanced")` en `PR-AUC` y `F1` en la corrida oficial actual.
+- La salida calibrada mejora levemente `F1` y `recall`, pero baja `PR-AUC`; por eso queda como evidencia secundaria, no como score principal del MVP.
 - El baseline simple por promedio de atributos ya no explica bien el target frente al nuevo pipeline, lo que indica que la etiqueta sintetica quedo menos trivial que antes.
-- La senal del dataset existe y la arquitectura residual acorta la brecha, pero PyTorch todavia no demuestra una ventaja global clara sobre el baseline lineal balanceado.
+- La senal del dataset existe y la arquitectura residual acorta la brecha; aun asi, la decision debe seguir revisandose si cambian datos o target.
 
 ## Limites que todavia no estan resueltos
 - Los partidos sinteticos todavia no representan encuentros compartidos entre varios jugadores del mismo plantel.
 - Los `ScoutReport` actuales siguen siendo sinteticos, no manuales ni cargados por usuarios reales.
 - Aunque el target ya es temporal y esta mejor calibrado, sus umbrales siguen siendo sinteticos y pueden requerir otro ajuste.
-- La calibracion de probabilidades existe, pero por ahora no alcanza para que PyTorch gane tambien en `PR-AUC`.
-- La nueva senal de disponibilidad y fisico mejora la riqueza del problema, y la arquitectura residual si mejora el comportamiento operativo, pero no cambia aun el orden global por ranking.
+- La calibracion de probabilidades existe, pero por ahora se mantiene como referencia secundaria porque reduce `PR-AUC` frente a la salida cruda.
+- La nueva senal de disponibilidad y fisico mejora la riqueza del problema, y la arquitectura residual mejora el ranking en la corrida oficial actual.
 - La evidencia actual sigue basada en datos sinteticos; no hay una validacion externa con datos reales.
-- La arquitectura residual mejora, pero todavia no justifica por rendimiento global reemplazar al baseline lineal como referencia formal.
+- El baseline lineal sigue siendo referencia formal obligatoria aunque PyTorch crudo sea el score principal actual.
 
 ## Pruebas ejecutadas
-- `pytest -q`: 35 tests aprobados.
+- `pytest -q`: 40 tests aprobados.
 - Cobertura nueva o reforzada:
 - persistencia del `preprocessor.joblib`
 - consistencia entre inferencia individual y batch
@@ -135,6 +139,8 @@
 - Regenerar dataset de entrenamiento:
 - `python scouting_app/generate_data.py --num-players 20000 --db-url sqlite:///players_training.db --seed 42 --min-age 12 --max-age 18 --reset`
 - Reentrenar artefactos:
-- `python scouting_app/train_model.py --db-url sqlite:///players_training.db --model-out scouting_app/model.pt --preprocessor-out scouting_app/preprocessor.joblib --calibrator-out scouting_app/probability_calibrator.joblib --metadata-out scouting_app/training_metadata.json --epochs 45 --lr 5e-4 --patience 10`
+- `python scouting_app/train_model.py --db-url sqlite:///players_training.db --model-out scouting_app/model.pt --preprocessor-out scouting_app/preprocessor.joblib --calibrator-out scouting_app/probability_calibrator.joblib --metadata-out scouting_app/training_metadata.json --splits-out scouting_app/training_splits.json --epochs 45 --lr 5e-4 --patience 10`
+- Evaluar artefactos:
+- `python scouting_app/evaluate_saved_model.py --db-url sqlite:///players_training.db --metadata-path scouting_app/training_metadata.json`
 - Ejecutar tests:
 - `python -m pytest -q`

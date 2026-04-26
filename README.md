@@ -21,8 +21,17 @@ Trabajo final orientado al scouting de futbol juvenil, con una app web para:
 - `scouting_app/`: aplicacion principal (backend, templates, logica y scripts operativos)
 - `tests/`: pruebas automatizadas (auth, paginas, permisos)
 - `docs/flujo_reproducible_mvp.md`: corrida oficial para regenerar datos, modelo y evaluacion
+- `docs/guia_indicadores_app.md`: explicacion de los indicadores visibles de proyeccion
+- `docs/contexto_para_nuevo_chat.md`: resumen compacto para continuar el proyecto sin perder contexto
+- `docs/model_training_evidence.md`: evidencia tecnica del entrenamiento y comparacion con baseline
+- `docs/model_training_plan.md`: plan tecnico vigente del modelo
 - `render.yaml`: configuracion de deploy en Render
 - `RUNBOOK.md`: guia operativa (healthcheck, backup/restore, admin, incidentes)
+
+## Ramas de trabajo
+
+- `training`: rama estable cerrada con las correcciones del MVP.
+- `reformas-finales`: rama activa para nuevas reformas y ajustes posteriores.
 
 ## Bases de datos del MVP
 
@@ -37,10 +46,10 @@ Las bases, el modelo entrenado y los artefactos de preprocesamiento son generado
 
 ## Ejecucion local
 
-```bash
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-python scouting_app/app.py
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe scouting_app\app.py
 ```
 
 Abrir en navegador:
@@ -53,16 +62,19 @@ El usuario administrador se crea por variable de entorno o con `create_admin.py`
 
 Ejemplo local:
 
-```bash
-APP_DB_URL="sqlite:///players_updated_v2.db" ADMIN_USERNAME="admin" ADMIN_PASSWORD="admin123" python scouting_app/create_admin.py
+```powershell
+$env:APP_DB_URL = "sqlite:///players_updated_v2.db"
+$env:ADMIN_USERNAME = "admin"
+$env:ADMIN_PASSWORD = "admin123"
+.\.venv\Scripts\python.exe .\scouting_app\create_admin.py
 ```
 
 Nota: en deploy (Render) la clave de admin se configura por variable de entorno (`ADMIN_PASSWORD`).
 
 ## Tests
 
-```bash
-pytest -q tests --import-mode=importlib
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q tests --import-mode=importlib
 ```
 
 ## Healthcheck

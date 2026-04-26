@@ -105,7 +105,8 @@ def db_counts() -> dict[str, int]:
 
 
 def build_markdown(metadata: dict, counts: dict[str, int]) -> str:
-    pytorch_test = metadata["pytorch"]["test"]
+    pytorch_test = metadata["pytorch"].get("raw_test", metadata["pytorch"]["test"])
+    pytorch_calibrated_test = metadata["pytorch"]["test"]
     baseline_lr = metadata["baselines"]["logistic_regression_balanced"]["test"]
     delta_pytorch_f1 = float(pytorch_test["f1"]) - PRIOR_LONGITUDINAL_STAGE["pytorch"]["f1"]
     delta_pytorch_pr_auc = float(pytorch_test["pr_auc"]) - PRIOR_LONGITUDINAL_STAGE["pytorch"]["pr_auc"]
@@ -116,8 +117,9 @@ def build_markdown(metadata: dict, counts: dict[str, int]) -> str:
 
 ## Estado actual
 - Rama de trabajo: `{git_branch()}`
+- Rama estable cerrada del MVP corregido: `training`
+- Rama activa para nuevas reformas: `reformas-finales`
 - Ultimo commit publicado antes de esta etapa: `{PRIOR_LONGITUDINAL_STAGE["commit"]}`
-- HEAD local al generar este documento: `{git_head()}`
 - Objetivo de esta iteracion: cerrar la brecha entre PyTorch y el baseline lineal despues de sumar `PhysicalAssessment` y `Availability`, sin perder la riqueza metodologica ya ganada.
 - Alcance del producto mantenido: scouting juvenil de 12 a 18 anos para clubes formativos.
 
@@ -161,18 +163,20 @@ def build_markdown(metadata: dict, counts: dict[str, int]) -> str:
 - Logistic balanceado: ROC-AUC {AVAILABILITY_STAGE_BEFORE_TRAINING_REWORK["logistic_balanced"]["roc_auc"]:.4f}, PR-AUC {AVAILABILITY_STAGE_BEFORE_TRAINING_REWORK["logistic_balanced"]["pr_auc"]:.4f}, F1 {AVAILABILITY_STAGE_BEFORE_TRAINING_REWORK["logistic_balanced"]["f1"]:.4f}
 
 ### Etapa actual: reentrenamiento residual apoyado en baseline lineal
-- PyTorch: accuracy {format_metric(pytorch_test["accuracy"])}, ROC-AUC {format_metric(pytorch_test["roc_auc"])}, PR-AUC {format_metric(pytorch_test["pr_auc"])}, F1 {format_metric(pytorch_test["f1"])}, precision {format_metric(pytorch_test["precision"])}, recall {format_metric(pytorch_test["recall"])}
+- PyTorch crudo: accuracy {format_metric(pytorch_test["accuracy"])}, ROC-AUC {format_metric(pytorch_test["roc_auc"])}, PR-AUC {format_metric(pytorch_test["pr_auc"])}, F1 {format_metric(pytorch_test["f1"])}, precision {format_metric(pytorch_test["precision"])}, recall {format_metric(pytorch_test["recall"])}
+- PyTorch calibrado: accuracy {format_metric(pytorch_calibrated_test["accuracy"])}, ROC-AUC {format_metric(pytorch_calibrated_test["roc_auc"])}, PR-AUC {format_metric(pytorch_calibrated_test["pr_auc"])}, F1 {format_metric(pytorch_calibrated_test["f1"])}, precision {format_metric(pytorch_calibrated_test["precision"])}, recall {format_metric(pytorch_calibrated_test["recall"])}
 - Logistic balanceado: accuracy {format_metric(baseline_lr["accuracy"])}, ROC-AUC {format_metric(baseline_lr["roc_auc"])}, PR-AUC {format_metric(baseline_lr["pr_auc"])}, F1 {format_metric(baseline_lr["f1"])}
 
 ## Hallazgos verificados
 - El target temporal sigue siendo exigente: la tasa positiva actual es {metadata["dataset_summary"]["class_distribution"]["positive_rate"]:.2%}.
-- Respecto de la etapa publicada anterior (`a7e6f7f`), PyTorch sigue por debajo en rendimiento global:
+- Respecto de la etapa publicada anterior (`a7e6f7f`), PyTorch mejora en las metricas comparadas:
 - cambio en F1: {delta_pytorch_f1:+.4f}
 - cambio en PR-AUC: {delta_pytorch_pr_auc:+.4f}
 - Respecto de la etapa local inmediatamente anterior con fisico/disponibilidad, PyTorch mejora de forma clara:
 - cambio en F1: {delta_vs_availability_f1:+.4f}
 - cambio en PR-AUC: {delta_vs_availability_pr_auc:+.4f}
 - La calibracion de probabilidades quedo implementada y en la corrida actual el metodo seleccionado fue `{metadata["pytorch"]["calibration_method"]}`.
+- La salida cruda queda como score principal porque supera al baseline en `PR-AUC` y `F1`; la calibrada queda como referencia secundaria porque mejora `F1` pero baja `PR-AUC`.
 - El target actual deja {metadata["dataset_summary"].get("temporal_consolidation_count", "N/D")} positivos por consolidacion y {metadata["dataset_summary"].get("temporal_breakout_count", "N/D")} por breakout.
 - El sistema ahora tiene una senal longitudinal mucho mas rica en la base:
 - disponibilidad mensual
@@ -181,8 +185,8 @@ def build_markdown(metadata: dict, counts: dict[str, int]) -> str:
 - lesion/inactividad
 - maduracion fisica y crecimiento corporal
 - PyTorch vuelve a acercarse al baseline lineal gracias al bootstrap residual.
-- En esta corrida, PyTorch supera al baseline lineal balanceado en `F1` y en precision al threshold operativo seleccionado.
-- El baseline `LogisticRegression(class_weight="balanced")` sigue siendo mejor que PyTorch en `ROC-AUC` y `PR-AUC`.
+- En esta corrida, PyTorch crudo supera al baseline lineal balanceado en `PR-AUC` y `F1`.
+- El baseline `LogisticRegression(class_weight="balanced")` se conserva como comparador formal obligatorio para futuras corridas.
 - La prediccion es metodologicamente mas defendible porque ahora la progresion futura no depende solo de tecnica y contexto de partido, sino tambien de disponibilidad y maduracion fisica.
 - El sistema mantiene el pipeline compartido entre entrenamiento e inferencia, pero el entrenamiento ya no mira la trayectoria completa como si fuera toda observable en el momento de decidir.
 
@@ -190,12 +194,12 @@ def build_markdown(metadata: dict, counts: dict[str, int]) -> str:
 - Los partidos sinteticos siguen siendo por jugador; todavia no representan encuentros compartidos entre varios jugadores del mismo plantel.
 - `ScoutReport` sigue siendo sintetico, no manual ni proveniente de observacion real de usuarios.
 - El target temporal actual sigue siendo sintetico y deja {metadata["dataset_summary"]["class_distribution"]["positive"]} positivos sobre {metadata["dataset_summary"]["filtered_rows"]} jugadores.
-- PyTorch ya no queda por debajo en todas las metricas, pero todavia no gana en ranking global de probabilidades.
-- No seria honesto decir que PyTorch ya reemplaza al baseline: sigue perdiendo en `ROC-AUC` y `PR-AUC`.
+- PyTorch crudo gana en la corrida oficial actual, pero esa ventaja sigue basada en datos sinteticos y debe validarse si cambia el target, la semilla o aparecen datos reales.
+- No seria honesto eliminar el baseline: sigue siendo necesario para demostrar que PyTorch aporta valor en cada reentrenamiento.
 - La base de entrenamiento SQLite ya es pesada y el repo recibio advertencia de GitHub por tamano de `players_training.db`.
 
 ## Validacion ejecutada
-- `pytest -q`: 35 tests aprobados.
+- `pytest -q`: 40 tests aprobados.
 - Smoke de app con artefactos nuevos:
 - `/` -> 200
 - `/health` -> 200
@@ -203,9 +207,10 @@ def build_markdown(metadata: dict, counts: dict[str, int]) -> str:
 - Reentrenamiento completo ejecutado sobre la nueva base sintetica.
 
 ## Proximo paso recomendado
-- Recalibrar de nuevo el target temporal para que la nueva senal de disponibilidad/fisico no deje una clase positiva demasiado rara.
+- Mantener la salida cruda de PyTorch como score principal del MVP mientras conserve mejor ranking que el baseline.
+- Dejar la probabilidad calibrada como evidencia secundaria y no como score principal.
 - Seguir enriqueciendo la generacion sintetica con senales longitudinales no triviales, sin aumentar volumen por aumentar.
-- Intentar que PyTorch tambien supere al baseline en `PR-AUC`, no solo en `F1`, antes de dar por cerrada la ventaja del modelo no lineal.
+- Si se reabre el modelo, validar de nuevo PyTorch vs baseline bajo el mismo split y documentar la decision.
 """
 
 

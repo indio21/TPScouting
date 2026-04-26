@@ -19,9 +19,10 @@ Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting`
 
 - Repo remoto: `https://github.com/indio21/TPScouting.git`
 - Carpeta local: `C:\Tesis\TPScouting`
-- Rama de trabajo: `training`
-- Ultimo commit subido al cierre: `87e9eb3 chore: make MVP artifacts reproducible`
-- Estado al cierre: `training` limpio y sincronizado con `origin/training`
+- Rama estable cerrada del MVP corregido: `training`
+- Rama activa para nuevas reformas: `reformas-finales`
+- Ultimo commit comun al crear `reformas-finales`: `b6c21ea docs: explain app prediction indicators`
+- Estado al cierre de este contexto: `reformas-finales` limpia y sincronizada con `origin/reformas-finales`
 - Entorno Python local: `C:\Tesis\TPScouting\.venv`
 
 Usar siempre la `.venv`; no usar el Python global.
@@ -203,21 +204,30 @@ cd C:\Tesis\TPScouting
 
 Resultado:
 
-- `39 passed`
+- `40 passed`
 
 ## Documentos Relevantes
 
 - `PROGRESO_MVP.md`
 - `README.md`
 - `RUNBOOK.md`
+- `REVISION_FINAL_MVP.md`
 - `docs/flujo_reproducible_mvp.md`
 - `docs/guia_indicadores_app.md`
+- `docs/model_training_evidence.md`
+- `docs/model_training_evidence.docx`
+- `docs/model_training_plan.md`
+- `docs/model_training_plan.docx`
+- `docs/prediction_improvement_progress.md`
+- `docs/prediction_improvement_progress.docx`
 - `docs/session_2026-04-22_synthetic_redesign.md`
 - `docs/session_2026-04-22_synthetic_redesign.docx`
 
 ## Proximo Paso Probable
 
-Despues de cerrar la estrategia de artefactos, hay dos caminos razonables:
+La rama `training` queda como base estable de las correcciones del MVP. Las nuevas reformas deben continuar en `reformas-finales`.
+
+Hay dos caminos razonables:
 
 - Seguir con desarrollo/modelo: mejorar generacion sintetica y target temporal, o robustecer evaluacion contra baseline.
 - Pasar a documento de tesis: alinear Word con el MVP real y eliminar afirmaciones que no esten respaldadas por el repo.

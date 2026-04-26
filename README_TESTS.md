@@ -1,12 +1,20 @@
-# Scouting IA - Test Patch (pytest)
+# Scouting IA - Tests
 
-## Instalación
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
+## Instalacion
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+```
 
 ## Ejecutar
-pytest -q
 
-## Notas
-- Los tests usan DBs temporales (no tocan tus .db reales).
-- /settings queda admin-only con el hotfix aplicado (testea 403 para no-admin).
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+## Estado Actual
+
+- Ultima validacion documentada: `40 passed`.
+- Los tests usan bases temporales y no tocan las `.db` reales del MVP.
+- `/settings` queda restringido a rol `administrador`.

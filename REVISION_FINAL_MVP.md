@@ -1,6 +1,6 @@
 # Revision Final Del MVP
 
-Fecha: 2026-04-16
+Fecha: 2026-04-26
 
 Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en evidencia ejecutada sobre el proyecto y sobre la demo incluida en el repositorio.
 
@@ -17,7 +17,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 
 ### 1. Suite automatizada
 
-- Estado final validado: `29 passed`
+- Estado final validado: `40 passed`
 - Cobertura reforzada sobre:
 - autenticacion
 - permisos por rol
@@ -29,6 +29,8 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - ABM de staff
 - persistencia del preprocesador del modelo
 - consistencia entre transformacion individual y batch
+- inferencia con features historicas faltantes sin propagar `NaN`
+- sincronizacion de demo rica desde la base de entrenamiento
 
 ### 2. Smoke funcional sobre la app real del repo
 
@@ -52,17 +54,22 @@ Rutas verificadas con respuesta `200`:
 
 ### 3. Estado real de la base demo
 
-Metricas medidas al cierre:
+Metricas medidas al cierre actualizado:
 
 - usuarios totales: `1`
 - roles de usuario: `administrador=1`
-- jugadores operativos: `96`
-- registros de rendimiento: `24`
-- registros de historial de atributos: `96`
+- jugadores operativos: `100`
+- registros de rendimiento: `713`
+- registros de historial de atributos: `908`
+- partidos sinteticos copiados a demo: `1419`
+- participaciones por partido copiadas a demo: `1419`
+- reportes de scout: `406`
+- evaluaciones fisicas: `908`
+- registros de disponibilidad: `908`
 
 ### 4. Calidad operativa de datos
 
-Se ejecuto limpieza controlada sobre la base demo:
+Se ejecuto limpieza controlada sobre la base demo en la revision inicial:
 
 - antes: `100` jugadores
 - antes: `4` jugadores sin `national_id`
@@ -70,6 +77,8 @@ Se ejecuto limpieza controlada sobre la base demo:
 - despues: `0` jugadores sin `national_id`
 
 La limpieza no invento DNIs faltantes. En su lugar elimino registros legacy inconsistentes con las reglas activas del MVP.
+
+Luego, para la demo final, `sync_shortlist.py --replace` reconstruyo los jugadores juveniles desde la base de entrenamiento y copio informacion longitudinal completa sin borrar usuarios.
 
 ## Mejoras Cerradas En Esta Revision
 
@@ -81,6 +90,9 @@ La limpieza no invento DNIs faltantes. En su lugar elimino registros legacy inco
 - dataset de entrenamiento construido con `pandas`
 - preprocesamiento real con `SimpleImputer`, `MinMaxScaler` y `OneHotEncoder`
 - `preprocessor.joblib` compartido entre entrenamiento e inferencia
+- target temporal de progresion juvenil
+- base demo con historial, partidos, reportes scout, fisico y disponibilidad
+- explicacion de indicadores visible documentada en `docs/guia_indicadores_app.md`
 
 ## Riesgos O Pendientes Reales
 
@@ -90,7 +102,8 @@ Estos puntos siguen siendo reales y no se deben ocultar:
 - el hardening CSRF puede ampliarse todavia mas si se quiere un nivel mas robusto
 - la app sigue siendo un MVP; no esta pensada para alta concurrencia
 - el documento Word todavia no fue alineado con el estado corregido del MVP en esta fase
+- la evidencia del modelo sigue basada en datos sinteticos; no hay validacion externa con datos reales
 
 ## Conclusion
 
-Con la evidencia actual, el MVP queda funcional, coherente con su alcance acotado y bastante mas defendible que al inicio de la revision. La siguiente etapa natural ya no es del codigo del MVP, sino la correccion del documento Word para que refleje fielmente este estado real.
+Con la evidencia actual, el MVP queda funcional, coherente con su alcance acotado y bastante mas defendible que al inicio de la revision. La rama `training` queda como base estable de estas correcciones y las reformas nuevas continuan en `reformas-finales`. La siguiente etapa natural es revisar visualmente la demo y luego corregir el documento Word para que refleje fielmente este estado real.

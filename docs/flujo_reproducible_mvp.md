@@ -4,6 +4,12 @@ Fecha de referencia: 2026-04-26
 
 Este documento define como regenerar localmente los artefactos del MVP sin versionar bases de datos ni modelos entrenados en Git.
 
+## Estado De Ramas
+
+- `training`: rama estable con las correcciones del MVP cerradas hasta `b6c21ea`.
+- `reformas-finales`: rama activa para nuevas reformas, creada desde `training` el 2026-04-26.
+- Las nuevas modificaciones deben realizarse sobre `reformas-finales` salvo decision explicita en contrario.
+
 ## Decision De Versionado
 
 El repositorio debe versionar codigo, tests y documentacion.
@@ -112,3 +118,5 @@ Para explicar los indicadores visibles de la app, usar `docs/guia_indicadores_ap
 cd C:\Tesis\TPScouting
 .\.venv\Scripts\python.exe -m pytest -q
 ```
+
+Ultima validacion documentada: `40 passed`.
