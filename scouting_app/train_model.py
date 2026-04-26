@@ -677,6 +677,17 @@ def train_model(
             "brier_validation": float(brier_score_loss(y_val, val_prob)) if len(y_val) else "",
             "brier_test": float(brier_score_loss(y_test, test_prob)) if len(y_test) else "",
         },
+        "scoring_policy": {
+            "primary_model_probability": "raw_pytorch_sigmoid",
+            "primary_app_score": "combined_score_from_raw_pytorch_plus_history_and_position_fit",
+            "secondary_probability": "calibrated_pytorch_probability",
+            "raw_validation_threshold": float(raw_val_threshold),
+            "calibrated_validation_threshold": float(best_threshold),
+            "reason": (
+                "La salida cruda queda como score principal porque en la evidencia actual "
+                "prioriza mejor candidatos por PR-AUC; la calibrada se conserva como referencia secundaria."
+            ),
+        },
         "splits": {
             "version": int(split_artifact["version"]),
             "train_count": int(len(split_artifact["train_player_ids"])),

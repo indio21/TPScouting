@@ -17,7 +17,14 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - primer `load_data(use_cache=True)` con cache invalida o inexistente: `137.2s`
 - reutilizacion de cache ya construida: `0.48s - 0.59s`
 - Estado validado: `38 passed` en `pytest -q`
-- Pendiente para la proxima sesion: reentrenar una corrida oficial del MVP para generar tambien `training_splits.json` y empezar a usar `scouting_app/evaluate_saved_model.py` sobre los artefactos reales del proyecto.
+- Corrida oficial 2026-04-26: se reentreno el modelo con `45` epocas, `patience=10` y `lr=5e-4`, generando `training_splits.json`.
+- Evaluacion rapida sobre artefactos reales con `scouting_app/evaluate_saved_model.py`: `load_data_seconds=0.5175`, `train=14000`, `validation=3000`, `test=3000`.
+- Dataset oficial evaluado: `20000` jugadores, edades `12-17`, `1597` positivos, tasa positiva `0.0799`.
+- PyTorch crudo en test: `ROC-AUC=0.9102`, `PR-AUC=0.4826`, `F1=0.5088`, `precision=0.4417`, `recall=0.6000`.
+- PyTorch calibrado en test: `ROC-AUC=0.9084`, `PR-AUC=0.4617`, `F1=0.5162`, `precision=0.4377`, `recall=0.6292`.
+- Baseline `LogisticRegression(class_weight="balanced")` en test: `ROC-AUC=0.9086`, `PR-AUC=0.4728`, `F1=0.4875`, `precision=0.4520`, `recall=0.5292`.
+- Conclusion honesta: PyTorch crudo supera al baseline en `PR-AUC` y `F1`; PyTorch calibrado mejora `F1` y `recall`, pero baja `PR-AUC`. Conviene seguir evaluando crudo vs calibrado antes de decidir la version final del MVP.
+- Decision de MVP: usar la salida cruda de PyTorch como score principal de ranking/priorizacion y conservar la probabilidad calibrada como referencia secundaria documentada.
 
 ## Estado Git
 

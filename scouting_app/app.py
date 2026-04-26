@@ -1172,12 +1172,16 @@ def batch_project_players(
                 )
             )
         )
-    raw_base_probs = np.asarray(probs_tensor.detach().cpu().numpy()).reshape(-1).tolist()
-    base_probs = apply_probability_calibrator(probability_calibrator, raw_base_probs).tolist()
+    raw_base_probs = np.asarray(probs_tensor.detach().cpu().numpy()).reshape(-1)
+    calibrated_base_probs = (
+        apply_probability_calibrator(probability_calibrator, raw_base_probs.tolist())
+        if probability_calibrator is not None
+        else None
+    )
 
     projections: Dict[int, Dict[str, object]] = {}
     for idx, player in enumerate(players):
-        base_prob = float(base_probs[idx])
+        base_prob = float(raw_base_probs[idx])
         attr_map = player_attribute_map(player)
         best_position, best_score = recommend_position_from_attrs(attr_map)
         fit_score = weighted_score_from_attrs(attr_map, player.position)
@@ -1187,8 +1191,21 @@ def batch_project_players(
             avg_final_score = player_stats_features.get("avg_final_score_hist")
         stats_summary = {"avg_final_score": avg_final_score}
         combined = combine_probability(base_prob, stats_summary, fit_score=fit_score)
+        calibrated_base_prob = (
+            float(calibrated_base_probs[idx])
+            if calibrated_base_probs is not None
+            else None
+        )
+        calibrated_combined = (
+            combine_probability(calibrated_base_prob, stats_summary, fit_score=fit_score)
+            if calibrated_base_prob is not None
+            else None
+        )
         projections[player.id] = {
             "base_prob": base_prob,
+            "base_prob_source": "raw_pytorch_sigmoid",
+            "calibrated_base_prob": calibrated_base_prob,
+            "calibrated_combined_prob": calibrated_combined,
             "combined_prob": combined,
             "category": categorize_probability(combined),
             "stats_summary": stats_summary,
@@ -2302,11 +2319,13 @@ def predict_player(player_id: int):
     if not projection:
         stats_summary = summarize_stats([])
         prob_base = prob_combined = 0.0
+        prob_calibrated_combined = None
         category = "Sin datos suficientes"
         stats_history = []
     else:
         prob_base = projection["base_prob"]
         prob_combined = projection["combined_prob"]
+        prob_calibrated_combined = projection.get("calibrated_combined_prob")
         category = projection["category"]
         stats_summary = projection["stats_summary"]
         stats_history = projection["history"]
@@ -2324,6 +2343,11 @@ def predict_player(player_id: int):
         player=player_view,
         probability=f"{prob_combined*100:.1f}%",
         probability_base=f"{prob_base*100:.1f}%",
+        probability_calibrated=(
+            f"{float(prob_calibrated_combined)*100:.1f}%"
+            if prob_calibrated_combined is not None
+            else None
+        ),
         probability_delta=(prob_combined - prob_base) * 100,
         category=category,
         suggestions=suggestions,

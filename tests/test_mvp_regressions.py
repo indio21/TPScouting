@@ -67,6 +67,57 @@ def test_refresh_player_potential_uses_same_high_threshold(app_module):
     assert dummy_player.potential_label is True
 
 
+def test_batch_projection_uses_raw_probability_as_primary_score(app_module, monkeypatch):
+    import torch
+
+    player = SimpleNamespace(
+        id=1,
+        position="Defensa",
+        pace=10,
+        shooting=9,
+        passing=11,
+        dribbling=10,
+        defending=12,
+        physical=11,
+        vision=10,
+        tackling=12,
+        determination=13,
+        technique=9,
+    )
+
+    class DummyModel:
+        def __call__(self, _tensor):
+            return torch.tensor([[0.0]], dtype=torch.float32)
+
+    class DummyCalibrator:
+        def predict(self, raw):
+            return np.full(len(raw), 0.90, dtype=np.float32)
+
+    app_module.model = DummyModel()
+    app_module.preprocessor = object()
+    app_module.probability_calibrator = DummyCalibrator()
+    monkeypatch.setattr(
+        app_module,
+        "players_to_model_tensor",
+        lambda *args, **kwargs: torch.zeros((1, 1), dtype=torch.float32),
+    )
+
+    projection = app_module.batch_project_players(
+        [player],
+        stats_feature_map={1: {}},
+        attribute_feature_map={1: {}},
+        match_feature_map={1: {}},
+        scout_report_feature_map={1: {}},
+        physical_feature_map={1: {}},
+        availability_feature_map={1: {}},
+    )[1]
+
+    assert round(float(projection["base_prob"]), 4) == 0.5
+    assert projection["base_prob_source"] == "raw_pytorch_sigmoid"
+    assert round(float(projection["calibrated_base_prob"]), 4) == 0.9
+    assert projection["combined_prob"] < projection["calibrated_combined_prob"]
+
+
 def test_register_rejects_weak_password(client, app_module, db):
     _create_user(db, app_module.User, "adminuser", "admin1234", role="administrador")
     _login(client, "adminuser", "admin1234")
