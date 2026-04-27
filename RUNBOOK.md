@@ -16,11 +16,13 @@ Este runbook cubre operación mínima, backup/restore de SQLite, healthcheck y b
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
-.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
 .\.venv\Scripts\python.exe scouting_app\app.py
 ```
 
 Para reproducibilidad exacta de dependencias existe `requirements-lock.txt`. Usarlo cuando se necesite recrear el entorno con las mismas versiones instaladas al cierre de esta rama.
+
+La explicacion breve de los cambios agregados para cerrar la revision de codigo fuente esta en `docs/explicacion_cambios_revision_codigo_2026-04-27.md`.
 
 Los artefactos de datos y modelo no son fuente principal del repo. Para regenerar una corrida local completa, usar `docs/flujo_reproducible_mvp.md`.
 
@@ -57,7 +59,7 @@ Crear admin (BD operativa):
 ```powershell
 $env:APP_DB_URL = "sqlite:///players_updated_v2.db"
 $env:ADMIN_USERNAME = "admin"
-$env:ADMIN_PASSWORD = "admin123"
+$env:ADMIN_PASSWORD = "AdminDemo123"
 .\.venv\Scripts\python.exe .\scouting_app\create_admin.py
 ```
 

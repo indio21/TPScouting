@@ -23,6 +23,8 @@ Trabajo final orientado al scouting de futbol juvenil, con una app web para:
 - `docs/flujo_reproducible_mvp.md`: corrida oficial para regenerar datos, modelo y evaluacion
 - `docs/guia_indicadores_app.md`: explicacion de los indicadores visibles de proyeccion
 - `docs/contexto_para_nuevo_chat.md`: resumen compacto para continuar el proyecto sin perder contexto
+- `docs/comparacion_falencias_codigo_fuente_2026-04-27.md`: estado punto por punto frente al informe de codigo fuente
+- `docs/explicacion_cambios_revision_codigo_2026-04-27.md`: explicacion simple de los ultimos cambios de hardening
 - `docs/model_training_evidence.md`: evidencia tecnica del entrenamiento y comparacion con baseline
 - `docs/model_training_plan.md`: plan tecnico vigente del modelo
 - `render.yaml`: configuracion de deploy en Render
@@ -52,6 +54,8 @@ Las bases, el modelo entrenado y los artefactos de preprocesamiento son generado
 .\.venv\Scripts\python.exe scouting_app\app.py
 ```
 
+Para reproducibilidad exacta de versiones existe `requirements-lock.txt`.
+
 Abrir en navegador:
 
 - `http://127.0.0.1:5000/`
@@ -65,7 +69,7 @@ Ejemplo local:
 ```powershell
 $env:APP_DB_URL = "sqlite:///players_updated_v2.db"
 $env:ADMIN_USERNAME = "admin"
-$env:ADMIN_PASSWORD = "admin123"
+$env:ADMIN_PASSWORD = "AdminDemo123"
 .\.venv\Scripts\python.exe .\scouting_app\create_admin.py
 ```
 
@@ -74,7 +78,7 @@ Nota: en deploy (Render) la clave de admin se configura por variable de entorno 
 ## Tests
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest -q tests --import-mode=importlib
+.\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
 ```
 
 ## Healthcheck

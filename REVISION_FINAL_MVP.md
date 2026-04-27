@@ -2,6 +2,8 @@
 
 Fecha: 2026-04-26
 
+Adenda tecnica: 2026-04-27
+
 Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en evidencia ejecutada sobre el proyecto y sobre la demo incluida en el repositorio.
 
 ## Alcance Revisado
@@ -17,7 +19,8 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 
 ### 1. Suite automatizada
 
-- Estado final validado: `40 passed`
+- Estado final validado original: `40 passed`
+- Estado tecnico actualizado 2026-04-27: `42 passed` con `pytest-cov`, cobertura total reportada `75%`
 - Cobertura reforzada sobre:
 - autenticacion
 - permisos por rol
@@ -31,6 +34,20 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - consistencia entre transformacion individual y batch
 - inferencia con features historicas faltantes sin propagar `NaN`
 - sincronizacion de demo rica desde la base de entrenamiento
+- migracion legacy de timestamps para fisico/disponibilidad
+- checkpoint del modelo con `input_dim`
+- warnings explicitos para metricas no calculables
+
+### 1.1. Cierre De Observaciones De Codigo Fuente 2026-04-27
+
+- CI mide cobertura con `pytest-cov`.
+- `requirements-lock.txt` registra versiones exactas instaladas.
+- `RUNBOOK.md` documenta DiceBear, cache in-memory sin limite y `app.py` monolitico como limitaciones reales del MVP.
+- `_PIPELINE_LOCK` documenta la dependencia de `--workers 1`.
+- Se elimino el uso de `globals().get(...)` para sincronizar historial tecnico.
+- El modelo se guarda como checkpoint con `input_dim`, version y `model_state`.
+- La carga de modelo mantiene compatibilidad con `state_dict` legacy.
+- Las metricas devuelven `warnings` cuando ROC-AUC, PR-AUC o F1/precision/recall no pueden calcularse.
 
 ### 2. Smoke funcional sobre la app real del repo
 
@@ -101,6 +118,7 @@ Estos puntos siguen siendo reales y no se deben ocultar:
 - despliegue final en Render todavia requiere cierre operativo completo
 - el hardening CSRF puede ampliarse todavia mas si se quiere un nivel mas robusto
 - la app sigue siendo un MVP; no esta pensada para alta concurrencia
+- persisten deudas de calidad no criticas: magic numbers, `conftest.py` dinamico y `app.py` monolitico
 - el documento Word todavia no fue alineado con el estado corregido del MVP en esta fase
 - la evidencia del modelo sigue basada en datos sinteticos; no hay validacion externa con datos reales
 

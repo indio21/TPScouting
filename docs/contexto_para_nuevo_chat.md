@@ -22,7 +22,8 @@ Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting`
 - Rama estable cerrada del MVP corregido: `training`
 - Rama activa para nuevas reformas: `reformas-finales`
 - Ultimo commit comun al crear `reformas-finales`: `b6c21ea docs: explain app prediction indicators`
-- Estado al cierre anterior: `reformas-finales` limpia y sincronizada con `origin/reformas-finales`
+- Ultimo commit tecnico publicado en `reformas-finales`: `d60ad6d chore: close source review follow-ups`
+- Estado al cierre tecnico: `reformas-finales` limpia y sincronizada con `origin/reformas-finales`
 - Entorno Python local: `C:\Tesis\TPScouting\.venv`
 
 Usar siempre la `.venv`; no usar el Python global.
@@ -101,7 +102,7 @@ Crear admin:
 cd C:\Tesis\TPScouting
 $env:APP_DB_URL = "sqlite:///players_updated_v2.db"
 $env:ADMIN_USERNAME = "admin"
-$env:ADMIN_PASSWORD = "admin123"
+$env:ADMIN_PASSWORD = "AdminDemo123"
 .\.venv\Scripts\python.exe .\scouting_app\create_admin.py
 ```
 
@@ -112,7 +113,7 @@ cd C:\Tesis\TPScouting\scouting_app
 $env:APP_DB_URL = "sqlite:///players_updated_v2.db"
 $env:TRAINING_DB_URL = "sqlite:///players_training.db"
 $env:ADMIN_USERNAME = "admin"
-$env:ADMIN_PASSWORD = "admin123"
+$env:ADMIN_PASSWORD = "AdminDemo123"
 ..\.venv\Scripts\python.exe app.py
 ```
 
@@ -183,6 +184,17 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - App usa salida cruda `raw_pytorch_sigmoid` como score principal.
 - Calibracion queda como referencia secundaria.
 - App no reentrena automaticamente al arrancar salvo `AUTO_TRAIN_ON_STARTUP=true`.
+- `_PIPELINE_LOCK` incluye comentario explicito sobre dependencia de Gunicorn `--workers 1`.
+- Se reemplazo `globals().get("sync_attribute_history_baseline")` por llamada directa.
+- CI ejecuta cobertura con `pytest-cov`.
+- `requirements-dev.txt` incluye `pytest-cov`.
+- `requirements-lock.txt` guarda el snapshot exacto de dependencias instalado en `.venv`.
+- `RUNBOOK.md` documenta DiceBear, cache in-memory sin limite y `app.py` monolitico como limitaciones reales del MVP.
+- `db_utils.ensure_player_columns()` migra timestamps tambien en `physical_assessments` y `player_availability`.
+- `train_model.py` guarda checkpoints con `input_dim`, version y `model_state`.
+- `app.py` y `evaluate_saved_model.py` cargan checkpoints nuevos y mantienen compatibilidad con `state_dict` legacy.
+- `classification_metrics()` devuelve `warnings` cuando ROC-AUC, PR-AUC o F1/precision/recall no pueden calcularse.
+- `docs/explicacion_cambios_revision_codigo_2026-04-27.md` explica estos cambios en lenguaje simple.
 
 ## Performance
 
@@ -204,7 +216,20 @@ cd C:\Tesis\TPScouting
 
 Resultado:
 
-- `40 passed`
+- Validacion anterior: `40 passed`
+
+Ultima validacion completa con cobertura:
+
+```powershell
+cd C:\Tesis\TPScouting
+.\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
+```
+
+Resultado:
+
+- `42 passed`
+- cobertura total reportada: `75%`
+- `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
 
 ## Comparacion Con Informe Del Profesor 2026-04-27
 
@@ -219,22 +244,30 @@ Archivo generado en el repo:
 Resultado general del analisis:
 
 - El informe del profesor contenia `31` observaciones.
-- Corregidos o practicamente corregidos: `15`.
-- Parciales o mejorados pero no cerrados del todo: `11`.
-- Pendientes claros: `5`.
+- Corregidos o practicamente corregidos para el MVP: `22`.
+- Parciales, aceptados o documentados como limitacion tecnica: `9`.
+- Pendientes criticos: `0`.
 - Los tres criticos cambiaron mucho respecto del informe original:
 - `CRITICO-01`: Render ya apunta a PostgreSQL administrado.
 - `CRITICO-02`: el umbral de potencial esta centralizado y testeado.
-- `CRITICO-03`: esta mitigado por `--workers 1 --threads 2`, pero falta comentario explicito junto a `_PIPELINE_LOCK` o lock robusto.
+- `CRITICO-03`: esta mitigado por `--workers 1 --threads 2` y comentario explicito junto a `_PIPELINE_LOCK`; lock DB/file robusto queda fuera del alcance actual.
 
-Prioridad recomendada para el proximo bloque de codigo:
+Bloque tecnico ya cerrado en `d60ad6d`:
 
 - Agregar comentario explicito junto a `_PIPELINE_LOCK` sobre dependencia de single-worker.
 - Reemplazar `globals().get(...)` por llamada directa a `sync_attribute_history_baseline`.
 - Agregar `pytest-cov` y reporte de cobertura en CI.
 - Documentar DiceBear y cache in-memory como limitaciones reales del MVP.
-- Evaluar guardar `input_dim` o metadata en el checkpoint del modelo.
-- Considerar `requirements-lock.txt` o pin de dependencias.
+- Guardar `input_dim` y metadata minima en checkpoint del modelo.
+- Crear `requirements-lock.txt`.
+
+Prioridad recomendada para el proximo bloque de codigo:
+
+- Auditoria CSRF ruta por ruta y tests para POST mutantes criticos.
+- Tests faltantes de inputs invalidos: edad invalida y campos obligatorios vacios.
+- Convertir magic numbers visibles (`50`, `2000`, pesos de score) en constantes nombradas.
+- Agregar limite simple al cache in-memory (`CACHE_MAX_ENTRIES`) si se quiere cerrar `REND-03` con codigo.
+- Evaluar simplificar `tests/conftest.py` para evitar nombres de modulo con UUID.
 
 ## Documentos Relevantes
 
@@ -243,6 +276,7 @@ Prioridad recomendada para el proximo bloque de codigo:
 - `RUNBOOK.md`
 - `REVISION_FINAL_MVP.md`
 - `docs/comparacion_falencias_codigo_fuente_2026-04-27.md`
+- `docs/explicacion_cambios_revision_codigo_2026-04-27.md`
 - `docs/flujo_reproducible_mvp.md`
 - `docs/guia_indicadores_app.md`
 - `docs/model_training_evidence.md`
@@ -260,7 +294,7 @@ La rama `training` queda como base estable de las correcciones del MVP. Las nuev
 
 Hay dos caminos razonables:
 
-- Cerrar pendientes livianos del informe del profesor sobre codigo fuente: lock single-worker, `globals()`, cobertura CI, documentacion de limitaciones, metadata de modelo y dependencias.
+- Continuar cerrando falencias livianas restantes del informe del profesor: CSRF/test matrix, inputs invalidos faltantes, magic numbers, limite de cache y `conftest`.
 - Pasar a documento de tesis: alinear Word con el MVP real y eliminar afirmaciones que no esten respaldadas por el repo.
 
 Antes de tocar codigo en el proximo chat, revisar:

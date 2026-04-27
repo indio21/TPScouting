@@ -85,7 +85,7 @@ Crear o asegurar usuario administrador:
 cd C:\Tesis\TPScouting
 $env:APP_DB_URL = "sqlite:///players_updated_v2.db"
 $env:ADMIN_USERNAME = "admin"
-$env:ADMIN_PASSWORD = "admin123"
+$env:ADMIN_PASSWORD = "AdminDemo123"
 .\.venv\Scripts\python.exe .\scouting_app\create_admin.py
 ```
 
@@ -96,7 +96,7 @@ cd C:\Tesis\TPScouting\scouting_app
 $env:APP_DB_URL = "sqlite:///players_updated_v2.db"
 $env:TRAINING_DB_URL = "sqlite:///players_training.db"
 $env:ADMIN_USERNAME = "admin"
-$env:ADMIN_PASSWORD = "admin123"
+$env:ADMIN_PASSWORD = "AdminDemo123"
 ..\.venv\Scripts\python.exe app.py
 ```
 
@@ -116,7 +116,7 @@ Para explicar los indicadores visibles de la app, usar `docs/guia_indicadores_ap
 
 ```powershell
 cd C:\Tesis\TPScouting
-.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
 ```
 
-Ultima validacion documentada: `40 passed`.
+Ultima validacion documentada: `42 passed`, cobertura total reportada `75%`.

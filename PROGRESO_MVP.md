@@ -1,8 +1,23 @@
 # Progreso Del MVP
 
-Fecha de actualizacion: 2026-04-26
+Fecha de actualizacion: 2026-04-27
 
 Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP real del proyecto `TPScouting`.
+
+## Actualizacion 2026-04-27
+
+- Se cerro un bloque de observaciones del informe del profesor sobre codigo fuente en la rama `reformas-finales`.
+- `app.py` ahora documenta junto a `_PIPELINE_LOCK` que el lock es intra-proceso y depende de Gunicorn `--workers 1`.
+- Se reemplazo el uso de `globals().get(...)` por llamada directa a `sync_attribute_history_baseline`.
+- CI ahora mide cobertura con `pytest-cov` y `requirements-dev.txt` incluye esa dependencia.
+- Se agrego `requirements-lock.txt` como snapshot exacto de dependencias instaladas en `.venv`.
+- `RUNBOOK.md` y `docs/explicacion_cambios_revision_codigo_2026-04-27.md` documentan DiceBear, cache in-memory sin limite, `app.py` monolitico y el lock de dependencias.
+- `db_utils.ensure_player_columns()` ahora migra `created_at` y `updated_at` tambien en `physical_assessments` y `player_availability`.
+- `train_model.py` guarda checkpoints con `input_dim`, version y `model_state`.
+- `app.py` y `evaluate_saved_model.py` cargan checkpoints nuevos y conservan compatibilidad con `state_dict` legacy.
+- `classification_metrics()` devuelve `warnings` cuando ROC-AUC, PR-AUC o F1/precision/recall no pueden calcularse.
+- Se agregaron tests de migracion legacy, checkpoint con `input_dim` y warnings de metricas.
+- Validacion: `42 passed` con `pytest -q --cov=scouting_app --cov-report=term-missing`, cobertura total reportada `75%`.
 
 ## Actualizacion 2026-04-23
 
@@ -40,11 +55,12 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Rama estable cerrada del MVP corregido: `training`
 - Rama activa para nuevas reformas: `reformas-finales`
 - Ultimo commit comun al crear `reformas-finales`: `b6c21ea`
-- Estado actual: `reformas-finales` limpia y sincronizada con `origin/reformas-finales`
+- Ultimo commit tecnico publicado en `reformas-finales`: `d60ad6d chore: close source review follow-ups`
+- Estado tecnico tras ese commit: `reformas-finales` limpia y sincronizada con `origin/reformas-finales`
 
 ## Etapas Ya Trabajadas
 
-Nota: las etapas numeradas conservan evidencia historica de cada corrida. El estado vigente del modelo y de la demo es el resumido en la actualizacion superior de fecha 2026-04-26.
+Nota: las etapas numeradas conservan evidencia historica de cada corrida. El estado vigente del modelo y de la demo es el resumido en las actualizaciones superiores de fecha 2026-04-26 y 2026-04-27.
 
 ### 1. Preparacion para PostgreSQL
 
@@ -289,7 +305,8 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 ## Tests Ejecutados
 
 - La suite automatizada actual termina pasando en esta maquina.
-- Ultimo estado validado: `40 passed`
+- Ultimo estado validado sin cobertura: `40 passed`
+- Ultimo estado validado con cobertura: `42 passed`, cobertura total `75%`
 
 ## Puntos Mejorados De Forma Clara
 
@@ -311,12 +328,18 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Trayectoria tecnica mensual incorporada al entrenamiento e inferencia
 - Contexto de partido y senal cualitativa del scout incorporados al pipeline de prediccion
 - Target temporal de progresion incorporado al entrenamiento
+- Cobertura formal en CI con `pytest-cov`
+- Checkpoint del modelo con `input_dim` validable
+- Dependencias exactas registradas en `requirements-lock.txt`
+- Limitaciones reales de DiceBear, cache in-memory y monolito documentadas
 
 ## Puntos Que Siguen Parciales O Pendientes
 
 - Persistencia/despliegue final en Render
-- Revisión completa de CSRF y endurecimiento adicional
+- Revision completa de CSRF y endurecimiento adicional
 - Optimizaciones adicionales de rendimiento
+- Tests adicionales para edad invalida y campos obligatorios vacios
+- Constantes nombradas para magic numbers restantes
 - Correccion del documento Word, que todavia no se empezo en esta fase
 
 ## Bloques Restantes

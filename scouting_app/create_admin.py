@@ -5,7 +5,7 @@ Uso (desde la raíz del repo o desde scouting_app/):
 
   APP_DB_URL="sqlite:///players_updated_v2.db" \
   ADMIN_USERNAME="admin" \
-  ADMIN_PASSWORD="admin123" \
+  ADMIN_PASSWORD="AdminDemo123" \
   python scouting_app/create_admin.py
 
 Notas:
