@@ -1,6 +1,6 @@
 # Contexto Para Nuevo Chat
 
-Fecha: 2026-04-26
+Fecha: 2026-04-27
 
 Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting` en un chat nuevo sin arrastrar toda la conversacion anterior.
 
@@ -22,7 +22,7 @@ Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting`
 - Rama estable cerrada del MVP corregido: `training`
 - Rama activa para nuevas reformas: `reformas-finales`
 - Ultimo commit comun al crear `reformas-finales`: `b6c21ea docs: explain app prediction indicators`
-- Estado al cierre de este contexto: `reformas-finales` limpia y sincronizada con `origin/reformas-finales`
+- Estado al cierre anterior: `reformas-finales` limpia y sincronizada con `origin/reformas-finales`
 - Entorno Python local: `C:\Tesis\TPScouting\.venv`
 
 Usar siempre la `.venv`; no usar el Python global.
@@ -206,12 +206,43 @@ Resultado:
 
 - `40 passed`
 
+## Comparacion Con Informe Del Profesor 2026-04-27
+
+Documento analizado:
+
+- `C:\Users\Usuario\Desktop\Evaluacion y punto a corregir del Codigo Fuente.docx`
+
+Archivo generado en el repo:
+
+- `docs/comparacion_falencias_codigo_fuente_2026-04-27.md`
+
+Resultado general del analisis:
+
+- El informe del profesor contenia `31` observaciones.
+- Corregidos o practicamente corregidos: `15`.
+- Parciales o mejorados pero no cerrados del todo: `11`.
+- Pendientes claros: `5`.
+- Los tres criticos cambiaron mucho respecto del informe original:
+- `CRITICO-01`: Render ya apunta a PostgreSQL administrado.
+- `CRITICO-02`: el umbral de potencial esta centralizado y testeado.
+- `CRITICO-03`: esta mitigado por `--workers 1 --threads 2`, pero falta comentario explicito junto a `_PIPELINE_LOCK` o lock robusto.
+
+Prioridad recomendada para el proximo bloque de codigo:
+
+- Agregar comentario explicito junto a `_PIPELINE_LOCK` sobre dependencia de single-worker.
+- Reemplazar `globals().get(...)` por llamada directa a `sync_attribute_history_baseline`.
+- Agregar `pytest-cov` y reporte de cobertura en CI.
+- Documentar DiceBear y cache in-memory como limitaciones reales del MVP.
+- Evaluar guardar `input_dim` o metadata en el checkpoint del modelo.
+- Considerar `requirements-lock.txt` o pin de dependencias.
+
 ## Documentos Relevantes
 
 - `PROGRESO_MVP.md`
 - `README.md`
 - `RUNBOOK.md`
 - `REVISION_FINAL_MVP.md`
+- `docs/comparacion_falencias_codigo_fuente_2026-04-27.md`
 - `docs/flujo_reproducible_mvp.md`
 - `docs/guia_indicadores_app.md`
 - `docs/model_training_evidence.md`
@@ -229,7 +260,7 @@ La rama `training` queda como base estable de las correcciones del MVP. Las nuev
 
 Hay dos caminos razonables:
 
-- Seguir con desarrollo/modelo: mejorar generacion sintetica y target temporal, o robustecer evaluacion contra baseline.
+- Cerrar pendientes livianos del informe del profesor sobre codigo fuente: lock single-worker, `globals()`, cobertura CI, documentacion de limitaciones, metadata de modelo y dependencias.
 - Pasar a documento de tesis: alinear Word con el MVP real y eliminar afirmaciones que no esten respaldadas por el repo.
 
 Antes de tocar codigo en el proximo chat, revisar:
