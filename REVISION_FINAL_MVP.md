@@ -20,7 +20,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 ### 1. Suite automatizada
 
 - Estado final validado original: `40 passed`
-- Estado tecnico actualizado 2026-04-27: `42 passed` con `pytest-cov`, cobertura total reportada `75%`
+- Estado tecnico actualizado 2026-04-27: `45 passed` con `pytest-cov`, cobertura total reportada `76%`
 - Cobertura reforzada sobre:
 - autenticacion
 - permisos por rol
@@ -37,6 +37,8 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - migracion legacy de timestamps para fisico/disponibilidad
 - checkpoint del modelo con `input_dim`
 - warnings explicitos para metricas no calculables
+- matriz CSRF para POST mutantes criticos
+- validacion de alta de jugador con edad invalida y campos obligatorios vacios
 
 ### 1.1. Cierre De Observaciones De Codigo Fuente 2026-04-27
 
@@ -48,6 +50,9 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - El modelo se guarda como checkpoint con `input_dim`, version y `model_state`.
 - La carga de modelo mantiene compatibilidad con `state_dict` legacy.
 - Las metricas devuelven `warnings` cuando ROC-AUC, PR-AUC o F1/precision/recall no pueden calcularse.
+- Se agregaron pruebas para que los POST mutantes criticos rechacen requests sin CSRF.
+- Se agregaron pruebas para edad invalida y campos obligatorios vacios.
+- La plantilla base muestra todos los mensajes flash para no ocultar errores multiples.
 
 ### 2. Smoke funcional sobre la app real del repo
 
@@ -116,7 +121,6 @@ Luego, para la demo final, `sync_shortlist.py --replace` reconstruyo los jugador
 Estos puntos siguen siendo reales y no se deben ocultar:
 
 - despliegue final en Render todavia requiere cierre operativo completo
-- el hardening CSRF puede ampliarse todavia mas si se quiere un nivel mas robusto
 - la app sigue siendo un MVP; no esta pensada para alta concurrencia
 - persisten deudas de calidad no criticas: magic numbers, `conftest.py` dinamico y `app.py` monolitico
 - el documento Word todavia no fue alineado con el estado corregido del MVP en esta fase

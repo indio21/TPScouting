@@ -119,4 +119,4 @@ cd C:\Tesis\TPScouting
 .\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
 ```
 
-Ultima validacion documentada: `42 passed`, cobertura total reportada `75%`.
+Ultima validacion documentada: `45 passed`, cobertura total reportada `76%`.

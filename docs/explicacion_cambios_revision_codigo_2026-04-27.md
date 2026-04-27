@@ -156,8 +156,8 @@ La validacion ejecutada despues de los cambios fue:
 
 Resultado:
 
-- `42 passed`
-- Cobertura total reportada: `75%`
+- `45 passed`
+- Cobertura total reportada: `76%`
 - `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN en tests
 
 ## Lectura General

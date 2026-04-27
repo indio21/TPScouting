@@ -55,6 +55,32 @@ def _create_player(app_module, db, **overrides):
     return player
 
 
+def _valid_manage_player_payload(**overrides):
+    payload = {
+        "mode": "single",
+        "name": "Nuevo Talento",
+        "national_id": "40111222",
+        "age": "15",
+        "position": "Delantero",
+        "club": "Club Nuevo",
+        "country": "Argentina",
+        "photo_url": "",
+        "pace": "14",
+        "shooting": "15",
+        "passing": "10",
+        "dribbling": "14",
+        "defending": "6",
+        "physical": "12",
+        "vision": "11",
+        "tackling": "5",
+        "determination": "16",
+        "technique": "13",
+        "potential_label": "1",
+    }
+    payload.update(overrides)
+    return payload
+
+
 def _fit_test_preprocessor(app_module, players):
     preprocessing_module = importlib.import_module("preprocessing")
     app_module.preprocessor = preprocessing_module.build_preprocessor()
@@ -378,6 +404,76 @@ def test_register_requires_csrf_token(client, app_module, db):
     assert response.status_code == 400
 
 
+def test_mutating_post_routes_reject_missing_csrf(client, app_module, db):
+    _create_user(db, app_module.User, "admin_no_csrf", "admin1234", role="administrador")
+    player = _create_player(app_module, db, name="CSRF Base", national_id="46660111")
+    coach = app_module.Coach(name="Coach CSRF", role="Entrenador", age=40, club="Club CSRF", country="Argentina")
+    director = app_module.Director(
+        name="Dir CSRF",
+        position="Director deportivo",
+        age=50,
+        club="Club CSRF",
+        country="Argentina",
+    )
+    db.add_all([coach, director])
+    db.commit()
+    _login(client, "admin_no_csrf", "admin1234")
+
+    valid_player_payload = _valid_manage_player_payload(
+        name="Sin Token",
+        national_id="46660112",
+        age="16",
+    )
+    edit_payload = _valid_manage_player_payload(
+        name="Editado Sin Token",
+        national_id=player.national_id,
+        age=str(player.age),
+        position=player.position,
+        potential_label="0",
+    )
+    routes = [
+        ("/login", {"username": "admin_no_csrf", "password": "admin1234"}),
+        ("/register", {"username": "sin_token", "password": "Password123", "role": "scout"}),
+        ("/players/manage", valid_player_payload),
+        (
+            f"/player/{player.id}/stats",
+            {
+                "action": "add",
+                "record_date": "2026-04-15",
+                "matches_played": "1",
+                "minutes_played": "90",
+            },
+        ),
+        (f"/player/{player.id}/attributes", {"action": "add", "record_date": "2026-04-15", "pace": "12"}),
+        (f"/edit_player/{player.id}", edit_payload),
+        (f"/delete_player/{player.id}", {}),
+        ("/coaches/new", {"name": "Coach Nuevo", "role": "Ayudante", "age": "35"}),
+        (f"/coaches/edit/{coach.id}", {"name": "Coach Editado", "role": "Ayudante", "age": "36"}),
+        (f"/coaches/delete/{coach.id}", {}),
+        ("/directors/new", {"name": "Director Nuevo", "position": "Presidente", "age": "55"}),
+        (f"/directors/edit/{director.id}", {"name": "Director Editado", "position": "Presidente", "age": "56"}),
+        (f"/directors/delete/{director.id}", {}),
+        ("/settings", {"action": "cleanup_demo_data"}),
+    ]
+
+    for path, data in routes:
+        response = client.post(path, data=data, follow_redirects=False)
+        assert response.status_code == 400, path
+
+    db.expire_all()
+    assert db.query(app_module.User).filter_by(username="sin_token").count() == 0
+    assert db.query(app_module.Player).filter_by(national_id="46660112").count() == 0
+    assert db.query(app_module.Player).filter_by(id=player.id).count() == 1
+    assert db.query(app_module.PlayerStat).filter_by(player_id=player.id).count() == 0
+    assert db.query(app_module.PlayerAttributeHistory).filter_by(player_id=player.id).count() == 0
+    db.refresh(player)
+    db.refresh(coach)
+    db.refresh(director)
+    assert player.name == "CSRF Base"
+    assert coach.name == "Coach CSRF"
+    assert director.name == "Dir CSRF"
+
+
 def test_manage_players_creates_valid_player(client, app_module, db):
     _create_user(db, app_module.User, "scout_create", "scout1234", role="scout")
     _login(client, "scout_create", "scout1234")
@@ -385,28 +481,7 @@ def test_manage_players_creates_valid_player(client, app_module, db):
 
     response = client.post(
         "/players/manage",
-        data={
-            "mode": "single",
-            "name": "Nuevo Talento",
-            "national_id": "40111222",
-            "age": "15",
-            "position": "Delantero",
-            "club": "Club Nuevo",
-            "country": "Argentina",
-            "photo_url": "",
-            "pace": "14",
-            "shooting": "15",
-            "passing": "10",
-            "dribbling": "14",
-            "defending": "6",
-            "physical": "12",
-            "vision": "11",
-            "tackling": "5",
-            "determination": "16",
-            "technique": "13",
-            "potential_label": "1",
-            "csrf_token": csrf_token,
-        },
+        data=_valid_manage_player_payload(csrf_token=csrf_token),
         follow_redirects=False,
     )
 
@@ -414,6 +489,50 @@ def test_manage_players_creates_valid_player(client, app_module, db):
     created = db.query(app_module.Player).filter_by(national_id="40111222").first()
     assert created is not None
     assert created.name == "Nuevo Talento"
+
+
+def test_manage_players_rejects_invalid_age(client, app_module, db):
+    _create_user(db, app_module.User, "scout_age", "scout1234", role="scout")
+    _login(client, "scout_age", "scout1234")
+    csrf_token = _get_csrf_token(client, "/players/manage")
+
+    response = client.post(
+        "/players/manage",
+        data=_valid_manage_player_payload(
+            national_id="40111223",
+            age="19",
+            csrf_token=csrf_token,
+        ),
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert "La edad debe estar entre 12 y 18 anos" in response.get_data(as_text=True)
+    assert db.query(app_module.Player).filter_by(national_id="40111223").count() == 0
+
+
+def test_manage_players_rejects_missing_required_fields(client, app_module, db):
+    _create_user(db, app_module.User, "scout_required", "scout1234", role="scout")
+    _login(client, "scout_required", "scout1234")
+    csrf_token = _get_csrf_token(client, "/players/manage")
+
+    response = client.post(
+        "/players/manage",
+        data=_valid_manage_player_payload(
+            name="",
+            national_id="",
+            age="",
+            csrf_token=csrf_token,
+        ),
+        follow_redirects=True,
+    )
+    body = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert "El nombre es obligatorio" in body
+    assert "DNI" in body
+    assert "edad debe estar entre 12 y 18" in body.lower()
+    assert db.query(app_module.Player).count() == 0
 
 
 def test_manage_players_rejects_duplicate_national_id(client, app_module, db):

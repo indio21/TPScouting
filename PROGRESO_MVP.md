@@ -18,6 +18,8 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - `classification_metrics()` devuelve `warnings` cuando ROC-AUC, PR-AUC o F1/precision/recall no pueden calcularse.
 - Se agregaron tests de migracion legacy, checkpoint con `input_dim` y warnings de metricas.
 - Validacion: `42 passed` con `pytest -q --cov=scouting_app --cov-report=term-missing`, cobertura total reportada `75%`.
+- Bloque CSRF/inputs invalidos: se agrego un test matriz para POST mutantes sin token, tests de edad invalida y campos obligatorios vacios, y `base.html` ahora muestra todos los mensajes flash de validacion.
+- Validacion posterior: `45 passed` con `pytest -q --cov=scouting_app --cov-report=term-missing`, cobertura total reportada `76%`.
 
 ## Actualizacion 2026-04-23
 
@@ -306,7 +308,7 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 
 - La suite automatizada actual termina pasando en esta maquina.
 - Ultimo estado validado sin cobertura: `40 passed`
-- Ultimo estado validado con cobertura: `42 passed`, cobertura total `75%`
+- Ultimo estado validado con cobertura: `45 passed`, cobertura total `76%`
 
 ## Puntos Mejorados De Forma Clara
 
@@ -329,6 +331,8 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Contexto de partido y senal cualitativa del scout incorporados al pipeline de prediccion
 - Target temporal de progresion incorporado al entrenamiento
 - Cobertura formal en CI con `pytest-cov`
+- Tests CSRF sobre POST mutantes criticos
+- Tests de inputs invalidos para edad y campos obligatorios vacios
 - Checkpoint del modelo con `input_dim` validable
 - Dependencias exactas registradas en `requirements-lock.txt`
 - Limitaciones reales de DiceBear, cache in-memory y monolito documentadas
@@ -336,10 +340,10 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 ## Puntos Que Siguen Parciales O Pendientes
 
 - Persistencia/despliegue final en Render
-- Revision completa de CSRF y endurecimiento adicional
 - Optimizaciones adicionales de rendimiento
-- Tests adicionales para edad invalida y campos obligatorios vacios
 - Constantes nombradas para magic numbers restantes
+- Limite explicito para cache in-memory
+- Simplificacion opcional de `tests/conftest.py`
 - Correccion del documento Word, que todavia no se empezo en esta fase
 
 ## Bloques Restantes

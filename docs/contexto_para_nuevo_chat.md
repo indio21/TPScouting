@@ -195,6 +195,9 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - `app.py` y `evaluate_saved_model.py` cargan checkpoints nuevos y mantienen compatibilidad con `state_dict` legacy.
 - `classification_metrics()` devuelve `warnings` cuando ROC-AUC, PR-AUC o F1/precision/recall no pueden calcularse.
 - `docs/explicacion_cambios_revision_codigo_2026-04-27.md` explica estos cambios en lenguaje simple.
+- Se agrego test matriz de CSRF para POST mutantes criticos.
+- Se agregaron tests de alta de jugador con edad invalida y campos obligatorios vacios.
+- `base.html` ahora muestra todos los mensajes flash para no ocultar errores multiples de validacion.
 
 ## Performance
 
@@ -227,8 +230,8 @@ cd C:\Tesis\TPScouting
 
 Resultado:
 
-- `42 passed`
-- cobertura total reportada: `75%`
+- `45 passed`
+- cobertura total reportada: `76%`
 - `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
 
 ## Comparacion Con Informe Del Profesor 2026-04-27
@@ -263,8 +266,6 @@ Bloque tecnico ya cerrado en `d60ad6d`:
 
 Prioridad recomendada para el proximo bloque de codigo:
 
-- Auditoria CSRF ruta por ruta y tests para POST mutantes criticos.
-- Tests faltantes de inputs invalidos: edad invalida y campos obligatorios vacios.
 - Convertir magic numbers visibles (`50`, `2000`, pesos de score) en constantes nombradas.
 - Agregar limite simple al cache in-memory (`CACHE_MAX_ENTRIES`) si se quiere cerrar `REND-03` con codigo.
 - Evaluar simplificar `tests/conftest.py` para evitar nombres de modulo con UUID.
@@ -294,7 +295,7 @@ La rama `training` queda como base estable de las correcciones del MVP. Las nuev
 
 Hay dos caminos razonables:
 
-- Continuar cerrando falencias livianas restantes del informe del profesor: CSRF/test matrix, inputs invalidos faltantes, magic numbers, limite de cache y `conftest`.
+- Continuar cerrando falencias livianas restantes del informe del profesor: magic numbers, limite de cache y `conftest`.
 - Pasar a documento de tesis: alinear Word con el MVP real y eliminar afirmaciones que no esten respaldadas por el repo.
 
 Antes de tocar codigo en el proximo chat, revisar:
