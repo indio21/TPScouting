@@ -10,7 +10,7 @@ import os
 import random
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -59,6 +59,7 @@ DEFAULT_FOCAL_GAMMA = float(os.environ.get("TRAIN_FOCAL_GAMMA", "1.5"))
 DEFAULT_SAMPLER_STRATEGY = os.environ.get("TRAIN_SAMPLER_STRATEGY", "shuffle").strip().lower()
 DEFAULT_LINEAR_PRIOR_STRENGTH = float(os.environ.get("TRAIN_LINEAR_PRIOR_STRENGTH", "0.0001"))
 DEFAULT_SPLITS_FILENAME = "training_splits.json"
+MODEL_CHECKPOINT_VERSION = 1
 
 random.seed(SEED)
 np.random.seed(SEED)
@@ -102,6 +103,59 @@ class PlayerNet(nn.Module):
             intercept = torch.tensor(linear_model.intercept_, dtype=torch.float32)
             self.wide.weight.copy_(coef)
             self.wide.bias.copy_(intercept.reshape(-1))
+
+
+def model_input_dim(model: nn.Module) -> int:
+    """Devuelve la dimension de entrada esperada por el modelo guardado."""
+    wide_layer = getattr(model, "wide", None)
+    input_dim = getattr(wide_layer, "in_features", None)
+    if input_dim is None:
+        raise ValueError("No se pudo inferir input_dim desde la capa wide del modelo.")
+    return int(input_dim)
+
+
+def model_checkpoint(model: nn.Module, input_dim: Optional[int] = None) -> Dict[str, object]:
+    return {
+        "version": MODEL_CHECKPOINT_VERSION,
+        "model_class": model.__class__.__name__,
+        "input_dim": int(input_dim if input_dim is not None else model_input_dim(model)),
+        "model_state": model.state_dict(),
+    }
+
+
+def load_model_checkpoint(
+    path: str,
+    expected_input_dim: Optional[int] = None,
+    map_location: object = "cpu",
+) -> Dict[str, object]:
+    """Carga checkpoints nuevos y state_dicts legacy con validacion opcional."""
+    try:
+        artifact = torch.load(path, map_location=map_location, weights_only=True)
+    except TypeError:
+        artifact = torch.load(path, map_location=map_location)
+
+    if isinstance(artifact, dict) and "model_state" in artifact:
+        state_dict = artifact["model_state"]
+        stored_input_dim = artifact.get("input_dim")
+        version = artifact.get("version", 0)
+    else:
+        state_dict = artifact
+        stored_input_dim = None
+        version = 0
+
+    if stored_input_dim is not None and expected_input_dim is not None:
+        if int(stored_input_dim) != int(expected_input_dim):
+            raise RuntimeError(
+                "Modelo incompatible con el preprocesador actual: "
+                f"checkpoint input_dim={stored_input_dim}, esperado={expected_input_dim}."
+            )
+
+    return {
+        "version": version,
+        "input_dim": stored_input_dim,
+        "state_dict": state_dict,
+        "is_legacy_state_dict": stored_input_dim is None,
+    }
 
 
 class BinaryFocalLossWithLogits(nn.Module):
@@ -278,33 +332,38 @@ def classification_metrics(
             "precision": "",
             "recall": "",
             "confusion_matrix": [],
+            "warnings": ["No se calcularon metricas: y_true esta vacio."],
         }
 
     y_pred = (y_prob >= threshold).astype(int)
     accuracy = float((y_pred == y_true).mean())
+    metric_warnings: List[str] = []
 
     try:
         if len(np.unique(y_true)) < 2:
             raise ValueError("Se requieren al menos dos clases reales para ROC-AUC.")
         roc_auc = float(roc_auc_score(y_true, y_prob))
-    except Exception:
+    except Exception as exc:
         roc_auc = ""
+        metric_warnings.append(f"ROC-AUC no calculado: {exc}")
 
     try:
         if len(np.unique(y_true)) < 2:
             raise ValueError("Se requieren al menos dos clases reales para PR-AUC.")
         pr_auc = float(average_precision_score(y_true, y_prob))
-    except Exception:
+    except Exception as exc:
         pr_auc = ""
+        metric_warnings.append(f"PR-AUC no calculado: {exc}")
 
     try:
         f1 = float(f1_score(y_true, y_pred, zero_division=0))
         precision = float(precision_score(y_true, y_pred, zero_division=0))
         recall = float(recall_score(y_true, y_pred, zero_division=0))
         cm = confusion_matrix(y_true, y_pred, labels=[0, 1]).tolist()
-    except Exception:
+    except Exception as exc:
         f1 = precision = recall = ""
         cm = []
+        metric_warnings.append(f"F1/precision/recall no calculados: {exc}")
 
     return {
         "threshold": float(threshold),
@@ -315,6 +374,7 @@ def classification_metrics(
         "precision": precision,
         "recall": recall,
         "confusion_matrix": cm,
+        "warnings": metric_warnings,
     }
 
 
@@ -492,7 +552,8 @@ def train_model(
         baseline_test_prob = baseline_model.predict_proba(X_test)[:, 1]
         baseline_test_metrics = classification_metrics(y_test, baseline_test_prob, baseline_threshold)
 
-    model = PlayerNet(input_dim=preprocessor_input_dim(preprocessor))
+    input_dim = preprocessor_input_dim(preprocessor)
+    model = PlayerNet(input_dim=input_dim)
     if baseline_model is not None:
         model.initialize_from_linear_model(baseline_model)
     if DEFAULT_LOSS_KIND == "focal":
@@ -653,6 +714,11 @@ def train_model(
             "test_size": float(DEFAULT_TEST_SIZE),
             "validation_size_on_train_pool": float(DEFAULT_VAL_SIZE),
         },
+        "model": {
+            "checkpoint_version": MODEL_CHECKPOINT_VERSION,
+            "input_dim": int(input_dim),
+            "class": "PlayerNet",
+        },
         "dataset": {
             "train_size": int(len(X_train_df)),
             "validation_size": int(len(X_val_df)),
@@ -712,7 +778,7 @@ def train_model(
 
 
 def save_model(model: nn.Module, path: str) -> None:
-    torch.save(model.state_dict(), path)
+    torch.save(model_checkpoint(model), path)
 
 
 def save_calibrator(calibrator: Optional[object], path: str) -> None:

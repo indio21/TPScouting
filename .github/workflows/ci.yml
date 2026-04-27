@@ -30,4 +30,4 @@ jobs:
           APP_SECRET_KEY: test-secret
           LOG_LEVEL: INFO
         run: |
-          pytest -q
+          pytest -q --cov=scouting_app --cov-report=term-missing

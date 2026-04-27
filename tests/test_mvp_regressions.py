@@ -4,6 +4,7 @@ from datetime import date
 from types import SimpleNamespace
 
 import numpy as np
+from sqlalchemy import inspect, text
 from werkzeug.security import generate_password_hash
 from sqlalchemy.orm import sessionmaker
 
@@ -851,10 +852,33 @@ def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir
     assert metadata["dataset"]["validation_size"] > 0
     assert 0.0 <= metadata["pytorch"]["selected_threshold"] <= 1.0
     assert metadata["dataset_summary"]["target_column"] == "temporal_target_label"
+    assert metadata["model"]["checkpoint_version"] == train_module.MODEL_CHECKPOINT_VERSION
+    assert metadata["model"]["input_dim"] > 0
     assert metadata["artifacts"]["splits_path"] == str(splits_path.resolve())
+    checkpoint = train_module.load_model_checkpoint(str(model_path))
+    assert checkpoint["input_dim"] == metadata["model"]["input_dim"]
+    assert checkpoint["is_legacy_state_dict"] is False
     assert len(splits["train_player_ids"]) > 0
     assert len(splits["validation_player_ids"]) > 0
     assert len(splits["test_player_ids"]) > 0
+
+
+def test_classification_metrics_reports_unavailable_metric_warnings(scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    train_module = importlib.import_module("train_model")
+
+    metrics = train_module.classification_metrics(
+        np.zeros(4, dtype=np.float32),
+        np.array([0.1, 0.2, 0.3, 0.4], dtype=np.float32),
+        0.5,
+    )
+
+    assert metrics["roc_auc"] == ""
+    assert metrics["pr_auc"] == ""
+    assert any("ROC-AUC no calculado" in warning for warning in metrics["warnings"])
+    assert any("PR-AUC no calculado" in warning for warning in metrics["warnings"])
 
 
 def test_temporal_training_dataframe_cache_reuses_cached_artifact(tmp_path, scouting_app_dir, monkeypatch):
@@ -1038,6 +1062,56 @@ def test_sync_shortlist_replace_copies_rich_demo_data(tmp_path, scouting_app_dir
         assert session.query(models_module.PlayerAvailability).count() > 0
     finally:
         session.close()
+
+
+def test_ensure_player_columns_migrates_physical_and_availability_tables(tmp_path, scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    db_utils_module = importlib.import_module("db_utils")
+
+    db_path = tmp_path / "legacy_longitudinal_tables.db"
+    db_url = f"sqlite:///{db_path.as_posix()}"
+    engine = db_utils_module.create_app_engine(db_url)
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "CREATE TABLE physical_assessments ("
+                "id INTEGER PRIMARY KEY, player_id INTEGER NOT NULL, assessment_date DATE NOT NULL)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE TABLE player_availability ("
+                "id INTEGER PRIMARY KEY, player_id INTEGER NOT NULL, record_date DATE NOT NULL)"
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO physical_assessments (id, player_id, assessment_date) "
+                "VALUES (1, 10, '2026-01-01')"
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO player_availability (id, player_id, record_date) "
+                "VALUES (1, 10, '2026-01-01')"
+            )
+        )
+
+    added_columns = db_utils_module.ensure_player_columns(engine)
+
+    assert added_columns == 4
+    inspector = inspect(engine)
+    for table_name in ("physical_assessments", "player_availability"):
+        columns = {column["name"] for column in inspector.get_columns(table_name)}
+        assert {"created_at", "updated_at"}.issubset(columns)
+        with engine.connect() as conn:
+            row = conn.execute(
+                text(f"SELECT created_at, updated_at FROM {table_name} WHERE id = 1")
+            ).one()
+        assert row.created_at is not None
+        assert row.updated_at is not None
 
 
 def test_training_dataframe_merges_historical_features(tmp_path, scouting_app_dir, monkeypatch):

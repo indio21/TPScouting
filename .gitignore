@@ -4,6 +4,7 @@
 *.pyd
 *.so
 .pytest_cache/
+.coverage*
 .venv/
 venv/
 .env

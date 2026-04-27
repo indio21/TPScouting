@@ -20,6 +20,8 @@ Este runbook cubre operación mínima, backup/restore de SQLite, healthcheck y b
 .\.venv\Scripts\python.exe scouting_app\app.py
 ```
 
+Para reproducibilidad exacta de dependencias existe `requirements-lock.txt`. Usarlo cuando se necesite recrear el entorno con las mismas versiones instaladas al cierre de esta rama.
+
 Los artefactos de datos y modelo no son fuente principal del repo. Para regenerar una corrida local completa, usar `docs/flujo_reproducible_mvp.md`.
 
 Por defecto la app no reentrena automaticamente al iniciar si faltan `model.pt` o `preprocessor.joblib`. Si se quiere permitir esa conducta en desarrollo, setear `AUTO_TRAIN_ON_STARTUP=true`.
@@ -124,5 +126,16 @@ Acciones:
 ### 8.5 Cache en memoria del dashboard
 - El dashboard usa cache in-memory con TTL (`CACHE_TTL_SECONDS`, por default 60s).
 - El cache se invalida cuando se cargan o editan jugadores, atributos, historial o cuando corre el pipeline.
+- No tiene limite maximo de entradas; para el volumen del MVP el riesgo es bajo, pero no es una cache apta para crecimiento sostenido.
 - En despliegues con mas de una instancia o proceso, el cache no se comparte entre workers.
 - Para este MVP se recomienda mantener una sola instancia de aplicacion si se quiere consistencia inmediata del dashboard.
+
+### 8.6 Dependencia externa DiceBear
+- Si un jugador no tiene `photo_url`, la app genera una URL publica de DiceBear (`api.dicebear.com`) para que el navegador cargue un avatar.
+- El servidor no descarga esa imagen, por lo que no hay timeout server-side asociado.
+- Si DiceBear no responde o el usuario no tiene acceso externo, la ficha sigue funcionando pero el avatar puede no mostrarse.
+
+### 8.7 Limite de arquitectura del MVP
+- `scouting_app/app.py` sigue concentrando configuracion, rutas, seguridad, cache, pipeline e inferencia.
+- Para el MVP academico se mantiene asi para reducir cambios de alcance.
+- Una version productiva deberia separar rutas en blueprints y mover logica de negocio a servicios o modulos especificos.

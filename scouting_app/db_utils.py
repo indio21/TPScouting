@@ -95,6 +95,14 @@ def ensure_player_columns(engine) -> int:
             "created_at": "TIMESTAMP",
             "updated_at": "TIMESTAMP",
         },
+        "physical_assessments": {
+            "created_at": "TIMESTAMP",
+            "updated_at": "TIMESTAMP",
+        },
+        "player_availability": {
+            "created_at": "TIMESTAMP",
+            "updated_at": "TIMESTAMP",
+        },
     }
 
     added_columns = 0

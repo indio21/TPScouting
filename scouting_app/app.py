@@ -30,7 +30,7 @@ from models import (
     PlayerMatchParticipation,
     ScoutReport,
 )
-from train_model import PlayerNet
+from train_model import PlayerNet, load_model_checkpoint
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from db_utils import normalize_db_url, create_app_engine, ensure_player_columns
@@ -95,6 +95,7 @@ _LOGIN_RATE_LIMIT_MAX_ATTEMPTS = int(os.environ.get("LOGIN_RATE_LIMIT_MAX_ATTEMP
 
 
 # --- Guardrails pipeline (evita doble ejecución concurrente) ---
+# Lock intra-proceso: en Gunicorn depende de mantener --workers 1 para no correr pipelines en paralelo.
 _PIPELINE_LOCK = threading.Lock()
 _LOGIN_ATTEMPT_LOCK = threading.Lock()
 
@@ -397,9 +398,7 @@ def cleanup_operational_data(db_session) -> Dict[str, int]:
 
     photo_updates = backfill_player_photo_urls(db_session)
     history_updates = 0
-    history_sync_fn = globals().get("sync_attribute_history_baseline")
-    if callable(history_sync_fn):
-        history_updates = history_sync_fn(db_session)
+    history_updates = sync_attribute_history_baseline(db_session)
 
     trimmed = 0
     if ENFORCE_EVAL_POOL_LIMIT:
@@ -432,12 +431,10 @@ def enforce_operational_pool_limit_on_startup():
         if photo_updates:
             db.commit()
             app.logger.info("Fotos de jugadores completadas: %s", photo_updates)
-        history_sync_fn = globals().get("sync_attribute_history_baseline")
-        if callable(history_sync_fn):
-            history_updates = history_sync_fn(db)
-            if history_updates:
-                db.commit()
-                app.logger.info("Historial tecnico sincronizado desde ficha actual: %s jugadores", history_updates)
+        history_updates = sync_attribute_history_baseline(db)
+        if history_updates:
+            db.commit()
+            app.logger.info("Historial tecnico sincronizado desde ficha actual: %s jugadores", history_updates)
     except Exception:
         db.rollback()
         app.logger.exception("No se pudo aplicar el limite de jugadores operativos al iniciar.")
@@ -621,7 +618,6 @@ def init_admin_user():
     db.close()
 
 init_admin_user()
-enforce_operational_pool_limit_on_startup()
 
 # ----------------------------------------------------
 # Landing
@@ -785,11 +781,12 @@ def roles_required(*roles: str) -> Callable:
 # Modelo
 def load_model_state(model_path: str, input_dim: int) -> PlayerNet:
     model = PlayerNet(input_dim=input_dim)
-    try:
-        state_dict = torch.load(model_path, map_location=torch.device('cpu'), weights_only=True)
-    except TypeError:
-        state_dict = torch.load(model_path, map_location=torch.device('cpu'))
-    model.load_state_dict(state_dict)
+    checkpoint = load_model_checkpoint(
+        model_path,
+        expected_input_dim=input_dim,
+        map_location=torch.device('cpu'),
+    )
+    model.load_state_dict(checkpoint["state_dict"])
     model.eval()
     return model
 
@@ -1348,6 +1345,9 @@ def sync_attribute_history_baseline(db_session) -> int:
         if sync_player_attribute_history(player, db_session):
             created += 1
     return created
+
+
+enforce_operational_pool_limit_on_startup()
 
 
 def summarize_attribute_history(history: List[PlayerAttributeHistory]) -> Dict[str, Optional[int]]:

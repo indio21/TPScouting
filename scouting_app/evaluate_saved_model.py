@@ -24,6 +24,7 @@ from train_model import (
     apply_probability_calibrator,
     classification_metrics,
     load_data,
+    load_model_checkpoint,
     load_split_artifact,
     select_best_threshold,
     sigmoid_numpy,
@@ -88,8 +89,10 @@ def evaluate_saved_model(
     X_test = transform_features(test_df, preprocessor)
 
     dropout = float(metadata.get("config", {}).get("dropout", DEFAULT_DROPOUT)) if metadata else DEFAULT_DROPOUT
-    model = PlayerNet(input_dim=preprocessor_input_dim(preprocessor), dropout=dropout)
-    model.load_state_dict(torch.load(model_path, map_location="cpu"))
+    input_dim = preprocessor_input_dim(preprocessor)
+    model = PlayerNet(input_dim=input_dim, dropout=dropout)
+    checkpoint = load_model_checkpoint(model_path, expected_input_dim=input_dim, map_location="cpu")
+    model.load_state_dict(checkpoint["state_dict"])
     model.eval()
 
     with torch.no_grad():
