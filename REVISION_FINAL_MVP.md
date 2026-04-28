@@ -42,6 +42,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - limite configurable para cache in-memory del dashboard
 - constantes nombradas en paginacion, comparadores y rating de estadisticas
 - fixture de app en tests con nombre de modulo estable
+- nomenclatura de sesiones SQLAlchemy mejorada en helpers y scripts
 
 ### 1.1. Cierre De Observaciones De Codigo Fuente 2026-04-27
 
@@ -59,6 +60,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - Se agregaron constantes nombradas para reemplazar literales visibles de paginacion, comparadores y rating.
 - El cache in-memory del dashboard ahora tiene limite `CACHE_MAX_ENTRIES`, por default `128`.
 - `tests/conftest.py` evita nombres de modulo con UUID para facilitar debugging.
+- Helpers operativos y `create_admin.py` usan `db_session`; la sesion temporal de entrenamiento usa `training_session`.
 
 ### 2. Smoke funcional sobre la app real del repo
 
@@ -128,7 +130,7 @@ Estos puntos siguen siendo reales y no se deben ocultar:
 
 - despliegue final en Render todavia requiere cierre operativo completo
 - la app sigue siendo un MVP; no esta pensada para alta concurrencia
-- persisten deudas de calidad no criticas: `app.py` monolitico, nomenclatura `db` / `db_session` y type hints parciales
+- persisten deudas de calidad no criticas: `app.py` monolitico, convenciones parciales en endpoints Flask y type hints parciales
 - el documento Word todavia no fue alineado con el estado corregido del MVP en esta fase
 - la evidencia del modelo sigue basada en datos sinteticos; no hay validacion externa con datos reales
 

@@ -60,29 +60,29 @@ def main() -> int:
     Base.metadata.create_all(engine)
 
     Session = sessionmaker(bind=engine)
-    db = Session()
+    db_session = Session()
 
     try:
-        existing = db.query(User).filter(User.username == admin_username).first()
+        existing = db_session.query(User).filter(User.username == admin_username).first()
         if existing:
             print(f"OK: el usuario '{admin_username}' ya existe. No se realizaron cambios.")
             return 0
 
-        u = User(
+        user = User(
             username=admin_username,
             password_hash=generate_password_hash(admin_password),
             role="administrador",
         )
-        db.add(u)
-        db.commit()
+        db_session.add(user)
+        db_session.commit()
         print(f"OK: admin creado: username='{admin_username}', role='administrador'")
         return 0
     except Exception as e:
-        db.rollback()
+        db_session.rollback()
         print("ERROR: no se pudo crear el admin:", str(e))
         return 1
     finally:
-        db.close()
+        db_session.close()
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ from statistics import mean
 from types import SimpleNamespace
 from flask import Flask, render_template, redirect, url_for, request, session, flash, abort, jsonify
 from sqlalchemy import func, desc, select
-from sqlalchemy.orm import sessionmaker, load_only
+from sqlalchemy.orm import Session as SQLAlchemySession, sessionmaker, load_only
 import numpy as np
 import pandas as pd
 import torch
@@ -287,7 +287,7 @@ Base.metadata.create_all(engine)
 ensure_player_columns(engine)
 
 
-def trim_operational_player_pool(db_session, max_players: int = EVAL_POOL_MAX) -> int:
+def trim_operational_player_pool(db_session: SQLAlchemySession, max_players: int = EVAL_POOL_MAX) -> int:
     """Mantiene la base operativa en un maximo de jugadores evaluables."""
     total = db_session.query(func.count(Player.id)).scalar() or 0
     if total <= max_players:
@@ -342,7 +342,7 @@ def trim_operational_player_pool(db_session, max_players: int = EVAL_POOL_MAX) -
     return len(drop_ids)
 
 
-def backfill_player_photo_urls(db_session) -> int:
+def backfill_player_photo_urls(db_session: SQLAlchemySession) -> int:
     players = (
         db_session.query(Player)
         .filter((Player.photo_url == None) | (Player.photo_url == ""))  # noqa: E711
@@ -359,7 +359,7 @@ def backfill_player_photo_urls(db_session) -> int:
     return updated
 
 
-def compute_operational_data_quality(db_session) -> Dict[str, int]:
+def compute_operational_data_quality(db_session: SQLAlchemySession) -> Dict[str, int]:
     """Resume consistencia basica de la base operativa."""
     players_total = db_session.query(func.count(Player.id)).scalar() or 0
     missing_national_id = (
@@ -421,7 +421,7 @@ def compute_operational_data_quality(db_session) -> Dict[str, int]:
     }
 
 
-def cleanup_operational_data(db_session) -> Dict[str, int]:
+def cleanup_operational_data(db_session: SQLAlchemySession) -> Dict[str, int]:
     """Limpia inconsistencias legacy sin inventar datos faltantes."""
     invalid_player_ids = [
         player_id
@@ -468,29 +468,29 @@ def cleanup_operational_data(db_session) -> Dict[str, int]:
 def enforce_operational_pool_limit_on_startup():
     if not ENFORCE_EVAL_POOL_LIMIT:
         return
-    db = Session()
+    db_session = Session()
     try:
-        removed = trim_operational_player_pool(db, EVAL_POOL_MAX)
+        removed = trim_operational_player_pool(db_session, EVAL_POOL_MAX)
         if removed:
-            db.commit()
+            db_session.commit()
             app.logger.warning(
                 "Base operativa recortada a %s jugadores (eliminados: %s).",
                 EVAL_POOL_MAX,
                 removed,
             )
-        photo_updates = backfill_player_photo_urls(db)
+        photo_updates = backfill_player_photo_urls(db_session)
         if photo_updates:
-            db.commit()
+            db_session.commit()
             app.logger.info("Fotos de jugadores completadas: %s", photo_updates)
-        history_updates = sync_attribute_history_baseline(db)
+        history_updates = sync_attribute_history_baseline(db_session)
         if history_updates:
-            db.commit()
+            db_session.commit()
             app.logger.info("Historial tecnico sincronizado desde ficha actual: %s jugadores", history_updates)
     except Exception:
-        db.rollback()
+        db_session.rollback()
         app.logger.exception("No se pudo aplicar el limite de jugadores operativos al iniciar.")
     finally:
-        db.close()
+        db_session.close()
 
 
 def run_subprocess(command: List[str], description: str) -> Tuple[bool, str]:
@@ -522,11 +522,11 @@ def ensure_training_dataset(min_players: int = 1) -> Tuple[bool, List[str]]:
     TrainingSession = sessionmaker(bind=training_engine)
     Base.metadata.create_all(training_engine)
     ensure_player_columns(training_engine)
-    session = TrainingSession()
+    training_session = TrainingSession()
     try:
-        count = session.query(func.count(Player.id)).scalar() or 0
+        count = training_session.query(func.count(Player.id)).scalar() or 0
     finally:
-        session.close()
+        training_session.close()
     logs.append(f"Jugadores disponibles en base de referencia: {count}")
     if count >= min_players:
         return True, logs
@@ -593,21 +593,21 @@ def update_database_pipeline(limit: int = EVAL_POOL_MAX, sync_shortlist: bool = 
         overall_logs.append("Sincronizacion de base operativa omitida.")
 
     # Guardrail final: la base operativa no debe superar EVAL_POOL_MAX.
-    db = Session()
+    db_session = Session()
     try:
-        removed = trim_operational_player_pool(db, EVAL_POOL_MAX)
+        removed = trim_operational_player_pool(db_session, EVAL_POOL_MAX)
         if removed:
-            db.commit()
+            db_session.commit()
             overall_logs.append(f"Base operativa recortada a {EVAL_POOL_MAX} jugadores (eliminados {removed}).")
         else:
-            db.rollback()
+            db_session.rollback()
             overall_logs.append(f"Base operativa dentro del limite ({EVAL_POOL_MAX} jugadores).")
     except Exception as exc:
-        db.rollback()
+        db_session.rollback()
         overall_logs.append(f"No se pudo aplicar el recorte de base operativa: {exc}")
         return False, overall_logs
     finally:
-        db.close()
+        db_session.close()
 
     try:
         global model, preprocessor, probability_calibrator
@@ -658,15 +658,15 @@ def init_admin_user():
         )
         return
 
-    db = Session()
-    existing = db.query(User).filter(User.username == username).first()
+    db_session = Session()
+    existing = db_session.query(User).filter(User.username == username).first()
     if not existing:
         user = User(username=username,
                     password_hash=generate_password_hash(password),
                     role="administrador")
-        db.add(user)
-        db.commit()
-    db.close()
+        db_session.add(user)
+        db_session.commit()
+    db_session.close()
 
 init_admin_user()
 
@@ -1292,7 +1292,7 @@ def normalize_identifier(raw_value: Optional[str]) -> Optional[str]:
 
 
 
-def fetch_player_stats(player_id: int, db_session = None) -> List[PlayerStat]:
+def fetch_player_stats(player_id: int, db_session: Optional[SQLAlchemySession] = None) -> List[PlayerStat]:
     close_session = False
     if db_session is None:
         db_session = Session()
@@ -1341,7 +1341,10 @@ def summarize_stats(stats: List[PlayerStat]) -> Dict[str, Optional[float]]:
     }
 
 
-def fetch_attribute_history(player_id: int, db_session = None) -> List[PlayerAttributeHistory]:
+def fetch_attribute_history(
+    player_id: int,
+    db_session: Optional[SQLAlchemySession] = None,
+) -> List[PlayerAttributeHistory]:
     close_session = False
     if db_session is None:
         db_session = Session()
@@ -1363,7 +1366,11 @@ def _attribute_row_from_entry(entry: PlayerAttributeHistory) -> Dict[str, int]:
     return {field: int(getattr(entry, field) or 0) for field in ATTRIBUTE_FIELDS}
 
 
-def sync_player_attribute_history(player: Player, db_session, note: str = "Sincronizacion automatica de ficha") -> bool:
+def sync_player_attribute_history(
+    player: Player,
+    db_session: SQLAlchemySession,
+    note: str = "Sincronizacion automatica de ficha",
+) -> bool:
     """Asegura que el ultimo registro del historial tecnico refleje la ficha actual.
 
     Devuelve True si crea un registro nuevo.
@@ -1388,7 +1395,7 @@ def sync_player_attribute_history(player: Player, db_session, note: str = "Sincr
     return True
 
 
-def sync_attribute_history_baseline(db_session) -> int:
+def sync_attribute_history_baseline(db_session: SQLAlchemySession) -> int:
     """Sincroniza historial tecnico para jugadores con ficha desfasada o sin historial."""
     players = db_session.query(Player).all()
     created = 0
@@ -1524,7 +1531,11 @@ def categorize_probability(probability: float) -> str:
     if probability >= medium:
         return "Potencial medio"
     return "Bajo potencial"
-def compute_projection(player: Player, stats: Optional[List[PlayerStat]] = None, db_session = None) -> Optional[Dict[str, object]]:
+def compute_projection(
+    player: Player,
+    stats: Optional[List[PlayerStat]] = None,
+    db_session: Optional[SQLAlchemySession] = None,
+) -> Optional[Dict[str, object]]:
     if model is None:
         return None
     if stats is None:
@@ -1560,7 +1571,10 @@ def compute_projection(player: Player, stats: Optional[List[PlayerStat]] = None,
     return projection
 
 
-def refresh_player_potential(player: Player, db_session = None) -> Optional[Dict[str, object]]:
+def refresh_player_potential(
+    player: Player,
+    db_session: Optional[SQLAlchemySession] = None,
+) -> Optional[Dict[str, object]]:
     projection = compute_projection(player, db_session=db_session)
     if projection:
         player.potential_label = is_high_potential_probability(projection["combined_prob"])

@@ -161,6 +161,17 @@ En un bloque posterior se cerraron tres mejoras livianas del informe del profeso
 
 Esto no cambia la regla funcional del MVP. Mejora lectura, configurabilidad y debugging.
 
+## 10. Nomenclatura puntual db_session
+
+Tambien se normalizo una parte acotada de la nomenclatura de sesiones SQLAlchemy:
+
+- Los helpers operativos reciben o crean `db_session`.
+- La sesion temporal usada para consultar la base de entrenamiento se llama `training_session`.
+- `create_admin.py` usa `db_session` y `user` en lugar de variables genericas como `db` o `u`.
+- Los endpoints Flask conservan `db` como variable local corta, porque cambiar todas las rutas seria mas grande y no agregaria valor funcional inmediato.
+
+Con esto el criterio queda documentado: `db_session` para helpers o scripts reutilizables, `db` solo como variable local breve en endpoints.
+
 ## Resultado De Validacion
 
 La validacion ejecutada despues de los cambios fue:
@@ -185,4 +196,5 @@ Estos cambios no transforman el MVP en un sistema productivo completo. Lo que ha
 - hacer mas seguro el artefacto del modelo,
 - mantener compatibilidad con artefactos anteriores,
 - hacer mas explicables los casos donde una metrica no aplica,
-- y cerrar deuda chica de legibilidad/configuracion sin abrir una refactorizacion grande.
+- cerrar deuda chica de legibilidad/configuracion,
+- y ordenar nombres de sesiones sin abrir una refactorizacion grande.

@@ -21,6 +21,7 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Bloque CSRF/inputs invalidos: se agrego un test matriz para POST mutantes sin token, tests de edad invalida y campos obligatorios vacios, y `base.html` ahora muestra todos los mensajes flash de validacion.
 - Validacion posterior: `45 passed` con `pytest -q --cov=scouting_app --cov-report=term-missing`, cobertura total reportada `76%`.
 - Bloque constantes/cache/conftest: se nombraron constantes de paginacion, comparadores y rating de estadisticas; se agrego `CACHE_MAX_ENTRIES` al cache in-memory; y `tests/conftest.py` usa un nombre estable de modulo de test.
+- Bloque nomenclatura de sesiones: helpers operativos y `create_admin.py` usan `db_session`; la sesion temporal de entrenamiento se llama `training_session`; los endpoints Flask conservan `db` como variable local corta.
 - Validacion posterior: `48 passed` con `pytest -q --cov=scouting_app --cov-report=term-missing`, cobertura total reportada `76%`.
 
 ## Actualizacion 2026-04-23
@@ -59,7 +60,7 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Rama estable cerrada del MVP corregido: `training`
 - Rama activa para nuevas reformas: `reformas-finales`
 - Ultimo commit comun al crear `reformas-finales`: `b6c21ea`
-- Ultimos bloques tecnicos publicados en `reformas-finales`: revision de codigo fuente, documentacion, CSRF/inputs invalidos y constantes/cache/conftest.
+- Ultimos bloques tecnicos publicados en `reformas-finales`: revision de codigo fuente, documentacion, CSRF/inputs invalidos, constantes/cache/conftest y normalizacion puntual de sesiones.
 - Estado tecnico documentado: `reformas-finales` se valida con la suite completa y cobertura antes de cada push.
 
 ## Etapas Ya Trabajadas
@@ -341,12 +342,13 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Constantes nombradas para paginacion, comparadores y rating de estadisticas
 - Limite configurable `CACHE_MAX_ENTRIES` para cache in-memory
 - `tests/conftest.py` simplificado con nombre de modulo estable
+- Nomenclatura de sesiones SQLAlchemy mejorada en helpers y scripts
 
 ## Puntos Que Siguen Parciales O Pendientes
 
 - Persistencia/despliegue final en Render
 - Optimizaciones adicionales de rendimiento
-- Nomenclatura `db` / `db_session` todavia mezclada en algunas zonas
+- Nomenclatura `db` / `db_session` aceptada como parcial en endpoints Flask; no bloquea el MVP
 - Type hints y herramientas dev opcionales todavia parciales
 - Correccion del documento Word, que todavia no se empezo en esta fase
 
