@@ -172,6 +172,19 @@ Tambien se normalizo una parte acotada de la nomenclatura de sesiones SQLAlchemy
 
 Con esto el criterio queda documentado: `db_session` para helpers o scripts reutilizables, `db` solo como variable local breve en endpoints.
 
+## 11. Type hints quirurgicos
+
+Se agregaron anotaciones de tipos en funciones compartidas donde ayudan a entender el contrato sin convertir el bloque en una refactorizacion grande:
+
+- Helpers de cache (`_cache_get`, `_cache_set`).
+- CSRF y context processors.
+- Helpers de carga de modelo, preprocesador y calibrador.
+- Utilidades de base de datos en `db_utils.py`.
+- Helpers de copia en `sync_shortlist.py`.
+- Seleccion de splits en `evaluate_saved_model.py`.
+
+No se tiparon todos los endpoints Flask. Esa decision es intencional: anotar rutas completas ahora agregaria mucho ruido y poco valor funcional para el MVP.
+
 ## Resultado De Validacion
 
 La validacion ejecutada despues de los cambios fue:
@@ -197,4 +210,5 @@ Estos cambios no transforman el MVP en un sistema productivo completo. Lo que ha
 - mantener compatibilidad con artefactos anteriores,
 - hacer mas explicables los casos donde una metrica no aplica,
 - cerrar deuda chica de legibilidad/configuracion,
-- y ordenar nombres de sesiones sin abrir una refactorizacion grande.
+- ordenar nombres de sesiones,
+- y mejorar type hints sin abrir una refactorizacion grande.

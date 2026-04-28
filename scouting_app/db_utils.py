@@ -6,6 +6,7 @@ import os
 from typing import Optional
 
 from sqlalchemy import create_engine, event, inspect, text
+from sqlalchemy.engine import Engine
 
 
 def is_sqlite_url(url: str) -> bool:
@@ -34,7 +35,7 @@ def normalize_db_url(url: str, base_dir: Optional[str] = None) -> str:
     return value
 
 
-def create_app_engine(db_url: str):
+def create_app_engine(db_url: str) -> Engine:
     """Crea un engine SQLAlchemy con defaults razonables por dialecto."""
     if is_sqlite_url(db_url):
         engine = create_engine(db_url, connect_args={"check_same_thread": False})
@@ -53,7 +54,7 @@ def create_app_engine(db_url: str):
     return create_engine(db_url, pool_pre_ping=True)
 
 
-def ensure_player_columns(engine) -> int:
+def ensure_player_columns(engine: Engine) -> int:
     """Asegura columnas optativas y de auditoría en bases existentes."""
     inspector = inspect(engine)
     table_specs = {

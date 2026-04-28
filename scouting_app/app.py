@@ -5,7 +5,7 @@ import threading
 import secrets
 import sys
 import subprocess
-from typing import List, Tuple, Callable, Optional, Dict, Set
+from typing import Any, List, Tuple, Callable, Optional, Dict, Set
 from datetime import datetime, date, timedelta
 from statistics import mean
 from types import SimpleNamespace
@@ -108,7 +108,7 @@ PERCENT_DENOMINATOR = 100.0
 MIN_STATS_RATING = 1.0
 MAX_STATS_RATING = 10.0
 
-_CACHE: dict = {}
+_CACHE: Dict[str, Tuple[float, Any]] = {}
 try:
     _CACHE_TTL_SECONDS = max(1, int(os.environ.get("CACHE_TTL_SECONDS", str(DEFAULT_CACHE_TTL_SECONDS))))
 except ValueError:
@@ -136,7 +136,7 @@ _PIPELINE_LOCK = threading.Lock()
 _LOGIN_ATTEMPT_LOCK = threading.Lock()
 
 
-def _cache_get(key: str):
+def _cache_get(key: str) -> Optional[Any]:
     item = _CACHE.get(key)
     if not item:
         return None
@@ -154,7 +154,7 @@ def _cache_prune_expired(now_ts: Optional[float] = None) -> None:
         _CACHE.pop(key, None)
 
 
-def _cache_set(key: str, value):
+def _cache_set(key: str, value: Any) -> None:
     now = time.time()
     _cache_prune_expired(now)
     if key in _CACHE:
@@ -248,10 +248,11 @@ def _csrf_token() -> str:
     return token
 
 @app.context_processor
-def inject_csrf_token():
+def inject_csrf_token() -> Dict[str, Callable[[], str]]:
     return {"csrf_token": _csrf_token()}
 
-def _require_csrf():
+
+def _require_csrf() -> None:
     # Solo para endpoints críticos (llamar manualmente en POST)
     token = request.form.get("csrf_token") or request.headers.get("X-CSRF-Token")
     if not token or token != session.get("csrf_token"):
@@ -465,7 +466,7 @@ def cleanup_operational_data(db_session: SQLAlchemySession) -> Dict[str, int]:
     }
 
 
-def enforce_operational_pool_limit_on_startup():
+def enforce_operational_pool_limit_on_startup() -> None:
     if not ENFORCE_EVAL_POOL_LIMIT:
         return
     db_session = Session()
@@ -627,7 +628,7 @@ def update_database_pipeline(limit: int = EVAL_POOL_MAX, sync_shortlist: bool = 
 
 # ----------------------------------------------------
 # Usuario administrador inicial (opcional en desarrollo)
-def init_admin_user():
+def init_admin_user() -> None:
     username = (os.environ.get("ADMIN_USERNAME") or "admin").strip()
     password = (os.environ.get("ADMIN_PASSWORD") or "").strip()
     allow_default = (os.environ.get("ALLOW_DEFAULT_ADMIN") or "").strip().lower() in {
@@ -705,8 +706,8 @@ def landing():
 # ----------------------------------------------------
 
 @app.context_processor
-def navbar_url_helpers():
-    def first_url(*endpoints, **values):
+def navbar_url_helpers() -> Dict[str, Callable[..., str]]:
+    def first_url(*endpoints: str, **values: Any) -> str:
         """Devuelve la primera URL válida entre una lista de endpoints.
         Si ninguno existe, devuelve '#'.
         """
@@ -719,7 +720,7 @@ def navbar_url_helpers():
     return dict(first_url=first_url)
 
 @app.context_processor
-def auth_flags():
+def auth_flags() -> Dict[str, object]:
     role = current_role()
     return {
         "is_authenticated": bool(session.get("user_id")),
@@ -799,7 +800,7 @@ def can_manage_users() -> bool:
 
 
 @app.context_processor
-def position_labels():
+def position_labels() -> Dict[str, Callable[[Optional[str]], str]]:
     return {"display_position": display_position_label}
 
 # Decorador de login
@@ -842,7 +843,7 @@ def load_model_state(model_path: str, input_dim: int) -> PlayerNet:
     return model
 
 
-def load_probability_calibrator(calibrator_path: str):
+def load_probability_calibrator(calibrator_path: str) -> Optional[object]:
     if not os.path.exists(calibrator_path):
         return None
     try:
@@ -851,7 +852,7 @@ def load_probability_calibrator(calibrator_path: str):
         return None
 
 
-def apply_probability_calibrator(calibrator, probabilities: List[float]) -> np.ndarray:
+def apply_probability_calibrator(calibrator: Optional[object], probabilities: List[float]) -> np.ndarray:
     raw = np.asarray(probabilities, dtype=np.float32).reshape(-1)
     if calibrator is None:
         return raw
@@ -869,7 +870,7 @@ def load_runtime_artifacts(
     calibrator_path: Optional[str] = None,
     allow_retrain: bool = True,
 ) -> Tuple[Optional[PlayerNet], Optional[object], Optional[object]]:
-    def retrain_or_raise(message: str, original_exc: Optional[Exception] = None):
+    def retrain_or_raise(message: str, original_exc: Optional[Exception] = None) -> None:
         if not allow_retrain:
             if original_exc is not None:
                 raise original_exc
@@ -967,7 +968,7 @@ def health():
 def prepare_input(player: Player) -> torch.Tensor:
     return players_to_model_tensor([player])
 
-def compute_suggestions(player: Player, threshold=14, top_n=3) -> List[Tuple[str, int]]:
+def compute_suggestions(player: Player, threshold: int = 14, top_n: int = 3) -> List[Tuple[str, int]]:
     attrs = {
         "Ritmo (pace)": player.pace,
         "Disparo (shooting)": player.shooting,

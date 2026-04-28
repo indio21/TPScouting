@@ -16,7 +16,7 @@ Este informe compara las observaciones del profesor contra el estado real del co
 .\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
 ```
 
-Resultado actualizado tras el bloque de normalizacion puntual `db_session`: `48 passed`, cobertura total reportada `76%`, con 4 warnings conocidos de scikit-learn por fixtures con columnas all-NaN en tests.
+Resultado actualizado tras el bloque de type hints quirurgicos: `48 passed`, cobertura total reportada `76%`, con 4 warnings conocidos de scikit-learn por fixtures con columnas all-NaN en tests.
 
 ## Resultado General
 
@@ -52,7 +52,7 @@ Conclusion honesta: el MVP actual esta bastante mas avanzado que el estado descr
 | CALIDAD-01 app.py monolitico | Documentado parcial | 45% | `app.py` sigue siendo monolitico. La limitacion quedo documentada; una separacion en blueprints queda como mejora productiva posterior. |
 | CALIDAD-02 magic numbers | Mejorado fuerte | 80% | Los valores visibles de paginacion, comparadores y calculo de rating pasaron a constantes nombradas; algunos adyacentes tambien pueden configurarse por env vars. Puede quedar deuda menor en literales de bajo riesgo. |
 | CALIDAD-03 nomenclatura db/db_session | Mejorado parcial | 75% | Los helpers y scripts puntuales usan `db_session`/`training_session`; los endpoints Flask conservan `db` como variable local corta. Queda deuda si se busca una convencion absoluta en toda la app. |
-| CALIDAD-04 type hints | Mejorado parcial | 70% | Hay mas hints, por ejemplo `Dict[str, Optional[float]]`; no esta completo en toda la app. |
+| CALIDAD-04 type hints | Mejorado parcial | 80% | Se agregaron hints en helpers compartidos de cache, CSRF/context processors, carga de artefactos, DB, sync_shortlist y evaluacion. No se tiparon todos los endpoints para evitar ruido cosmetico. |
 | CALIDAD-05 uso de globals() | Corregido | 100% | Se reemplazo `globals().get(...)` por llamada directa a `sync_attribute_history_baseline`, moviendo la llamada de startup para respetar el orden de definicion. |
 | TEST-01 cobertura muy baja | Medido formalmente | 90% | La suite tiene `48` tests y CI mide cobertura con `pytest-cov`; la corrida local reporto `76%` total. |
 | TEST-02 CRUD | Corregido | 100% | Hay tests de crear/editar/eliminar jugador. |
@@ -83,13 +83,14 @@ Conclusion honesta: el MVP actual esta bastante mas avanzado que el estado descr
 - Limite configurable `CACHE_MAX_ENTRIES` para el cache in-memory del dashboard.
 - `tests/conftest.py` usa nombre de modulo estable para facilitar debugging sin perder aislamiento.
 - Normalizacion puntual de nombres de sesion: helpers con `db_session`, sesion de entrenamiento como `training_session` y script `create_admin.py` sin variable generica `db`.
+- Type hints quirurgicos en helpers compartidos de `app.py`, `db_utils.py`, `sync_shortlist.py` y `evaluate_saved_model.py`.
 
 ## Proximo Bloque Sugerido
 
 Si se decide continuar con codigo, los pendientes livianos que quedan son menos criticos:
 
-- Agregar type hints en funciones compartidas donde ayuden a lectura y mantenimiento.
 - Evaluar herramientas dev opcionales (`ruff`, `black`, `mypy`) si se quiere subir exigencia de calidad.
 - Revisar deuda de estructura de `app.py` solo si se acepta un bloque mas grande.
+- Preparar el documento Word de tesis para alinear texto, capturas y afirmaciones con el MVP real.
 
 La refactorizacion grande de `app.py` en blueprints sigue siendo una mejora productiva posterior, no un bloque chico.

@@ -6,9 +6,10 @@ import argparse
 import json
 import time
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Sequence
 
 import numpy as np
+import pandas as pd
 import torch
 from joblib import load
 from sklearn.linear_model import LogisticRegression
@@ -40,7 +41,7 @@ def _resolve_artifact_path(cli_value: Optional[str], metadata: Dict[str, object]
     return fallback
 
 
-def _select_split_dataframe(features_df, player_ids):
+def _select_split_dataframe(features_df: pd.DataFrame, player_ids: Sequence[int]) -> pd.DataFrame:
     indexed_df = features_df.set_index("player_id", drop=False)
     ordered_ids = [int(player_id) for player_id in player_ids if int(player_id) in indexed_df.index]
     missing_ids = len(player_ids) - len(ordered_ids)

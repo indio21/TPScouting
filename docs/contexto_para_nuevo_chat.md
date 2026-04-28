@@ -22,7 +22,7 @@ Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting`
 - Rama estable cerrada del MVP corregido: `training`
 - Rama activa para nuevas reformas: `reformas-finales`
 - Ultimo commit comun al crear `reformas-finales`: `b6c21ea docs: explain app prediction indicators`
-- Ultimos bloques tecnicos publicados en `reformas-finales`: cierre de revision de codigo, documentacion, CSRF/inputs invalidos, constantes/cache/conftest y normalizacion puntual `db_session`.
+- Ultimos bloques tecnicos publicados en `reformas-finales`: cierre de revision de codigo, documentacion, CSRF/inputs invalidos, constantes/cache/conftest, normalizacion puntual `db_session` y type hints quirurgicos.
 - Estado al cierre tecnico: `reformas-finales` limpia y sincronizada con `origin/reformas-finales`
 - Entorno Python local: `C:\Tesis\TPScouting\.venv`
 
@@ -202,6 +202,7 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - El cache in-memory del dashboard tiene limite `CACHE_MAX_ENTRIES` configurable, por default `128`.
 - `tests/conftest.py` usa nombre estable de modulo de test (`scouting_app_app_test`) y limpia `sys.modules`.
 - Helpers operativos y script `create_admin.py` usan `db_session`; la sesion temporal de entrenamiento se llama `training_session`.
+- Se agregaron type hints puntuales en helpers compartidos de `app.py`, `db_utils.py`, `sync_shortlist.py` y `evaluate_saved_model.py`.
 
 ## Performance
 
@@ -252,7 +253,7 @@ Resultado general del analisis:
 
 - El informe del profesor contenia `31` observaciones.
 - Corregidos o practicamente corregidos para el MVP: `24`.
-- Parciales, aceptados o documentados como limitacion tecnica: `7`, con `CALIDAD-03` mejorado parcialmente.
+- Parciales, aceptados o documentados como limitacion tecnica: `7`, con `CALIDAD-03` y `CALIDAD-04` mejorados parcialmente.
 - Pendientes criticos: `0`.
 - Los tres criticos cambiaron mucho respecto del informe original:
 - `CRITICO-01`: Render ya apunta a PostgreSQL administrado.
@@ -272,12 +273,13 @@ Bloques tecnicos ya cerrados en `reformas-finales`:
 - Agregar limite simple al cache in-memory con `CACHE_MAX_ENTRIES`.
 - Simplificar `tests/conftest.py` para evitar nombres de modulo con UUID.
 - Normalizar puntualmente nombres de sesiones SQLAlchemy en helpers y scripts.
+- Agregar type hints quirurgicos en funciones compartidas de mayor uso.
 
 Prioridad recomendada para el proximo bloque de codigo:
 
-- Agregar type hints en funciones compartidas de mayor uso.
 - Evaluar herramientas dev opcionales (`ruff`, `black`, `mypy`) solo si no abre un bloque grande.
 - Dejar `app.py` monolitico para un bloque aparte si se decide asumir una refactorizacion mas grande.
+- Considerar pasar al documento Word de tesis para alinear la narrativa con el MVP real.
 
 ## Documentos Relevantes
 
@@ -304,7 +306,7 @@ La rama `training` queda como base estable de las correcciones del MVP. Las nuev
 
 Hay dos caminos razonables:
 
-- Continuar con falencias livianas restantes del informe del profesor: type hints y herramientas dev opcionales.
+- Continuar con falencias livianas restantes del informe del profesor: herramientas dev opcionales.
 - Pasar a documento de tesis: alinear Word con el MVP real y eliminar afirmaciones que no esten respaldadas por el repo.
 
 Antes de tocar codigo en el proximo chat, revisar:

@@ -4,7 +4,7 @@ import argparse
 import os
 from typing import Dict, List, Optional
 
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session as SQLAlchemySession, sessionmaker
 
 from models import (
     Base,
@@ -38,7 +38,7 @@ def copy_player_data(src_player: Player, dst_player: Player) -> None:
         setattr(dst_player, field, getattr(src_player, field))
 
 
-def clear_player_related_data(dst_session, player: Player) -> None:
+def clear_player_related_data(dst_session: SQLAlchemySession, player: Player) -> None:
     old_match_ids = [participation.match_id for participation in player.match_participations]
     for model in (
         PlayerStat,
@@ -55,7 +55,7 @@ def clear_player_related_data(dst_session, player: Player) -> None:
             dst_session.query(Match).filter_by(id=match_id).delete(synchronize_session=False)
 
 
-def clear_operational_players(dst_session) -> None:
+def clear_operational_players(dst_session: SQLAlchemySession) -> None:
     for model in (
         PlayerMatchParticipation,
         Match,
@@ -70,7 +70,11 @@ def clear_operational_players(dst_session) -> None:
     dst_session.flush()
 
 
-def copy_match(src_match: Optional[Match], dst_session, match_map: Dict[int, Match]) -> Optional[Match]:
+def copy_match(
+    src_match: Optional[Match],
+    dst_session: SQLAlchemySession,
+    match_map: Dict[int, Match],
+) -> Optional[Match]:
     if src_match is None:
         return None
     if src_match.id in match_map:
@@ -89,7 +93,12 @@ def copy_match(src_match: Optional[Match], dst_session, match_map: Dict[int, Mat
     return dst_match
 
 
-def copy_player_related_data(src_player: Player, dst_player: Player, dst_session, match_map: Dict[int, Match]) -> None:
+def copy_player_related_data(
+    src_player: Player,
+    dst_player: Player,
+    dst_session: SQLAlchemySession,
+    match_map: Dict[int, Match],
+) -> None:
     clear_player_related_data(dst_session, dst_player)
 
     for stat in sorted(src_player.stats, key=lambda item: (item.record_date, item.id)):
@@ -275,7 +284,7 @@ def sync_shortlist(src_db: str, dst_db: str, limit: int, min_age: int, max_age: 
         dst_session.close()
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Copia jugadores juveniles a la base operativa.")
     parser.add_argument("--src-db", default="sqlite:///players_training.db", help="Base de datos origen (entrenamiento)")
     parser.add_argument("--dst-db", default="sqlite:///players_updated_v2.db", help="Base de datos destino (shortlist)")
