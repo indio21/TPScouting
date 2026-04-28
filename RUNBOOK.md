@@ -11,6 +11,10 @@ Este runbook cubre operación mínima, backup/restore de SQLite, healthcheck y b
 - `APP_DB_URL` (recomendado; controla la BD operativa).
 - `TRAINING_DB_URL` (recomendado; controla la BD de entrenamiento).
 - `LOG_LEVEL` (`INFO`/`DEBUG`).
+- `CACHE_TTL_SECONDS` (opcional; TTL del cache del dashboard, default `60`).
+- `CACHE_MAX_ENTRIES` (opcional; limite del cache del dashboard, default `128`).
+- `PLAYER_LIST_PER_PAGE` (opcional; paginacion del listado, default `50`).
+- `MAX_COMPARE_PLAYERS` (opcional; limite de jugadores cargados en comparadores, default `2000`).
 
 ## 2) Arranque local
 ```powershell
@@ -127,8 +131,9 @@ Acciones:
 
 ### 8.5 Cache en memoria del dashboard
 - El dashboard usa cache in-memory con TTL (`CACHE_TTL_SECONDS`, por default 60s).
+- El cache tiene limite configurable de entradas (`CACHE_MAX_ENTRIES`, por default 128).
 - El cache se invalida cuando se cargan o editan jugadores, atributos, historial o cuando corre el pipeline.
-- No tiene limite maximo de entradas; para el volumen del MVP el riesgo es bajo, pero no es una cache apta para crecimiento sostenido.
+- Si se supera el limite, se descarta la entrada con vencimiento mas cercano.
 - En despliegues con mas de una instancia o proceso, el cache no se comparte entre workers.
 - Para este MVP se recomienda mantener una sola instancia de aplicacion si se quiere consistencia inmediata del dashboard.
 

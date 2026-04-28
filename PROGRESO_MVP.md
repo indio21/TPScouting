@@ -11,7 +11,7 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Se reemplazo el uso de `globals().get(...)` por llamada directa a `sync_attribute_history_baseline`.
 - CI ahora mide cobertura con `pytest-cov` y `requirements-dev.txt` incluye esa dependencia.
 - Se agrego `requirements-lock.txt` como snapshot exacto de dependencias instaladas en `.venv`.
-- `RUNBOOK.md` y `docs/explicacion_cambios_revision_codigo_2026-04-27.md` documentan DiceBear, cache in-memory sin limite, `app.py` monolitico y el lock de dependencias.
+- `RUNBOOK.md` y `docs/explicacion_cambios_revision_codigo_2026-04-27.md` documentan DiceBear, cache in-memory con limite configurable, `app.py` monolitico y el lock de dependencias.
 - `db_utils.ensure_player_columns()` ahora migra `created_at` y `updated_at` tambien en `physical_assessments` y `player_availability`.
 - `train_model.py` guarda checkpoints con `input_dim`, version y `model_state`.
 - `app.py` y `evaluate_saved_model.py` cargan checkpoints nuevos y conservan compatibilidad con `state_dict` legacy.
@@ -20,6 +20,8 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Validacion: `42 passed` con `pytest -q --cov=scouting_app --cov-report=term-missing`, cobertura total reportada `75%`.
 - Bloque CSRF/inputs invalidos: se agrego un test matriz para POST mutantes sin token, tests de edad invalida y campos obligatorios vacios, y `base.html` ahora muestra todos los mensajes flash de validacion.
 - Validacion posterior: `45 passed` con `pytest -q --cov=scouting_app --cov-report=term-missing`, cobertura total reportada `76%`.
+- Bloque constantes/cache/conftest: se nombraron constantes de paginacion, comparadores y rating de estadisticas; se agrego `CACHE_MAX_ENTRIES` al cache in-memory; y `tests/conftest.py` usa un nombre estable de modulo de test.
+- Validacion posterior: `48 passed` con `pytest -q --cov=scouting_app --cov-report=term-missing`, cobertura total reportada `76%`.
 
 ## Actualizacion 2026-04-23
 
@@ -57,8 +59,8 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Rama estable cerrada del MVP corregido: `training`
 - Rama activa para nuevas reformas: `reformas-finales`
 - Ultimo commit comun al crear `reformas-finales`: `b6c21ea`
-- Ultimo commit tecnico publicado en `reformas-finales`: `d60ad6d chore: close source review follow-ups`
-- Estado tecnico tras ese commit: `reformas-finales` limpia y sincronizada con `origin/reformas-finales`
+- Ultimos bloques tecnicos publicados en `reformas-finales`: revision de codigo fuente, documentacion, CSRF/inputs invalidos y constantes/cache/conftest.
+- Estado tecnico documentado: `reformas-finales` se valida con la suite completa y cobertura antes de cada push.
 
 ## Etapas Ya Trabajadas
 
@@ -308,7 +310,7 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 
 - La suite automatizada actual termina pasando en esta maquina.
 - Ultimo estado validado sin cobertura: `40 passed`
-- Ultimo estado validado con cobertura: `45 passed`, cobertura total `76%`
+- Ultimo estado validado con cobertura: `48 passed`, cobertura total `76%`
 
 ## Puntos Mejorados De Forma Clara
 
@@ -336,14 +338,16 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Checkpoint del modelo con `input_dim` validable
 - Dependencias exactas registradas en `requirements-lock.txt`
 - Limitaciones reales de DiceBear, cache in-memory y monolito documentadas
+- Constantes nombradas para paginacion, comparadores y rating de estadisticas
+- Limite configurable `CACHE_MAX_ENTRIES` para cache in-memory
+- `tests/conftest.py` simplificado con nombre de modulo estable
 
 ## Puntos Que Siguen Parciales O Pendientes
 
 - Persistencia/despliegue final en Render
 - Optimizaciones adicionales de rendimiento
-- Constantes nombradas para magic numbers restantes
-- Limite explicito para cache in-memory
-- Simplificacion opcional de `tests/conftest.py`
+- Nomenclatura `db` / `db_session` todavia mezclada en algunas zonas
+- Type hints y herramientas dev opcionales todavia parciales
 - Correccion del documento Word, que todavia no se empezo en esta fase
 
 ## Bloques Restantes

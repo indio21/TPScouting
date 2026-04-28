@@ -2,7 +2,6 @@ import os
 import sys
 import importlib.util
 from pathlib import Path
-from uuid import uuid4
 
 import pytest
 
@@ -27,10 +26,12 @@ def app_module(tmp_path, scouting_app_dir, monkeypatch):
     monkeypatch.chdir(str(scouting_app_dir))
 
     app_py = scouting_app_dir / "app.py"
-    module_name = f"scouting_app_app_{uuid4().hex}"
+    module_name = "scouting_app_app_test"
+    sys.modules.pop(module_name, None)
     spec = importlib.util.spec_from_file_location(module_name, app_py)
     mod = importlib.util.module_from_spec(spec)
     assert spec and spec.loader
+    sys.modules[module_name] = mod
     spec.loader.exec_module(mod)
     return mod
 

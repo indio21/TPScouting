@@ -6,7 +6,7 @@ Documento comparado: `C:\Users\Usuario\Desktop\Evaluacion y punto a corregir del
 
 Rama analizada: `reformas-finales`
 
-Commit base del analisis: `d60ad6d chore: close source review follow-ups`
+Commit base original del analisis: `d60ad6d chore: close source review follow-ups`
 
 ## Criterio De Analisis
 
@@ -16,7 +16,7 @@ Este informe compara las observaciones del profesor contra el estado real del co
 .\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
 ```
 
-Resultado actualizado tras el bloque CSRF/inputs: `45 passed`, cobertura total reportada `76%`, con 4 warnings conocidos de scikit-learn por fixtures con columnas all-NaN en tests.
+Resultado actualizado tras el bloque constantes/cache/conftest: `48 passed`, cobertura total reportada `76%`, con 4 warnings conocidos de scikit-learn por fixtures con columnas all-NaN en tests.
 
 ## Resultado General
 
@@ -24,8 +24,8 @@ El documento del profesor lista 31 observaciones agrupadas en problemas criticos
 
 Estado general despues de las correcciones ya implementadas en el MVP:
 
-- Corregidos o practicamente corregidos para el alcance del MVP: 22.
-- Parciales, aceptados o documentados como limitacion tecnica: 9.
+- Corregidos o practicamente corregidos para el alcance del MVP: 24.
+- Parciales, aceptados o documentados como limitacion tecnica: 7.
 - Pendientes criticos: 0.
 
 Conclusion honesta: el MVP actual esta bastante mas avanzado que el estado descripto en el informe original. Los tres problemas criticos ya no estan en el mismo estado: Render ya apunta a PostgreSQL, el umbral de potencial fue unificado y el lock del pipeline quedo mitigado por single-worker con comentario explicito en codigo. Lo pendiente se concentra en hardening incremental, deuda de calidad y optimizaciones que no bloquean el MVP academico.
@@ -48,16 +48,16 @@ Conclusion honesta: el MVP actual esta bastante mas avanzado que el estado descr
 | DATOS-04 timestamps | Corregido | 100% | `TimestampMixin` esta en modelos principales y `ensure_player_columns` cubre tambien `physical_assessments` y `player_availability`, con test de migracion legacy. |
 | REND-01 N+1 listado jugadores | Corregido | 95% | El listado usa `batch_project_players` y mapas agregados, no `compute_projection` por jugador. |
 | REND-02 dashboard carga todos los jugadores | Parcial aceptable | 75% | Sigue haciendo `.all()` en dashboard, pero existe `EVAL_POOL_MAX=100` y guardrails. Para MVP sirve; si crece, paginar/agregar consultas SQL. |
-| REND-03 cache sin limite de tamano | Documentado parcial | 70% | TTL existe y la limitacion de no tener maximo de entradas quedo documentada. Agregar `CACHE_MAX_ENTRIES` sigue siendo una mejora simple. |
+| REND-03 cache sin limite de tamano | Corregido para MVP | 90% | TTL existe y se agrego `CACHE_MAX_ENTRIES` configurable, por default `128`, con descarte de la entrada que vence antes cuando se supera el limite. Para produccion real seguiria conveniendo cache externa. |
 | CALIDAD-01 app.py monolitico | Documentado parcial | 45% | `app.py` sigue siendo monolitico. La limitacion quedo documentada; una separacion en blueprints queda como mejora productiva posterior. |
-| CALIDAD-02 magic numbers | Parcial | 55% | Algunos pasaron a env vars, pero quedan `50`, `2000`, `90.0`, pesos de score, etc. Conviene constantes nombradas. |
+| CALIDAD-02 magic numbers | Mejorado fuerte | 80% | Los valores visibles de paginacion, comparadores y calculo de rating pasaron a constantes nombradas; algunos adyacentes tambien pueden configurarse por env vars. Puede quedar deuda menor en literales de bajo riesgo. |
 | CALIDAD-03 nomenclatura db/db_session | Parcial | 50% | Sigue mezclado. No rompe funcionalidad, pero conviene estandarizar gradualmente a `db_session` en helpers y `db` en endpoints. |
 | CALIDAD-04 type hints | Mejorado parcial | 70% | Hay mas hints, por ejemplo `Dict[str, Optional[float]]`; no esta completo en toda la app. |
 | CALIDAD-05 uso de globals() | Corregido | 100% | Se reemplazo `globals().get(...)` por llamada directa a `sync_attribute_history_baseline`, moviendo la llamada de startup para respetar el orden de definicion. |
-| TEST-01 cobertura muy baja | Medido formalmente | 90% | La suite tiene `45` tests y CI mide cobertura con `pytest-cov`; la corrida local reporto `76%` total. |
+| TEST-01 cobertura muy baja | Medido formalmente | 90% | La suite tiene `48` tests y CI mide cobertura con `pytest-cov`; la corrida local reporto `76%` total. |
 | TEST-02 CRUD | Corregido | 100% | Hay tests de crear/editar/eliminar jugador. |
 | TEST-03 inputs invalidos | Corregido | 100% | Hay tests de DNI duplicado, CSRF, stats invalidos, atributos fuera de rango, edad invalida y campos obligatorios vacios. |
-| TEST-04 conftest carga dinamica | Pendiente/parcial | 40% | Sigue usando modulo con UUID. Funciona, pero complica debugging. No es urgente. |
+| TEST-04 conftest carga dinamica | Corregido para tests | 90% | El fixture usa un nombre estable (`scouting_app_app_test`) y limpia `sys.modules` antes de cargar. Mantiene import dinamico para aislar la app por base temporal. |
 | TEST-05 CI sin cobertura | Corregido | 100% | `.github/workflows/ci.yml` ejecuta `pytest -q --cov=scouting_app --cov-report=term-missing` y `requirements-dev.txt` incluye `pytest-cov`. |
 | ML-01 dimension modelo/inferencia | Corregido | 100% | El checkpoint nuevo guarda `input_dim`, version y `model_state`; `app.py` y `evaluate_saved_model.py` validan contra el preprocesador y mantienen compatibilidad con `state_dict` legacy. |
 | ML-02 etiqueta sintetica no reproducible | Corregido | 100% | `generate_data.py` usa `DEFAULT_SEED`, `--seed`, `--reset` y target temporal mas serio. |
@@ -66,12 +66,12 @@ Conclusion honesta: el MVP actual esta bastante mas avanzado que el estado descr
 | DEP-01 requirements no pinadas | Mitigado | 75% | `requirements.txt` mantiene rangos flexibles, pero se agrego `requirements-lock.txt` con versiones exactas validadas localmente. |
 | DEP-02 dev requirements incompletas | Mejorado parcial | 65% | Se agrego `pytest-cov`; siguen siendo opcionales herramientas como ruff/black/mypy. |
 
-## Cambios Cerrados En El Bloque `d60ad6d`
+## Cambios Cerrados En Reformas-Finales
 
 - Comentario explicito junto a `_PIPELINE_LOCK` sobre dependencia de `--workers 1`.
 - Reemplazo de `globals().get(...)` por llamada directa a `sync_attribute_history_baseline`.
 - Agregado de `pytest-cov` y reporte de cobertura en CI.
-- Documentacion de DiceBear, cache in-memory sin limite, monolito `app.py` y lock de dependencias.
+- Documentacion de DiceBear, cache in-memory con limite configurable, monolito `app.py` y lock de dependencias.
 - Migracion de timestamps para `physical_assessments` y `player_availability`.
 - Checkpoint del modelo con `input_dim`, version y `model_state`, manteniendo compatibilidad con `state_dict` legacy.
 - Warnings explicitos cuando metricas como ROC-AUC o PR-AUC no se pueden calcular.
@@ -79,13 +79,16 @@ Conclusion honesta: el MVP actual esta bastante mas avanzado que el estado descr
 - Test matriz de CSRF para POST mutantes criticos.
 - Tests de edad invalida y campos obligatorios vacios en alta de jugador.
 - Renderizado de todos los mensajes flash para mostrar errores multiples de validacion.
+- Constantes nombradas para paginacion, comparadores y pesos/rangos del rating de estadisticas.
+- Limite configurable `CACHE_MAX_ENTRIES` para el cache in-memory del dashboard.
+- `tests/conftest.py` usa nombre de modulo estable para facilitar debugging sin perder aislamiento.
 
 ## Proximo Bloque Sugerido
 
-Si se decide continuar con codigo, el bloque mas razonable y acotado seria:
+Si se decide continuar con codigo, los pendientes livianos que quedan son menos criticos:
 
-- Convertir magic numbers visibles (`50`, `2000`, pesos de score) en constantes nombradas.
-- Agregar limite simple al cache in-memory (`CACHE_MAX_ENTRIES`) si se quiere cerrar `REND-03` con codigo.
-- Evaluar simplificar `tests/conftest.py` para evitar nombres de modulo con UUID.
+- Estandarizar gradualmente nomenclatura `db` / `db_session` en helpers y endpoints.
+- Agregar type hints en funciones compartidas donde ayuden a lectura y mantenimiento.
+- Evaluar herramientas dev opcionales (`ruff`, `black`, `mypy`) si se quiere subir exigencia de calidad.
 
-Eso seguiria cerrando puntos del informe sin abrir todavia la refactorizacion grande de `app.py` en blueprints.
+La refactorizacion grande de `app.py` en blueprints sigue siendo una mejora productiva posterior, no un bloque chico.

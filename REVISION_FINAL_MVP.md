@@ -20,7 +20,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 ### 1. Suite automatizada
 
 - Estado final validado original: `40 passed`
-- Estado tecnico actualizado 2026-04-27: `45 passed` con `pytest-cov`, cobertura total reportada `76%`
+- Estado tecnico actualizado 2026-04-28: `48 passed` con `pytest-cov`, cobertura total reportada `76%`
 - Cobertura reforzada sobre:
 - autenticacion
 - permisos por rol
@@ -39,12 +39,15 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - warnings explicitos para metricas no calculables
 - matriz CSRF para POST mutantes criticos
 - validacion de alta de jugador con edad invalida y campos obligatorios vacios
+- limite configurable para cache in-memory del dashboard
+- constantes nombradas en paginacion, comparadores y rating de estadisticas
+- fixture de app en tests con nombre de modulo estable
 
 ### 1.1. Cierre De Observaciones De Codigo Fuente 2026-04-27
 
 - CI mide cobertura con `pytest-cov`.
 - `requirements-lock.txt` registra versiones exactas instaladas.
-- `RUNBOOK.md` documenta DiceBear, cache in-memory sin limite y `app.py` monolitico como limitaciones reales del MVP.
+- `RUNBOOK.md` documenta DiceBear, cache in-memory con limite configurable y `app.py` monolitico como limitaciones reales del MVP.
 - `_PIPELINE_LOCK` documenta la dependencia de `--workers 1`.
 - Se elimino el uso de `globals().get(...)` para sincronizar historial tecnico.
 - El modelo se guarda como checkpoint con `input_dim`, version y `model_state`.
@@ -53,6 +56,9 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - Se agregaron pruebas para que los POST mutantes criticos rechacen requests sin CSRF.
 - Se agregaron pruebas para edad invalida y campos obligatorios vacios.
 - La plantilla base muestra todos los mensajes flash para no ocultar errores multiples.
+- Se agregaron constantes nombradas para reemplazar literales visibles de paginacion, comparadores y rating.
+- El cache in-memory del dashboard ahora tiene limite `CACHE_MAX_ENTRIES`, por default `128`.
+- `tests/conftest.py` evita nombres de modulo con UUID para facilitar debugging.
 
 ### 2. Smoke funcional sobre la app real del repo
 
@@ -122,7 +128,7 @@ Estos puntos siguen siendo reales y no se deben ocultar:
 
 - despliegue final en Render todavia requiere cierre operativo completo
 - la app sigue siendo un MVP; no esta pensada para alta concurrencia
-- persisten deudas de calidad no criticas: magic numbers, `conftest.py` dinamico y `app.py` monolitico
+- persisten deudas de calidad no criticas: `app.py` monolitico, nomenclatura `db` / `db_session` y type hints parciales
 - el documento Word todavia no fue alineado con el estado corregido del MVP en esta fase
 - la evidencia del modelo sigue basada en datos sinteticos; no hay validacion externa con datos reales
 

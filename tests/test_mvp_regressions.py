@@ -100,6 +100,41 @@ def test_refresh_player_potential_uses_same_high_threshold(app_module):
     assert dummy_player.potential_label is True
 
 
+def test_app_module_fixture_uses_stable_module_name(app_module):
+    assert app_module.__name__ == "scouting_app_app_test"
+
+
+def test_dashboard_cache_respects_max_entries(app_module, monkeypatch):
+    app_module._CACHE.clear()
+    monkeypatch.setattr(app_module, "_CACHE_MAX_ENTRIES", 2)
+    monkeypatch.setattr(app_module, "_CACHE_TTL_SECONDS", 60)
+
+    app_module._cache_set("dashboard:first", "first")
+    app_module._cache_set("dashboard:second", "second")
+    app_module._cache_set("dashboard:third", "third")
+
+    assert len(app_module._CACHE) == 2
+    assert "dashboard:first" not in app_module._CACHE
+    assert app_module._cache_get("dashboard:second") == "second"
+    assert app_module._cache_get("dashboard:third") == "third"
+
+
+def test_calculate_stats_rating_uses_named_rating_limits(app_module):
+    rating = app_module.calculate_stats_rating(
+        {
+            "matches": 10,
+            "goals": 8,
+            "assists": 7,
+            "minutes": 180,
+            "pass_pct": 100.0,
+            "shot_pct": 100.0,
+            "duels_pct": 100.0,
+        }
+    )
+
+    assert rating == app_module.MAX_STATS_RATING
+
+
 def test_batch_projection_uses_raw_probability_as_primary_score(app_module, monkeypatch):
     import torch
 

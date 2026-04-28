@@ -58,9 +58,9 @@ El dashboard usa una cache en memoria para no recalcular todo en cada request. E
 
 - Vive dentro del proceso Python.
 - No se comparte entre varios workers o instancias.
-- No tiene limite maximo de entradas.
+- Tiene limite maximo configurable con `CACHE_MAX_ENTRIES`, por default `128`.
 
-Para el volumen del MVP y `EVAL_POOL_MAX=100`, es aceptable. Para una version productiva, convendria usar una cache externa o agregar politicas mas estrictas.
+Si se supera el limite, la app descarta la entrada que vence antes. Para el volumen del MVP y `EVAL_POOL_MAX=100`, es aceptable. Para una version productiva, convendria usar una cache externa o politicas mas completas de expiracion/eviccion.
 
 ### app.py monolitico
 
@@ -143,8 +143,23 @@ Se agregaron pruebas para cubrir los cambios anteriores:
 - Migracion de timestamps en `physical_assessments` y `player_availability`.
 - Persistencia del checkpoint nuevo con `input_dim`.
 - Warnings cuando ROC-AUC o PR-AUC no pueden calcularse.
+- Matriz CSRF para POST mutantes criticos.
+- Inputs invalidos en alta de jugador.
+- Limite de entradas del cache in-memory.
+- Constantes nombradas del rating de estadisticas.
+- Fixture de app con nombre de modulo estable en `tests/conftest.py`.
 
 Con estos tests, los cambios no quedan solo documentados: tambien quedan verificados automaticamente.
+
+## 9. Constantes, cache limitado y conftest estable
+
+En un bloque posterior se cerraron tres mejoras livianas del informe del profesor:
+
+- Los literales visibles de paginacion (`50`), comparadores (`2000`) y pesos/rangos del rating de estadisticas pasaron a constantes nombradas.
+- `PLAYER_LIST_PER_PAGE`, `MAX_COMPARE_PLAYERS`, `CACHE_TTL_SECONDS` y `CACHE_MAX_ENTRIES` pueden ajustarse por variables de entorno.
+- `tests/conftest.py` ya no genera un nombre de modulo con UUID; usa `scouting_app_app_test` y limpia `sys.modules` antes de cargar la app.
+
+Esto no cambia la regla funcional del MVP. Mejora lectura, configurabilidad y debugging.
 
 ## Resultado De Validacion
 
@@ -156,7 +171,7 @@ La validacion ejecutada despues de los cambios fue:
 
 Resultado:
 
-- `45 passed`
+- `48 passed`
 - Cobertura total reportada: `76%`
 - `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN en tests
 
@@ -169,4 +184,5 @@ Estos cambios no transforman el MVP en un sistema productivo completo. Lo que ha
 - mejorar trazabilidad de migraciones,
 - hacer mas seguro el artefacto del modelo,
 - mantener compatibilidad con artefactos anteriores,
-- y hacer mas explicables los casos donde una metrica no aplica.
+- hacer mas explicables los casos donde una metrica no aplica,
+- y cerrar deuda chica de legibilidad/configuracion sin abrir una refactorizacion grande.

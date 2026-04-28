@@ -22,7 +22,7 @@ Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting`
 - Rama estable cerrada del MVP corregido: `training`
 - Rama activa para nuevas reformas: `reformas-finales`
 - Ultimo commit comun al crear `reformas-finales`: `b6c21ea docs: explain app prediction indicators`
-- Ultimo commit tecnico publicado en `reformas-finales`: `d60ad6d chore: close source review follow-ups`
+- Ultimos bloques tecnicos publicados en `reformas-finales`: cierre de revision de codigo, documentacion, CSRF/inputs invalidos y bloque constantes/cache/conftest.
 - Estado al cierre tecnico: `reformas-finales` limpia y sincronizada con `origin/reformas-finales`
 - Entorno Python local: `C:\Tesis\TPScouting\.venv`
 
@@ -189,7 +189,7 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - CI ejecuta cobertura con `pytest-cov`.
 - `requirements-dev.txt` incluye `pytest-cov`.
 - `requirements-lock.txt` guarda el snapshot exacto de dependencias instalado en `.venv`.
-- `RUNBOOK.md` documenta DiceBear, cache in-memory sin limite y `app.py` monolitico como limitaciones reales del MVP.
+- `RUNBOOK.md` documenta DiceBear, cache in-memory con limite configurable y `app.py` monolitico como limitaciones reales del MVP.
 - `db_utils.ensure_player_columns()` migra timestamps tambien en `physical_assessments` y `player_availability`.
 - `train_model.py` guarda checkpoints con `input_dim`, version y `model_state`.
 - `app.py` y `evaluate_saved_model.py` cargan checkpoints nuevos y mantienen compatibilidad con `state_dict` legacy.
@@ -198,6 +198,9 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - Se agrego test matriz de CSRF para POST mutantes criticos.
 - Se agregaron tests de alta de jugador con edad invalida y campos obligatorios vacios.
 - `base.html` ahora muestra todos los mensajes flash para no ocultar errores multiples de validacion.
+- Valores visibles de paginacion, comparadores y rating de estadisticas pasaron a constantes nombradas.
+- El cache in-memory del dashboard tiene limite `CACHE_MAX_ENTRIES` configurable, por default `128`.
+- `tests/conftest.py` usa nombre estable de modulo de test (`scouting_app_app_test`) y limpia `sys.modules`.
 
 ## Performance
 
@@ -230,7 +233,7 @@ cd C:\Tesis\TPScouting
 
 Resultado:
 
-- `45 passed`
+- `48 passed`
 - cobertura total reportada: `76%`
 - `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
 
@@ -247,28 +250,32 @@ Archivo generado en el repo:
 Resultado general del analisis:
 
 - El informe del profesor contenia `31` observaciones.
-- Corregidos o practicamente corregidos para el MVP: `22`.
-- Parciales, aceptados o documentados como limitacion tecnica: `9`.
+- Corregidos o practicamente corregidos para el MVP: `24`.
+- Parciales, aceptados o documentados como limitacion tecnica: `7`.
 - Pendientes criticos: `0`.
 - Los tres criticos cambiaron mucho respecto del informe original:
 - `CRITICO-01`: Render ya apunta a PostgreSQL administrado.
 - `CRITICO-02`: el umbral de potencial esta centralizado y testeado.
 - `CRITICO-03`: esta mitigado por `--workers 1 --threads 2` y comentario explicito junto a `_PIPELINE_LOCK`; lock DB/file robusto queda fuera del alcance actual.
 
-Bloque tecnico ya cerrado en `d60ad6d`:
+Bloques tecnicos ya cerrados en `reformas-finales`:
 
 - Agregar comentario explicito junto a `_PIPELINE_LOCK` sobre dependencia de single-worker.
 - Reemplazar `globals().get(...)` por llamada directa a `sync_attribute_history_baseline`.
 - Agregar `pytest-cov` y reporte de cobertura en CI.
-- Documentar DiceBear y cache in-memory como limitaciones reales del MVP.
+- Documentar DiceBear, cache in-memory y `app.py` monolitico como limitaciones reales del MVP.
 - Guardar `input_dim` y metadata minima en checkpoint del modelo.
 - Crear `requirements-lock.txt`.
+- Cubrir CSRF en POST mutantes e inputs invalidos de alta de jugador.
+- Convertir magic numbers visibles de paginacion/comparadores/rating en constantes nombradas.
+- Agregar limite simple al cache in-memory con `CACHE_MAX_ENTRIES`.
+- Simplificar `tests/conftest.py` para evitar nombres de modulo con UUID.
 
 Prioridad recomendada para el proximo bloque de codigo:
 
-- Convertir magic numbers visibles (`50`, `2000`, pesos de score) en constantes nombradas.
-- Agregar limite simple al cache in-memory (`CACHE_MAX_ENTRIES`) si se quiere cerrar `REND-03` con codigo.
-- Evaluar simplificar `tests/conftest.py` para evitar nombres de modulo con UUID.
+- Estandarizar gradualmente nomenclatura `db` / `db_session`.
+- Agregar type hints en funciones compartidas de mayor uso.
+- Evaluar herramientas dev opcionales (`ruff`, `black`, `mypy`) solo si no abre un bloque grande.
 
 ## Documentos Relevantes
 
@@ -295,7 +302,7 @@ La rama `training` queda como base estable de las correcciones del MVP. Las nuev
 
 Hay dos caminos razonables:
 
-- Continuar cerrando falencias livianas restantes del informe del profesor: magic numbers, limite de cache y `conftest`.
+- Continuar con falencias livianas restantes del informe del profesor: nomenclatura `db` / `db_session`, type hints y herramientas dev opcionales.
 - Pasar a documento de tesis: alinear Word con el MVP real y eliminar afirmaciones que no esten respaldadas por el repo.
 
 Antes de tocar codigo en el proximo chat, revisar:

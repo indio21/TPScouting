@@ -87,8 +87,44 @@ logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO))
 
 
 # --- Cache in-memory con TTL (MVP) ---
+DEFAULT_CACHE_TTL_SECONDS = 60
+DEFAULT_CACHE_MAX_ENTRIES = 128
+DEFAULT_PLAYER_LIST_PER_PAGE = 50
+DEFAULT_MAX_COMPARE_PLAYERS = 2000
+
+MATCH_MINUTES_DENOMINATOR = 90.0
+MAX_MINUTES_FACTOR = 1.5
+MAX_GOALS_RATED = 3
+MAX_ASSISTS_RATED = 3
+MAX_MATCHES_RATED = 3
+BASE_STATS_RATING = 1.5
+GOAL_RATING_WEIGHT = 1.5
+ASSIST_RATING_WEIGHT = 1.2
+PASS_ACCURACY_RATING_WEIGHT = 2.0
+SHOT_ACCURACY_RATING_WEIGHT = 1.5
+DUEL_ACCURACY_RATING_WEIGHT = 1.3
+MATCH_CONSISTENCY_WEIGHT = 0.5
+PERCENT_DENOMINATOR = 100.0
+MIN_STATS_RATING = 1.0
+MAX_STATS_RATING = 10.0
+
 _CACHE: dict = {}
-_CACHE_TTL_SECONDS = int(os.environ.get("CACHE_TTL_SECONDS", "60"))
+try:
+    _CACHE_TTL_SECONDS = max(1, int(os.environ.get("CACHE_TTL_SECONDS", str(DEFAULT_CACHE_TTL_SECONDS))))
+except ValueError:
+    _CACHE_TTL_SECONDS = DEFAULT_CACHE_TTL_SECONDS
+try:
+    _CACHE_MAX_ENTRIES = max(1, int(os.environ.get("CACHE_MAX_ENTRIES", str(DEFAULT_CACHE_MAX_ENTRIES))))
+except ValueError:
+    _CACHE_MAX_ENTRIES = DEFAULT_CACHE_MAX_ENTRIES
+try:
+    PLAYER_LIST_PER_PAGE = max(1, int(os.environ.get("PLAYER_LIST_PER_PAGE", str(DEFAULT_PLAYER_LIST_PER_PAGE))))
+except ValueError:
+    PLAYER_LIST_PER_PAGE = DEFAULT_PLAYER_LIST_PER_PAGE
+try:
+    MAX_COMPARE_PLAYERS = max(1, int(os.environ.get("MAX_COMPARE_PLAYERS", str(DEFAULT_MAX_COMPARE_PLAYERS))))
+except ValueError:
+    MAX_COMPARE_PLAYERS = DEFAULT_MAX_COMPARE_PLAYERS
 _LOGIN_ATTEMPTS: Dict[str, List[float]] = {}
 _LOGIN_RATE_LIMIT_WINDOW_SECONDS = int(os.environ.get("LOGIN_RATE_LIMIT_WINDOW_SECONDS", "900"))
 _LOGIN_RATE_LIMIT_MAX_ATTEMPTS = int(os.environ.get("LOGIN_RATE_LIMIT_MAX_ATTEMPTS", "5"))
@@ -110,8 +146,23 @@ def _cache_get(key: str):
         return None
     return value
 
+
+def _cache_prune_expired(now_ts: Optional[float] = None) -> None:
+    now = time.time() if now_ts is None else now_ts
+    expired_keys = [key for key, (expires_at, _value) in _CACHE.items() if now >= expires_at]
+    for key in expired_keys:
+        _CACHE.pop(key, None)
+
+
 def _cache_set(key: str, value):
-    _CACHE[key] = (time.time() + _CACHE_TTL_SECONDS, value)
+    now = time.time()
+    _cache_prune_expired(now)
+    if key in _CACHE:
+        _CACHE.pop(key, None)
+    elif len(_CACHE) >= _CACHE_MAX_ENTRIES:
+        oldest_key = min(_CACHE, key=lambda cached_key: _CACHE[cached_key][0])
+        _CACHE.pop(oldest_key, None)
+    _CACHE[key] = (now + _CACHE_TTL_SECONDS, value)
 
 
 def _cache_invalidate_prefix(prefix: str) -> None:
@@ -1426,13 +1477,20 @@ def calculate_stats_rating(metrics: Dict[str, Optional[float]]) -> float:
     shot_pct = metrics.get("shot_pct") or 0.0
     duels_pct = metrics.get("duels_pct") or 0.0
 
-    minutes_factor = min(minutes / 90.0, 1.5)
-    scoring_factor = min(goals, 3) * 1.5 + min(assists, 3) * 1.2
-    accuracy_factor = (pass_pct / 100.0) * 2.0 + (shot_pct / 100.0) * 1.5 + (duels_pct / 100.0) * 1.3
-    consistency_factor = min(matches, 3) * 0.5
+    minutes_factor = min(minutes / MATCH_MINUTES_DENOMINATOR, MAX_MINUTES_FACTOR)
+    scoring_factor = (
+        min(goals, MAX_GOALS_RATED) * GOAL_RATING_WEIGHT
+        + min(assists, MAX_ASSISTS_RATED) * ASSIST_RATING_WEIGHT
+    )
+    accuracy_factor = (
+        (pass_pct / PERCENT_DENOMINATOR) * PASS_ACCURACY_RATING_WEIGHT
+        + (shot_pct / PERCENT_DENOMINATOR) * SHOT_ACCURACY_RATING_WEIGHT
+        + (duels_pct / PERCENT_DENOMINATOR) * DUEL_ACCURACY_RATING_WEIGHT
+    )
+    consistency_factor = min(matches, MAX_MATCHES_RATED) * MATCH_CONSISTENCY_WEIGHT
 
-    raw_score = 1.5 + minutes_factor + scoring_factor + accuracy_factor + consistency_factor
-    return round(max(1.0, min(10.0, raw_score)), 2)
+    raw_score = BASE_STATS_RATING + minutes_factor + scoring_factor + accuracy_factor + consistency_factor
+    return round(max(MIN_STATS_RATING, min(MAX_STATS_RATING, raw_score)), 2)
 
 
 def attribute_chart_payload(history: List[PlayerAttributeHistory]) -> Dict[str, List[Optional[int]]]:
@@ -1755,7 +1813,7 @@ def index():
     top_potential = request.args.get('top_potential')
     order_attr = request.args.get('order_attr')
     page = request.args.get('page', 1, type=int)
-    per_page = 50
+    per_page = PLAYER_LIST_PER_PAGE
     db = Session()
     player_list_columns = [
         Player.id,
@@ -2380,8 +2438,6 @@ def predict_player(player_id: int):
 def compare_players():
     db = Session()
 
-    # Limitar la cantidad de jugadores que se cargan en el combo
-    MAX_COMPARE_PLAYERS = 2000
     rows = (
         db.query(Player.id, Player.name, Player.position)
         .order_by(Player.name.asc())
@@ -2544,8 +2600,6 @@ def compare_players():
 def compare_multi():
     db = Session()
 
-    # Igual que en el comparador 1vs1: limitamos la lista de jugadores
-    MAX_COMPARE_PLAYERS = 2000
     rows = (
         db.query(Player.id, Player.name, Player.position)
         .order_by(Player.name.asc())
