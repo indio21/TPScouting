@@ -26,6 +26,9 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Validacion posterior: `48 passed` con `pytest -q --cov=scouting_app --cov-report=term-missing`, cobertura total reportada `76%`.
 - Cierre de rama: `reformas-finales` queda cerrada en `7763bb0` como bloque de reformas livianas. Se creo `reformas-complejas` desde ese commit para trabajos de mayor alcance.
 - Se agrego una comparacion actualizada punto por punto en `docs/comparacion_falencias_codigo_fuente_2026-04-28.md`.
+- Refactor de arquitectura fase 1 en `reformas-complejas`: se extrajeron cache, seguridad liviana, mantenimiento operativo y runtime ML a `services/` y `ml/`, manteniendo rutas/endpoints en `app.py`.
+- Se documento la evaluacion de factibilidad y riesgos en `docs/refactor_arquitectura_2026-04-28.md`.
+- Validacion posterior al refactor de arquitectura: `48 passed` con `pytest -q --cov=scouting_app --cov-report=term-missing`, cobertura total reportada `77%`.
 
 ## Actualizacion 2026-04-23
 
@@ -315,7 +318,7 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 
 - La suite automatizada actual termina pasando en esta maquina.
 - Ultimo estado validado sin cobertura: `40 passed`
-- Ultimo estado validado con cobertura: `48 passed`, cobertura total `76%`
+- Ultimo estado validado con cobertura: `48 passed`, cobertura total `77%`
 
 ## Puntos Mejorados De Forma Clara
 
@@ -348,6 +351,7 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - `tests/conftest.py` simplificado con nombre de modulo estable
 - Nomenclatura de sesiones SQLAlchemy mejorada en helpers y scripts
 - Type hints mejorados en helpers compartidos
+- Arquitectura fase 1: servicios y runtime ML separados de `app.py`
 
 ## Puntos Que Siguen Parciales O Pendientes
 
@@ -355,6 +359,7 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Optimizaciones adicionales de rendimiento
 - Nomenclatura `db` / `db_session` aceptada como parcial en endpoints Flask; no bloquea el MVP
 - Herramientas dev opcionales todavia parciales (`ruff`, `black`, `mypy`)
+- Rutas Flask todavia concentradas en `app.py`; mover a blueprints queda como fase 2
 - Correccion del documento Word, que todavia no se empezo en esta fase
 
 ## Bloques Restantes

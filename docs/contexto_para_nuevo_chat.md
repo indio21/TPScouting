@@ -205,6 +205,9 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - `tests/conftest.py` usa nombre estable de modulo de test (`scouting_app_app_test`) y limpia `sys.modules`.
 - Helpers operativos y script `create_admin.py` usan `db_session`; la sesion temporal de entrenamiento se llama `training_session`.
 - Se agregaron type hints puntuales en helpers compartidos de `app.py`, `db_utils.py`, `sync_shortlist.py` y `evaluate_saved_model.py`.
+- En `reformas-complejas` se aplico refactor de arquitectura fase 1: `services/cache.py`, `services/security.py`, `services/operational_data.py` y `ml/runtime.py`.
+- Las rutas Flask siguen en `app.py`; moverlas a blueprints queda como fase 2 porque puede afectar nombres de endpoints, templates y tests.
+- Validacion posterior al refactor de arquitectura: `48 passed`, cobertura total reportada `77%`.
 
 ## Performance
 
@@ -238,7 +241,7 @@ cd C:\Tesis\TPScouting
 Resultado:
 
 - `48 passed`
-- cobertura total reportada: `76%`
+- cobertura total reportada: `77%`
 - `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
 
 ## Comparacion Con Informe Del Profesor 2026-04-27
@@ -295,6 +298,7 @@ Prioridad recomendada para el proximo bloque de codigo:
 - `docs/explicacion_cambios_revision_codigo_2026-04-27.md`
 - `docs/flujo_reproducible_mvp.md`
 - `docs/guia_indicadores_app.md`
+- `docs/refactor_arquitectura_2026-04-28.md`
 - `docs/model_training_evidence.md`
 - `docs/model_training_evidence.docx`
 - `docs/model_training_plan.md`
@@ -311,6 +315,7 @@ La rama `training` queda como base estable de las correcciones del MVP. La rama 
 Hay dos caminos razonables:
 
 - Continuar con falencias livianas restantes del informe del profesor: herramientas dev opcionales.
+- Continuar arquitectura fase 2: mover rutas a blueprints por dominio, una familia por vez.
 - Pasar a documento de tesis: alinear Word con el MVP real y eliminar afirmaciones que no esten respaldadas por el repo.
 
 Antes de tocar codigo en el proximo chat, revisar:

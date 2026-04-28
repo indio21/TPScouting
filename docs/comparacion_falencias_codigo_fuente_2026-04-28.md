@@ -20,7 +20,7 @@ Validacion tecnica vigente del cierre:
 .\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
 ```
 
-Resultado validado: `48 passed`, cobertura total `76%`, con 4 warnings conocidos de scikit-learn por fixtures con columnas all-NaN en tests.
+Resultado validado tras arquitectura fase 1: `48 passed`, cobertura total `77%`, con 4 warnings conocidos de scikit-learn por fixtures con columnas all-NaN en tests.
 
 ## Resumen Ejecutivo
 
@@ -28,7 +28,7 @@ El estado actual es mucho mas solido que el descripto en el informe original:
 
 - Pendientes criticos: `0`.
 - Falencias cerradas o mitigadas de forma suficiente para el MVP: la gran mayoria.
-- Falencias que siguen abiertas como deuda real: principalmente arquitectura monolitica, rendimiento del dashboard a gran escala, tooling dev opcional y decisiones productivas de despliegue/concurrencia.
+- Falencias que siguen abiertas como deuda real: principalmente rutas todavia concentradas en `app.py`, rendimiento del dashboard a gran escala, tooling dev opcional y decisiones productivas de despliegue/concurrencia.
 
 La conclusion honesta es que `reformas-finales` puede cerrarse como rama de correcciones livianas. Lo que queda pertenece mejor a `reformas-complejas` o a la etapa de documento de tesis.
 
@@ -51,12 +51,12 @@ La conclusion honesta es que `reformas-finales` puede cerrarse como rama de corr
 | REND-01 N+1 listado jugadores | Listado y comparadores usan `batch_project_players` y mapas agregados. | Corregido | Nada critico pendiente. |
 | REND-02 dashboard carga todos los jugadores | El dashboard todavia hace consultas `.all()`, aunque existe `EVAL_POOL_MAX=100` y guardrails. | Parcial aceptable | Si crece el volumen: agregaciones SQL/paginacion/resumen persistido. |
 | REND-03 cache sin limite | Cache tiene TTL y `CACHE_MAX_ENTRIES`, default `128`. | Corregido para MVP | Cache externa si se busca escalabilidad real. |
-| CALIDAD-01 app.py monolitico | `app.py` sigue concentrando rutas, seguridad, cache, pipeline e inferencia. | Documentado parcial | Separar en blueprints/servicios en una rama grande, no en bloque chico. |
+| CALIDAD-01 app.py monolitico | Fase 1 de arquitectura aplicada: cache, seguridad liviana, mantenimiento operativo y runtime ML pasaron a `services/` y `ml/`. Las rutas siguen en `app.py`. | Mejorado parcial | Mover rutas a blueprints queda como fase 2 por riesgo de romper endpoints/templates. |
 | CALIDAD-02 magic numbers | Paginacion, comparadores y rating pasaron a constantes/env vars. | Mejorado fuerte | Puede quedar deuda menor de literales de bajo riesgo. |
 | CALIDAD-03 nomenclatura db/db_session | Helpers/scripts usan `db_session` o `training_session`; endpoints conservan `db` local. | Mejorado parcial | Solo estandarizar todo si se acepta ruido de refactor. |
 | CALIDAD-04 type hints | Hints agregados en helpers compartidos de app, DB, sync y evaluacion. | Mejorado parcial | Tipado completo o `mypy` seria bloque nuevo. |
 | CALIDAD-05 globals() | Se reemplazo `globals().get(...)` por llamada directa. | Corregido | Nada pendiente. |
-| TEST-01 cobertura baja | CI y local miden cobertura con `pytest-cov`; suite actual `48 passed`, total `76%`. | Corregido/medido | Subir cobertura de `app.py` seria mejora incremental, no bloqueo. |
+| TEST-01 cobertura baja | CI y local miden cobertura con `pytest-cov`; suite actual `48 passed`, total `77%`. | Corregido/medido | Subir cobertura de `app.py` seria mejora incremental, no bloqueo. |
 | TEST-02 sin CRUD tests | Hay tests de crear, editar y eliminar jugador y staff. | Corregido | Nada critico pendiente. |
 | TEST-03 sin tests inputs invalidos | Hay tests de CSRF, DNI duplicado, edad invalida, campos vacios y rangos invalidos. | Corregido | Nada critico pendiente. |
 | TEST-04 conftest carga dinamica | Ya no usa UUID; usa nombre estable y limpia `sys.modules`. | Corregido para tests | Mantiene import dinamico por aislamiento de DB temporal. |
@@ -75,19 +75,20 @@ La conclusion honesta es que `reformas-finales` puede cerrarse como rama de corr
 - Datos y migraciones quedaron mas robustos, incluyendo fisico/disponibilidad.
 - Testing paso de una cobertura estimada muy baja a una suite formal con cobertura visible en CI.
 - ML quedo mas defendible: checkpoint con metadata, validacion de `input_dim`, split reproducible y warnings de metricas.
-- Calidad mejoro sin abrir refactor grande: constantes, cache limitado, `db_session` puntual y type hints quirurgicos.
+- Calidad mejoro sin abrir refactor grande primero: constantes, cache limitado, `db_session` puntual y type hints quirurgicos.
+- En `reformas-complejas` ya empezo el refactor de arquitectura con servicios y runtime ML extraidos.
 
 ## Que Falta De Verdad
 
-Quedan cuatro caminos posibles, de menor a mayor impacto:
+Tras la fase 1 de arquitectura, quedan estos caminos posibles, de menor a mayor impacto:
 
 1. Tooling dev opcional: `ruff`, `black`, `mypy` o una combinacion minima. Riesgo: puede generar ruido de formato.
 2. Rendimiento dashboard a escala: dejar de depender de `.all()` y pasar a agregaciones SQL o resumen cacheado/persistido.
-3. Refactor de arquitectura: separar `app.py` en blueprints, servicios y modulo de ML/inferencia.
+3. Refactor de arquitectura fase 2: mover rutas a blueprints por dominio.
 4. Documento Word de tesis: alinear narrativa, capturas y afirmaciones con el MVP real ya corregido.
 
 ## Recomendacion
 
 Cerrar `reformas-finales` en `7763bb0` y usar `reformas-complejas` solo para trabajos mas grandes.
 
-El proximo paso mas util no necesariamente es mas codigo: conviene empezar a alinear el documento Word de tesis con esta evidencia. Si se decide seguir en codigo, el primer bloque razonable seria evaluar tooling dev minimo sin aplicar formateo masivo automaticamente.
+El proximo paso mas util no necesariamente es mas codigo: conviene empezar a alinear el documento Word de tesis con esta evidencia. Si se decide seguir arquitectura, conviene mover rutas a blueprints por familia y con tests focales por cada grupo.

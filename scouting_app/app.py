@@ -5,7 +5,7 @@ import threading
 import secrets
 import sys
 import subprocess
-from typing import Any, List, Tuple, Callable, Optional, Dict, Set
+from typing import Any, List, Tuple, Callable, Optional, Dict
 from datetime import datetime, date, timedelta
 from statistics import mean
 from types import SimpleNamespace
@@ -15,7 +15,6 @@ from sqlalchemy.orm import Session as SQLAlchemySession, sessionmaker, load_only
 import numpy as np
 import pandas as pd
 import torch
-from joblib import load as joblib_load
 from models import (
     Base,
     Match,
@@ -30,10 +29,15 @@ from models import (
     PlayerMatchParticipation,
     ScoutReport,
 )
-from train_model import PlayerNet, load_model_checkpoint
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from db_utils import normalize_db_url, create_app_engine, ensure_player_columns
+from ml.runtime import (
+    apply_probability_calibrator,
+    load_model_state,
+    load_probability_calibrator,
+    load_runtime_artifacts,
+)
 from preprocessing import (
     aggregate_attribute_history_dataframe,
     aggregate_availability_dataframe,
@@ -44,11 +48,9 @@ from preprocessing import (
     availability_feature_defaults,
     attribute_history_feature_defaults,
     dataframe_from_players,
-    load_preprocessor as load_saved_preprocessor,
     match_feature_defaults,
     physical_feature_defaults,
     player_base_dataframe_from_players,
-    preprocessor_input_dim,
     scout_report_feature_defaults,
     stats_feature_defaults,
     transform_features,
@@ -64,6 +66,21 @@ from player_logic import (
     is_valid_attribute,
     is_valid_eval_age,
     default_player_photo_url,
+)
+from services.cache import TTLCache
+from services.operational_data import (
+    backfill_player_photo_urls,
+    cleanup_operational_data as _cleanup_operational_data,
+    compute_operational_data_quality as _compute_operational_data_quality,
+    sync_attribute_history_baseline,
+    sync_player_attribute_history,
+    trim_operational_player_pool as _trim_operational_player_pool,
+)
+from services.security import (
+    LoginRateLimiter,
+    client_ip_from_request,
+    csrf_token as service_csrf_token,
+    require_csrf as service_require_csrf,
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -108,7 +125,6 @@ PERCENT_DENOMINATOR = 100.0
 MIN_STATS_RATING = 1.0
 MAX_STATS_RATING = 10.0
 
-_CACHE: Dict[str, Tuple[float, Any]] = {}
 try:
     _CACHE_TTL_SECONDS = max(1, int(os.environ.get("CACHE_TTL_SECONDS", str(DEFAULT_CACHE_TTL_SECONDS))))
 except ValueError:
@@ -125,50 +141,35 @@ try:
     MAX_COMPARE_PLAYERS = max(1, int(os.environ.get("MAX_COMPARE_PLAYERS", str(DEFAULT_MAX_COMPARE_PLAYERS))))
 except ValueError:
     MAX_COMPARE_PLAYERS = DEFAULT_MAX_COMPARE_PLAYERS
-_LOGIN_ATTEMPTS: Dict[str, List[float]] = {}
 _LOGIN_RATE_LIMIT_WINDOW_SECONDS = int(os.environ.get("LOGIN_RATE_LIMIT_WINDOW_SECONDS", "900"))
 _LOGIN_RATE_LIMIT_MAX_ATTEMPTS = int(os.environ.get("LOGIN_RATE_LIMIT_MAX_ATTEMPTS", "5"))
+_DASHBOARD_CACHE = TTLCache(_CACHE_TTL_SECONDS, _CACHE_MAX_ENTRIES)
+_CACHE = _DASHBOARD_CACHE.store
+_LOGIN_RATE_LIMITER = LoginRateLimiter(_LOGIN_RATE_LIMIT_WINDOW_SECONDS, _LOGIN_RATE_LIMIT_MAX_ATTEMPTS)
+_LOGIN_ATTEMPTS = _LOGIN_RATE_LIMITER.attempts
 
 
 # --- Guardrails pipeline (evita doble ejecución concurrente) ---
 # Lock intra-proceso: en Gunicorn depende de mantener --workers 1 para no correr pipelines en paralelo.
 _PIPELINE_LOCK = threading.Lock()
-_LOGIN_ATTEMPT_LOCK = threading.Lock()
 
 
 def _cache_get(key: str) -> Optional[Any]:
-    item = _CACHE.get(key)
-    if not item:
-        return None
-    expires_at, value = item
-    if time.time() >= expires_at:
-        _CACHE.pop(key, None)
-        return None
-    return value
+    return _DASHBOARD_CACHE.get(key)
 
 
 def _cache_prune_expired(now_ts: Optional[float] = None) -> None:
-    now = time.time() if now_ts is None else now_ts
-    expired_keys = [key for key, (expires_at, _value) in _CACHE.items() if now >= expires_at]
-    for key in expired_keys:
-        _CACHE.pop(key, None)
+    _DASHBOARD_CACHE.prune_expired(now_ts)
 
 
 def _cache_set(key: str, value: Any) -> None:
-    now = time.time()
-    _cache_prune_expired(now)
-    if key in _CACHE:
-        _CACHE.pop(key, None)
-    elif len(_CACHE) >= _CACHE_MAX_ENTRIES:
-        oldest_key = min(_CACHE, key=lambda cached_key: _CACHE[cached_key][0])
-        _CACHE.pop(oldest_key, None)
-    _CACHE[key] = (now + _CACHE_TTL_SECONDS, value)
+    _DASHBOARD_CACHE.ttl_seconds = max(1, int(_CACHE_TTL_SECONDS))
+    _DASHBOARD_CACHE.max_entries = max(1, int(_CACHE_MAX_ENTRIES))
+    _DASHBOARD_CACHE.set(key, value)
 
 
 def _cache_invalidate_prefix(prefix: str) -> None:
-    keys = [key for key in _CACHE.keys() if key.startswith(prefix)]
-    for key in keys:
-        _CACHE.pop(key, None)
+    _DASHBOARD_CACHE.invalidate_prefix(prefix)
 
 
 def invalidate_dashboard_cache() -> None:
@@ -176,46 +177,27 @@ def invalidate_dashboard_cache() -> None:
 
 
 def client_ip() -> str:
-    forwarded_for = (request.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
-    return forwarded_for or request.remote_addr or "unknown"
+    return client_ip_from_request(request)
 
 
 def login_attempt_key(username: Optional[str]) -> str:
-    normalized_username = (username or "").strip().lower() or "-"
-    return f"{client_ip()}:{normalized_username}"
+    return _LOGIN_RATE_LIMITER.key(username, client_ip())
 
 
 def _prune_login_attempts(now_ts: Optional[float] = None) -> None:
-    now_ts = now_ts if now_ts is not None else time.time()
-    cutoff = now_ts - _LOGIN_RATE_LIMIT_WINDOW_SECONDS
-    expired_keys = []
-    for key, attempts in _LOGIN_ATTEMPTS.items():
-        fresh_attempts = [attempt for attempt in attempts if attempt >= cutoff]
-        if fresh_attempts:
-            _LOGIN_ATTEMPTS[key] = fresh_attempts
-        else:
-            expired_keys.append(key)
-    for key in expired_keys:
-        _LOGIN_ATTEMPTS.pop(key, None)
+    _LOGIN_RATE_LIMITER.prune(now_ts)
 
 
 def is_login_rate_limited(username: Optional[str]) -> bool:
-    with _LOGIN_ATTEMPT_LOCK:
-        _prune_login_attempts()
-        return len(_LOGIN_ATTEMPTS.get(login_attempt_key(username), [])) >= _LOGIN_RATE_LIMIT_MAX_ATTEMPTS
+    return _LOGIN_RATE_LIMITER.is_limited(username, client_ip())
 
 
 def register_failed_login(username: Optional[str]) -> None:
-    with _LOGIN_ATTEMPT_LOCK:
-        _prune_login_attempts()
-        key = login_attempt_key(username)
-        attempts = _LOGIN_ATTEMPTS.setdefault(key, [])
-        attempts.append(time.time())
+    _LOGIN_RATE_LIMITER.register_failure(username, client_ip())
 
 
 def clear_failed_logins(username: Optional[str]) -> None:
-    with _LOGIN_ATTEMPT_LOCK:
-        _LOGIN_ATTEMPTS.pop(login_attempt_key(username), None)
+    _LOGIN_RATE_LIMITER.clear(username, client_ip())
 
 
 # --- Secret key obligatoria en producción ---
@@ -241,11 +223,7 @@ if _env in ("production", "prod"):
 
 # --- CSRF mínimo (session token) ---
 def _csrf_token() -> str:
-    token = session.get("csrf_token")
-    if not token:
-        token = secrets.token_urlsafe(32)
-        session["csrf_token"] = token
-    return token
+    return service_csrf_token(session)
 
 @app.context_processor
 def inject_csrf_token() -> Dict[str, Callable[[], str]]:
@@ -254,9 +232,7 @@ def inject_csrf_token() -> Dict[str, Callable[[], str]]:
 
 def _require_csrf() -> None:
     # Solo para endpoints críticos (llamar manualmente en POST)
-    token = request.form.get("csrf_token") or request.headers.get("X-CSRF-Token")
-    if not token or token != session.get("csrf_token"):
-        abort(400)
+    service_require_csrf(request.form, request.headers, session)
 
 APP_DB_URL = normalize_db_url(
     os.environ.get("APP_DB_URL", "sqlite:///players_updated_v2.db"),
@@ -289,181 +265,20 @@ ensure_player_columns(engine)
 
 
 def trim_operational_player_pool(db_session: SQLAlchemySession, max_players: int = EVAL_POOL_MAX) -> int:
-    """Mantiene la base operativa en un maximo de jugadores evaluables."""
-    total = db_session.query(func.count(Player.id)).scalar() or 0
-    if total <= max_players:
-        return 0
-
-    stat_subq = (
-        db_session.query(
-            PlayerStat.player_id.label("player_id"),
-            func.max(PlayerStat.record_date).label("last_stat_date"),
-        )
-        .group_by(PlayerStat.player_id)
-        .subquery()
-    )
-    attr_subq = (
-        db_session.query(
-            PlayerAttributeHistory.player_id.label("player_id"),
-            func.max(PlayerAttributeHistory.record_date).label("last_attr_date"),
-        )
-        .group_by(PlayerAttributeHistory.player_id)
-        .subquery()
-    )
-
-    rows = (
-        db_session.query(
-            Player.id,
-            Player.age,
-            stat_subq.c.last_stat_date,
-            attr_subq.c.last_attr_date,
-        )
-        .outerjoin(stat_subq, stat_subq.c.player_id == Player.id)
-        .outerjoin(attr_subq, attr_subq.c.player_id == Player.id)
-        .all()
-    )
-
-    def sort_key(row):
-        dates = [d for d in (row.last_stat_date, row.last_attr_date) if d is not None]
-        last_activity = max(dates) if dates else date.min
-        has_history = 1 if dates else 0
-        in_eval_range = 1 if is_valid_eval_age(int(row.age or 0)) else 0
-        return (has_history, in_eval_range, last_activity, row.id)
-
-    rows_sorted = sorted(rows, key=sort_key, reverse=True)
-    keep_ids: Set[int] = {row.id for row in rows_sorted[:max_players]}
-    drop_ids = [row.id for row in rows_sorted if row.id not in keep_ids]
-
-    if not drop_ids:
-        return 0
-
-    db_session.query(PlayerStat).filter(PlayerStat.player_id.in_(drop_ids)).delete(synchronize_session=False)
-    db_session.query(PlayerAttributeHistory).filter(PlayerAttributeHistory.player_id.in_(drop_ids)).delete(synchronize_session=False)
-    db_session.query(Player).filter(Player.id.in_(drop_ids)).delete(synchronize_session=False)
-    return len(drop_ids)
-
-
-def backfill_player_photo_urls(db_session: SQLAlchemySession) -> int:
-    players = (
-        db_session.query(Player)
-        .filter((Player.photo_url == None) | (Player.photo_url == ""))  # noqa: E711
-        .all()
-    )
-    updated = 0
-    for player in players:
-        player.photo_url = default_player_photo_url(
-            name=player.name,
-            national_id=player.national_id,
-            fallback=str(player.id),
-        )
-        updated += 1
-    return updated
+    return _trim_operational_player_pool(db_session, max_players)
 
 
 def compute_operational_data_quality(db_session: SQLAlchemySession) -> Dict[str, int]:
-    """Resume consistencia basica de la base operativa."""
-    players_total = db_session.query(func.count(Player.id)).scalar() or 0
-    missing_national_id = (
-        db_session.query(func.count(Player.id))
-        .filter((Player.national_id == None) | (func.trim(Player.national_id) == ""))  # noqa: E711
-        .scalar()
-        or 0
-    )
-    invalid_age = (
-        db_session.query(func.count(Player.id))
-        .filter((Player.age < 12) | (Player.age > 18))
-        .scalar()
-        or 0
-    )
-    missing_name = (
-        db_session.query(func.count(Player.id))
-        .filter((Player.name == None) | (func.trim(Player.name) == ""))  # noqa: E711
-        .scalar()
-        or 0
-    )
-    missing_position = (
-        db_session.query(func.count(Player.id))
-        .filter((Player.position == None) | (func.trim(Player.position) == ""))  # noqa: E711
-        .scalar()
-        or 0
-    )
-    missing_photo_url = (
-        db_session.query(func.count(Player.id))
-        .filter((Player.photo_url == None) | (func.trim(Player.photo_url) == ""))  # noqa: E711
-        .scalar()
-        or 0
-    )
-    orphan_stats = (
-        db_session.query(func.count(PlayerStat.id))
-        .outerjoin(Player, Player.id == PlayerStat.player_id)
-        .filter(Player.id == None)  # noqa: E711
-        .scalar()
-        or 0
-    )
-    orphan_attribute_history = (
-        db_session.query(func.count(PlayerAttributeHistory.id))
-        .outerjoin(Player, Player.id == PlayerAttributeHistory.player_id)
-        .filter(Player.id == None)  # noqa: E711
-        .scalar()
-        or 0
-    )
-    over_limit_players = max(players_total - EVAL_POOL_MAX, 0)
-
-    return {
-        "players_total": int(players_total),
-        "missing_national_id": int(missing_national_id),
-        "invalid_age": int(invalid_age),
-        "missing_name": int(missing_name),
-        "missing_position": int(missing_position),
-        "missing_photo_url": int(missing_photo_url),
-        "orphan_stats": int(orphan_stats),
-        "orphan_attribute_history": int(orphan_attribute_history),
-        "over_limit_players": int(over_limit_players),
-    }
+    return _compute_operational_data_quality(db_session, EVAL_POOL_MAX)
 
 
 def cleanup_operational_data(db_session: SQLAlchemySession) -> Dict[str, int]:
-    """Limpia inconsistencias legacy sin inventar datos faltantes."""
-    invalid_player_ids = [
-        player_id
-        for (player_id,) in db_session.query(Player.id)
-        .filter(
-            (Player.name == None)  # noqa: E711
-            | (func.trim(Player.name) == "")
-            | (Player.position == None)  # noqa: E711
-            | (func.trim(Player.position) == "")
-            | (Player.national_id == None)  # noqa: E711
-            | (func.trim(Player.national_id) == "")
-            | (Player.age < 12)
-            | (Player.age > 18)
-        )
-        .all()
-    ]
-
-    removed_invalid_players = len(invalid_player_ids)
-    if invalid_player_ids:
-        db_session.query(PlayerStat).filter(PlayerStat.player_id.in_(invalid_player_ids)).delete(synchronize_session=False)
-        db_session.query(PlayerAttributeHistory).filter(
-            PlayerAttributeHistory.player_id.in_(invalid_player_ids)
-        ).delete(synchronize_session=False)
-        db_session.query(Player).filter(Player.id.in_(invalid_player_ids)).delete(synchronize_session=False)
-
-    photo_updates = backfill_player_photo_urls(db_session)
-    history_updates = 0
-    history_updates = sync_attribute_history_baseline(db_session)
-
-    trimmed = 0
-    if ENFORCE_EVAL_POOL_LIMIT:
-        trimmed = trim_operational_player_pool(db_session, EVAL_POOL_MAX)
-
-    quality_after = compute_operational_data_quality(db_session)
-    return {
-        "removed_invalid_players": int(removed_invalid_players),
-        "photo_updates": int(photo_updates),
-        "history_updates": int(history_updates),
-        "trimmed_players": int(trimmed),
-        **quality_after,
-    }
+    return _cleanup_operational_data(
+        db_session,
+        eval_pool_max=EVAL_POOL_MAX,
+        enforce_eval_pool_limit=ENFORCE_EVAL_POOL_LIMIT,
+        sync_history=sync_attribute_history_baseline,
+    )
 
 
 def enforce_operational_pool_limit_on_startup() -> None:
@@ -617,6 +432,7 @@ def update_database_pipeline(limit: int = EVAL_POOL_MAX, sync_shortlist: bool = 
             PREPROCESSOR_PATH,
             CALIBRATOR_PATH,
             allow_retrain=False,
+            update_callback=update_database_pipeline,
         )
         invalidate_dashboard_cache()
         overall_logs.append("Modelo, preprocesador y calibrador recargados en memoria; cache del dashboard invalidado.")
@@ -829,82 +645,6 @@ def roles_required(*roles: str) -> Callable:
 
     return decorator
 
-# ----------------------------------------------------
-# Modelo
-def load_model_state(model_path: str, input_dim: int) -> PlayerNet:
-    model = PlayerNet(input_dim=input_dim)
-    checkpoint = load_model_checkpoint(
-        model_path,
-        expected_input_dim=input_dim,
-        map_location=torch.device('cpu'),
-    )
-    model.load_state_dict(checkpoint["state_dict"])
-    model.eval()
-    return model
-
-
-def load_probability_calibrator(calibrator_path: str) -> Optional[object]:
-    if not os.path.exists(calibrator_path):
-        return None
-    try:
-        return joblib_load(calibrator_path)
-    except Exception:
-        return None
-
-
-def apply_probability_calibrator(calibrator: Optional[object], probabilities: List[float]) -> np.ndarray:
-    raw = np.asarray(probabilities, dtype=np.float32).reshape(-1)
-    if calibrator is None:
-        return raw
-    try:
-        if hasattr(calibrator, "predict_proba"):
-            return calibrator.predict_proba(raw.reshape(-1, 1))[:, 1].astype(np.float32)
-        return np.clip(np.asarray(calibrator.predict(raw), dtype=np.float32), 0.0, 1.0)
-    except Exception:
-        return raw
-
-
-def load_runtime_artifacts(
-    model_path: str,
-    preprocessor_path: str,
-    calibrator_path: Optional[str] = None,
-    allow_retrain: bool = True,
-) -> Tuple[Optional[PlayerNet], Optional[object], Optional[object]]:
-    def retrain_or_raise(message: str, original_exc: Optional[Exception] = None) -> None:
-        if not allow_retrain:
-            if original_exc is not None:
-                raise original_exc
-            raise FileNotFoundError(message)
-        print(message)
-        success, logs = update_database_pipeline()
-        for log in logs:
-            print(log)
-        if not success:
-            raise RuntimeError(
-                "No se pudo reentrenar el modelo automaticamente. Ejecute train_model.py manualmente."
-            ) from original_exc
-
-    if not os.path.exists(model_path):
-        retrain_or_raise("Advertencia: modelo no encontrado. Intentando reentrenar automaticamente.")
-    if not os.path.exists(preprocessor_path):
-        retrain_or_raise("Advertencia: preprocesador no encontrado. Intentando reentrenar automaticamente.")
-
-    preprocessor = load_saved_preprocessor(preprocessor_path)
-    input_dim = preprocessor_input_dim(preprocessor)
-    try:
-        model = load_model_state(model_path, input_dim)
-    except RuntimeError as exc:
-        retrain_or_raise(
-            "Advertencia: modelo incompatible con el preprocesador actual. Intentando reentrenar automaticamente.",
-            original_exc=exc,
-        )
-        preprocessor = load_saved_preprocessor(preprocessor_path)
-        input_dim = preprocessor_input_dim(preprocessor)
-        model = load_model_state(model_path, input_dim)
-    calibrator = load_probability_calibrator(calibrator_path) if calibrator_path else None
-    return model, preprocessor, calibrator
-
-
 MODEL_PATH = os.path.join(BASE_DIR, "model.pt")
 PREPROCESSOR_PATH = os.path.join(BASE_DIR, "preprocessor.joblib")
 CALIBRATOR_PATH = os.path.join(BASE_DIR, "probability_calibrator.joblib")
@@ -919,6 +659,7 @@ try:
         PREPROCESSOR_PATH,
         CALIBRATOR_PATH,
         allow_retrain=AUTO_TRAIN_ON_STARTUP,
+        update_callback=update_database_pipeline,
     )
 except (FileNotFoundError, RuntimeError):
     model = None
@@ -1357,53 +1098,6 @@ def fetch_attribute_history(
     if close_session:
         db_session.close()
     return history
-
-
-def _attribute_row_from_player(player: Player) -> Dict[str, int]:
-    return {field: int(getattr(player, field) or 0) for field in ATTRIBUTE_FIELDS}
-
-
-def _attribute_row_from_entry(entry: PlayerAttributeHistory) -> Dict[str, int]:
-    return {field: int(getattr(entry, field) or 0) for field in ATTRIBUTE_FIELDS}
-
-
-def sync_player_attribute_history(
-    player: Player,
-    db_session: SQLAlchemySession,
-    note: str = "Sincronizacion automatica de ficha",
-) -> bool:
-    """Asegura que el ultimo registro del historial tecnico refleje la ficha actual.
-
-    Devuelve True si crea un registro nuevo.
-    """
-    latest = (
-        db_session.query(PlayerAttributeHistory)
-        .filter(PlayerAttributeHistory.player_id == player.id)
-        .order_by(PlayerAttributeHistory.record_date.desc(), PlayerAttributeHistory.id.desc())
-        .first()
-    )
-    current_values = _attribute_row_from_player(player)
-    if latest and _attribute_row_from_entry(latest) == current_values:
-        return False
-
-    entry = PlayerAttributeHistory(
-        player_id=player.id,
-        record_date=date.today(),
-        notes=note,
-        **current_values,
-    )
-    db_session.add(entry)
-    return True
-
-
-def sync_attribute_history_baseline(db_session: SQLAlchemySession) -> int:
-    """Sincroniza historial tecnico para jugadores con ficha desfasada o sin historial."""
-    players = db_session.query(Player).all()
-    created = 0
-    for player in players:
-        if sync_player_attribute_history(player, db_session):
-            created += 1
-    return created
 
 
 enforce_operational_pool_limit_on_startup()
