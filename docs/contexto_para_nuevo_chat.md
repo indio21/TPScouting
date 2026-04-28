@@ -20,10 +20,12 @@ Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting`
 - Repo remoto: `https://github.com/indio21/TPScouting.git`
 - Carpeta local: `C:\Tesis\TPScouting`
 - Rama estable cerrada del MVP corregido: `training`
-- Rama activa para nuevas reformas: `reformas-finales`
+- Rama cerrada para reformas livianas: `reformas-finales`
+- Rama activa para cambios complejos: `reformas-complejas`
 - Ultimo commit comun al crear `reformas-finales`: `b6c21ea docs: explain app prediction indicators`
 - Ultimos bloques tecnicos publicados en `reformas-finales`: cierre de revision de codigo, documentacion, CSRF/inputs invalidos, constantes/cache/conftest, normalizacion puntual `db_session` y type hints quirurgicos.
-- Estado al cierre tecnico: `reformas-finales` limpia y sincronizada con `origin/reformas-finales`
+- Estado al cierre tecnico: `reformas-finales` limpia y sincronizada con `origin/reformas-finales` en `7763bb0`.
+- `reformas-complejas` fue creada desde `7763bb0` para trabajos mas grandes.
 - Entorno Python local: `C:\Tesis\TPScouting\.venv`
 
 Usar siempre la `.venv`; no usar el Python global.
@@ -248,6 +250,7 @@ Documento analizado:
 Archivo generado en el repo:
 
 - `docs/comparacion_falencias_codigo_fuente_2026-04-27.md`
+- `docs/comparacion_falencias_codigo_fuente_2026-04-28.md`
 
 Resultado general del analisis:
 
@@ -288,6 +291,7 @@ Prioridad recomendada para el proximo bloque de codigo:
 - `RUNBOOK.md`
 - `REVISION_FINAL_MVP.md`
 - `docs/comparacion_falencias_codigo_fuente_2026-04-27.md`
+- `docs/comparacion_falencias_codigo_fuente_2026-04-28.md`
 - `docs/explicacion_cambios_revision_codigo_2026-04-27.md`
 - `docs/flujo_reproducible_mvp.md`
 - `docs/guia_indicadores_app.md`
@@ -302,7 +306,7 @@ Prioridad recomendada para el proximo bloque de codigo:
 
 ## Proximo Paso Probable
 
-La rama `training` queda como base estable de las correcciones del MVP. Las nuevas reformas deben continuar en `reformas-finales`.
+La rama `training` queda como base estable de las correcciones del MVP. La rama `reformas-finales` queda cerrada como bloque liviano. Las reformas grandes deben continuar en `reformas-complejas`.
 
 Hay dos caminos razonables:
 

@@ -24,6 +24,8 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Bloque nomenclatura de sesiones: helpers operativos y `create_admin.py` usan `db_session`; la sesion temporal de entrenamiento se llama `training_session`; los endpoints Flask conservan `db` como variable local corta.
 - Bloque type hints quirurgicos: se agregaron anotaciones en helpers compartidos de cache, CSRF/context processors, carga de artefactos, DB, `sync_shortlist.py` y `evaluate_saved_model.py`.
 - Validacion posterior: `48 passed` con `pytest -q --cov=scouting_app --cov-report=term-missing`, cobertura total reportada `76%`.
+- Cierre de rama: `reformas-finales` queda cerrada en `7763bb0` como bloque de reformas livianas. Se creo `reformas-complejas` desde ese commit para trabajos de mayor alcance.
+- Se agrego una comparacion actualizada punto por punto en `docs/comparacion_falencias_codigo_fuente_2026-04-28.md`.
 
 ## Actualizacion 2026-04-23
 
@@ -55,14 +57,15 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 
 ## Estado Git
 
-- Rama local actual: `reformas-finales`
+- Rama local actual: `reformas-complejas`
 - Remoto configurado: `origin -> https://github.com/indio21/TPScouting.git`
 - Ultimo commit publicado en `main`: `bd8e4ef`
 - Rama estable cerrada del MVP corregido: `training`
-- Rama activa para nuevas reformas: `reformas-finales`
+- Rama cerrada para reformas livianas: `reformas-finales`
+- Rama activa para cambios complejos: `reformas-complejas`
 - Ultimo commit comun al crear `reformas-finales`: `b6c21ea`
 - Ultimos bloques tecnicos publicados en `reformas-finales`: revision de codigo fuente, documentacion, CSRF/inputs invalidos, constantes/cache/conftest, normalizacion puntual de sesiones y type hints quirurgicos.
-- Estado tecnico documentado: `reformas-finales` se valida con la suite completa y cobertura antes de cada push.
+- Estado tecnico documentado: `reformas-finales` cerrada en `7763bb0`; `reformas-complejas` continua desde ese punto.
 
 ## Etapas Ya Trabajadas
 
