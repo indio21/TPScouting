@@ -1,6 +1,8 @@
-# Refactor De Arquitectura - Evaluacion Y Fase 1
+# Refactor De Arquitectura - Evaluacion, Fase 1 Y Fase 2 Auth
 
 Fecha: 2026-04-28
+
+Ultima actualizacion: 2026-04-29
 
 Rama: `reformas-complejas`
 
@@ -33,11 +35,26 @@ Se modifico:
 
 - `scouting_app/app.py`: ahora delega esas responsabilidades en servicios, pero conserva rutas y endpoints.
 
+## Fase 2 Auth
+
+El 2026-04-29 empezo la fase 2 con el bloque mas acotado: autenticacion.
+
+Se agregaron:
+
+- `scouting_app/routes/__init__.py`: utilidad para registrar aliases historicos de endpoints.
+- `scouting_app/routes/auth.py`: blueprint `auth` con `/login`, `/logout` y `/register`.
+
+Se modifico:
+
+- `scouting_app/app.py`: registra el blueprint `auth` y conserva aliases legacy para `login`, `logout` y `register`.
+
+La decision clave fue mantener compatibilidad con los endpoints historicos. Flask normalmente nombraria estas vistas como `auth.login`, `auth.logout` y `auth.register`; en esta fase tambien se registran los nombres `login`, `logout` y `register` para que `url_for('login')`, redirects, templates y tests sigan funcionando mientras se migra por familias.
+
 ## Que No Se Toco A Proposito
 
-No se movieron todavia las rutas a blueprints.
+No se movieron todavia todas las rutas a blueprints.
 
-Motivo: si se usan blueprints de forma directa, endpoints como `login`, `index`, `dashboard` o `player_detail` suelen pasar a nombres prefijados como `auth.login` o `players.player_detail`. Eso obliga a actualizar templates, redirects, tests y links internos. Es posible, pero es un bloque mas riesgoso.
+Motivo: si se usan blueprints de forma directa, endpoints como `index`, `dashboard` o `player_detail` suelen pasar a nombres prefijados como `main.index`, `dashboard.dashboard` o `players.player_detail`. Eso obliga a actualizar templates, redirects, tests y links internos. Es posible, pero es un bloque mas riesgoso.
 
 Tampoco se modificaron:
 
@@ -93,6 +110,22 @@ Resultado:
 - cobertura total `77%`
 - `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
 
+Validacion focal posterior a fase 2 auth:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests\test_auth.py tests\test_mvp_regressions.py::test_register_rejects_weak_password tests\test_mvp_regressions.py::test_register_creates_user_with_valid_role tests\test_mvp_regressions.py::test_register_requires_csrf_token tests\test_mvp_regressions.py::test_mutating_post_routes_reject_missing_csrf tests\test_pages.py -q
+```
+
+Resultado:
+
+- `14 passed`
+
+Validacion completa posterior a fase 2 auth:
+
+- `49 passed`
+- cobertura total `77%`
+- `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
+
 ## Riesgos Que Se Redujeron
 
 - Menos logica de infraestructura mezclada con rutas.
@@ -102,17 +135,18 @@ Resultado:
 
 ## Riesgos Que Siguen
 
-- Las rutas siguen en `app.py`.
-- Los nombres de endpoints siguen dependiendo del archivo principal.
+- La mayoria de las rutas siguen en `app.py`.
+- Ya empezo la migracion a blueprints, pero solo `auth` esta separado.
+- Los nombres de endpoints siguen dependiendo de una capa de compatibilidad mientras se migra por familias.
 - El dashboard todavia tiene deuda de rendimiento a escala.
-- Una fase de blueprints todavia requeriria revisar templates y tests.
+- Las siguientes familias de blueprints todavia requieren revisar templates, redirects y tests.
 
 ## Siguiente Paso Si Se Continua Arquitectura
 
-El siguiente corte razonable seria mover rutas por dominio, de a una familia:
+El siguiente corte razonable es seguir moviendo rutas por dominio, de a una familia:
 
-1. `routes/auth.py`: login, logout, register.
-2. `routes/staff.py`: coaches/directors.
+1. `routes/auth.py`: login, logout, register. Hecho en fase 2 inicial.
+2. `routes/staff.py`: coaches/directors. Recomendado como siguiente bloque.
 3. `routes/players.py`: listado, alta/edicion/baja, ficha, stats, atributos.
 4. `routes/dashboard.py`: dashboard.
 5. `routes/compare.py`: comparadores.

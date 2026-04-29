@@ -20,7 +20,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 ### 1. Suite automatizada
 
 - Estado final validado original: `40 passed`
-- Estado tecnico actualizado 2026-04-28: `48 passed` con `pytest-cov`, cobertura total reportada `77%`
+- Estado tecnico actualizado 2026-04-29: `49 passed` con `pytest-cov`, cobertura total reportada `77%`
 - Cobertura reforzada sobre:
 - autenticacion
 - permisos por rol
@@ -134,10 +134,10 @@ Estos puntos siguen siendo reales y no se deben ocultar:
 
 - despliegue final en Render todavia requiere cierre operativo completo
 - la app sigue siendo un MVP; no esta pensada para alta concurrencia
-- persisten deudas de calidad no criticas: rutas Flask todavia concentradas en `app.py`, convenciones parciales en endpoints Flask y tooling dev opcional
+- persisten deudas de calidad no criticas: las rutas Flask siguen mayormente concentradas en `app.py`, aunque arquitectura fase 2 ya separo `auth` en blueprint; tambien quedan convenciones parciales en endpoints Flask y tooling dev opcional
 - el documento Word todavia no fue alineado con el estado corregido del MVP en esta fase
 - la evidencia del modelo sigue basada en datos sinteticos; no hay validacion externa con datos reales
 
 ## Conclusion
 
-Con la evidencia actual, el MVP queda funcional, coherente con su alcance acotado y bastante mas defendible que al inicio de la revision. La rama `training` queda como base estable de estas correcciones y las reformas nuevas continuan en `reformas-finales`. La siguiente etapa natural es revisar visualmente la demo y luego corregir el documento Word para que refleje fielmente este estado real.
+Con la evidencia actual, el MVP queda funcional, coherente con su alcance acotado y bastante mas defendible que al inicio de la revision. La rama `training` queda como base estable inicial, `reformas-finales` cerro las reformas livianas y `reformas-complejas` concentra los cambios estructurales. La siguiente etapa tecnica natural es continuar blueprints por familia; la siguiente etapa documental es corregir el Word para que refleje fielmente este estado real.

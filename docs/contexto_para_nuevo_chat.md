@@ -1,6 +1,6 @@
 # Contexto Para Nuevo Chat
 
-Fecha: 2026-04-27
+Fecha: 2026-04-29
 
 Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting` en un chat nuevo sin arrastrar toda la conversacion anterior.
 
@@ -206,8 +206,10 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - Helpers operativos y script `create_admin.py` usan `db_session`; la sesion temporal de entrenamiento se llama `training_session`.
 - Se agregaron type hints puntuales en helpers compartidos de `app.py`, `db_utils.py`, `sync_shortlist.py` y `evaluate_saved_model.py`.
 - En `reformas-complejas` se aplico refactor de arquitectura fase 1: `services/cache.py`, `services/security.py`, `services/operational_data.py` y `ml/runtime.py`.
-- Las rutas Flask siguen en `app.py`; moverlas a blueprints queda como fase 2 porque puede afectar nombres de endpoints, templates y tests.
-- Validacion posterior al refactor de arquitectura: `48 passed`, cobertura total reportada `77%`.
+- Arquitectura fase 2 iniciada: `login`, `logout` y `register` se movieron a `scouting_app/routes/auth.py` como blueprint `auth`.
+- Para reducir riesgo se conserva compatibilidad con endpoints historicos mediante aliases `login`, `logout` y `register`; asi siguen funcionando `url_for(...)`, redirects, templates y tests existentes.
+- Las demas rutas Flask siguen en `app.py`; faltan blueprints por familia para `staff`, `players`, `dashboard`, `compare` y `settings`.
+- Validacion posterior al refactor de arquitectura fase 2 auth: `49 passed`, cobertura total reportada `77%`.
 
 ## Performance
 
@@ -229,7 +231,7 @@ cd C:\Tesis\TPScouting
 
 Resultado:
 
-- Validacion anterior: `40 passed`
+- `49 passed`
 
 Ultima validacion completa con cobertura:
 
@@ -240,9 +242,20 @@ cd C:\Tesis\TPScouting
 
 Resultado:
 
-- `48 passed`
+- `49 passed`
 - cobertura total reportada: `77%`
 - `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
+
+Validacion focal de arquitectura fase 2 auth:
+
+```powershell
+cd C:\Tesis\TPScouting
+.\.venv\Scripts\python.exe -m pytest tests\test_auth.py tests\test_mvp_regressions.py::test_register_rejects_weak_password tests\test_mvp_regressions.py::test_register_creates_user_with_valid_role tests\test_mvp_regressions.py::test_register_requires_csrf_token tests\test_mvp_regressions.py::test_mutating_post_routes_reject_missing_csrf tests\test_pages.py -q
+```
+
+Resultado:
+
+- `14 passed`
 
 ## Comparacion Con Informe Del Profesor 2026-04-27
 
@@ -281,10 +294,15 @@ Bloques tecnicos ya cerrados en `reformas-finales`:
 - Normalizar puntualmente nombres de sesiones SQLAlchemy en helpers y scripts.
 - Agregar type hints quirurgicos en funciones compartidas de mayor uso.
 
+Bloques tecnicos ya iniciados en `reformas-complejas`:
+
+- Refactor de arquitectura fase 1: servicios y runtime ML separados.
+- Refactor de arquitectura fase 2 auth: `routes/auth.py` contiene login, logout y register con aliases legacy.
+
 Prioridad recomendada para el proximo bloque de codigo:
 
+- Continuar arquitectura fase 2 con `staff`, porque coaches/directors tienen menos acoplamiento que `players` y `dashboard`.
 - Evaluar herramientas dev opcionales (`ruff`, `black`, `mypy`) solo si no abre un bloque grande.
-- Dejar `app.py` monolitico para un bloque aparte si se decide asumir una refactorizacion mas grande.
 - Considerar pasar al documento Word de tesis para alinear la narrativa con el MVP real.
 
 ## Documentos Relevantes
@@ -315,7 +333,7 @@ La rama `training` queda como base estable de las correcciones del MVP. La rama 
 Hay dos caminos razonables:
 
 - Continuar con falencias livianas restantes del informe del profesor: herramientas dev opcionales.
-- Continuar arquitectura fase 2: mover rutas a blueprints por dominio, una familia por vez.
+- Continuar arquitectura fase 2: siguiente bloque recomendado `staff` (`coaches` y `directors`).
 - Pasar a documento de tesis: alinear Word con el MVP real y eliminar afirmaciones que no esten respaldadas por el repo.
 
 Antes de tocar codigo en el proximo chat, revisar:

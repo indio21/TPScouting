@@ -1,4 +1,5 @@
 from werkzeug.security import generate_password_hash
+from flask import url_for
 
 def _create_user(db, User, username, password, role="scout"):
     u = User(username=username, password_hash=generate_password_hash(password), role=role)
@@ -14,6 +15,13 @@ def _get_csrf_token(client, path="/login"):
 def test_landing_public_ok(client):
     resp = client.get("/")
     assert resp.status_code == 200
+
+
+def test_auth_blueprint_keeps_legacy_endpoint_names(app_module):
+    with app_module.app.test_request_context():
+        assert url_for("login") == "/login"
+        assert url_for("logout") == "/logout"
+        assert url_for("register") == "/register"
 
 def test_protected_requires_login_redirects_to_login(client):
     resp = client.get("/players")

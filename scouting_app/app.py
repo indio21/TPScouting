@@ -29,7 +29,7 @@ from models import (
     PlayerMatchParticipation,
     ScoutReport,
 )
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
 from functools import wraps
 from db_utils import normalize_db_url, create_app_engine, ensure_player_columns
 from ml.runtime import (
@@ -82,6 +82,8 @@ from services.security import (
     csrf_token as service_csrf_token,
     require_csrf as service_require_csrf,
 )
+from routes import register_legacy_endpoint_aliases
+from routes.auth import create_auth_blueprint
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -644,6 +646,32 @@ def roles_required(*roles: str) -> Callable:
         return wrapper
 
     return decorator
+
+
+auth_blueprint = create_auth_blueprint(
+    Session=Session,
+    User=User,
+    require_csrf=_require_csrf,
+    is_login_rate_limited=is_login_rate_limited,
+    clear_failed_logins=clear_failed_logins,
+    register_failed_login=register_failed_login,
+    normalize_role=normalize_role,
+    roles_required=roles_required,
+    is_strong_password=is_strong_password,
+    role_admin=ROLE_ADMIN,
+    role_scout=ROLE_SCOUT,
+    role_director=ROLE_DIRECTOR,
+)
+app.register_blueprint(auth_blueprint)
+register_legacy_endpoint_aliases(
+    app,
+    "auth",
+    (
+        ("login", "/login", ("GET", "POST")),
+        ("logout", "/logout", ("GET",)),
+        ("register", "/register", ("GET", "POST")),
+    ),
+)
 
 MODEL_PATH = os.path.join(BASE_DIR, "model.pt")
 PREPROCESSOR_PATH = os.path.join(BASE_DIR, "preprocessor.joblib")
@@ -1274,76 +1302,6 @@ def refresh_player_potential(
     if projection:
         player.potential_label = is_high_potential_probability(projection["combined_prob"])
     return projection
-
-# ----------------------------------------------------
-# LOGIN
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == "POST":
-        _require_csrf()
-
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        if is_login_rate_limited(username):
-            return (
-                render_template(
-                    'login.html',
-                    error='Se bloquearon temporalmente los intentos de acceso. Espera unos minutos antes de reintentar.',
-                ),
-                429,
-            )
-        db = Session()
-        user = db.query(User).filter(User.username == username).first()
-        db.close()
-        if user and check_password_hash(user.password_hash, password):
-            clear_failed_logins(username)
-            session['user_id'] = user.id
-            session['username'] = user.username
-            session['role'] = normalize_role(user.role)
-            return redirect(request.args.get('next') or url_for('index'))
-        register_failed_login(username)
-        return render_template('login.html', error='Usuario o contraseña inválidos')
-    return render_template('login.html')
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("landing"))  # <- antes apuntaba al login; ahora a la web pública
-
-
-# ----------------------------------------------------
-# REGISTRO
-@app.route('/register', methods=['GET', 'POST'])
-@roles_required(ROLE_ADMIN)
-def register():
-    if request.method == "POST":
-        _require_csrf()
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        role = normalize_role(request.form.get('role'))
-        if not username or not password or not role:
-            return render_template('register.html', error='Todos los campos son obligatorios')
-        if not is_strong_password(password):
-            return render_template(
-                'register.html',
-                error='La contraseña debe tener al menos 8 caracteres e incluir letras y numeros',
-            )
-        if role not in {ROLE_ADMIN, ROLE_SCOUT, ROLE_DIRECTOR}:
-            return render_template('register.html', error='Rol inválido')
-        db = Session()
-        if db.query(User).filter(User.username == username).first():
-            db.close()
-            return render_template('register.html', error='El usuario ya existe')
-        user = User(username=username,
-                    password_hash=generate_password_hash(password),
-                    role=role)
-        db.add(user)
-        db.commit()
-        db.close()
-        return redirect(url_for('index'))
-    return render_template('register.html')
 
 # ----------------------------------------------------
 # DASHBOARD
