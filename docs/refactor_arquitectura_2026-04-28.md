@@ -64,11 +64,25 @@ Se conservaron aliases legacy para los endpoints usados por templates, redirects
 
 La decision tecnica fue registrar `players` al final de `app.py`, despues de definir helpers de validacion, prediccion, cache y permisos. Esto evita depender de funciones que aun no existen durante el import de Flask.
 
+## Fase 2 Compare Y Settings
+
+Luego se movieron dos familias mas:
+
+- `scouting_app/routes/compare.py`: comparador simple y comparador multiple.
+- `scouting_app/routes/settings.py`: configuracion, pipeline, limpieza operativa y metricas de calidad.
+
+Se conservaron aliases legacy para los endpoints usados por templates, redirects y tests:
+
+- compare: `compare_players`, `compare_multi`;
+- settings: `settings`.
+
+En `settings` se uso `current_app.logger` dentro del blueprint para evitar depender del objeto `app` global. En `compare` se inyectaron solo los helpers y modelos que esa familia usa realmente.
+
 ## Que No Se Toco A Proposito
 
 No se movieron todavia todas las rutas a blueprints.
 
-Motivo: si se usan blueprints de forma directa, endpoints como `dashboard`, `compare_players` o `settings` suelen pasar a nombres prefijados como `dashboard.dashboard`, `compare.compare_players` o `settings.settings`. Eso obliga a actualizar templates, redirects, tests y links internos. Es posible, pero se sigue haciendo por familia.
+Motivo: si se usan blueprints de forma directa, endpoints como `dashboard`, `compare_players` o `settings` suelen pasar a nombres prefijados como `dashboard.dashboard`, `compare.compare_players` o `settings.settings`. Eso obliga a actualizar templates, redirects, tests y links internos. Es posible, pero se sigue haciendo por familia y manteniendo aliases durante la transicion.
 
 Tampoco se modificaron:
 
@@ -104,7 +118,7 @@ Despues de esta fase:
 
 Medicion aproximada tras el corte:
 
-- `app.py`: `2145` lineas;
+- `app.py`: `1718` lineas;
 - `services/cache.py`: `40` lineas;
 - `services/security.py`: `55` lineas;
 - `services/operational_data.py`: `206` lineas;
@@ -112,6 +126,8 @@ Medicion aproximada tras el corte:
 - `routes/auth.py`: rutas de login/logout/registro.
 - `routes/staff.py`: `156` lineas.
 - `routes/players.py`: `854` lineas.
+- `routes/compare.py`: `395` lineas.
+- `routes/settings.py`: `104` lineas.
 
 ## Validacion
 
@@ -165,6 +181,28 @@ Resultado:
 - cobertura total `77%`
 - `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
 
+Validacion focal posterior a fase 2 compare/settings:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests\test_pages.py tests\test_mvp_regressions.py::test_mutating_post_routes_reject_missing_csrf -q
+```
+
+Resultado:
+
+- `8 passed`
+
+Validacion completa con cobertura posterior a fase 2 compare/settings:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
+```
+
+Resultado:
+
+- `52 passed`
+- cobertura total `77%`
+- `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
+
 ## Riesgos Que Se Redujeron
 
 - Menos logica de infraestructura mezclada con rutas.
@@ -174,8 +212,8 @@ Resultado:
 
 ## Riesgos Que Siguen
 
-- Todavia quedan rutas en `app.py`: landing, health, dashboard, comparadores y settings.
-- Ya estan separados `auth`, `staff` y `players`.
+- Todavia quedan rutas en `app.py`: landing, health, dashboard, handlers de error y helpers compartidos.
+- Ya estan separados `auth`, `staff`, `players`, `compare` y `settings`.
 - Los nombres de endpoints siguen dependiendo de una capa de compatibilidad mientras se migra por familias.
 - El dashboard todavia tiene deuda de rendimiento a escala.
 - Las siguientes familias de blueprints todavia requieren revisar templates, redirects y tests.
@@ -187,8 +225,8 @@ El siguiente corte razonable es seguir moviendo rutas por dominio, de a una fami
 1. `routes/auth.py`: login, logout, register. Hecho.
 2. `routes/staff.py`: coaches/directors. Hecho.
 3. `routes/players.py`: listado, alta/edicion/baja, ficha, stats, atributos y proyeccion. Hecho.
-4. `routes/dashboard.py`: dashboard. Pendiente.
-5. `routes/compare.py`: comparadores. Pendiente.
-6. `routes/settings.py`: configuracion y pipeline. Pendiente.
+4. `routes/compare.py`: comparadores. Hecho.
+5. `routes/settings.py`: configuracion y pipeline. Hecho.
+6. `routes/dashboard.py`: dashboard. Pendiente.
 
-Para hacerlo con seguridad habria que decidir antes si se aceptan endpoints prefijados por blueprint o si se implementa una capa de compatibilidad para no romper `url_for(...)`.
+Para cerrar la fase 2 con seguridad falta una sola familia relevante: `dashboard`. Conviene mantener la misma estrategia de aliases legacy para no romper `url_for(...)`, templates ni tests.

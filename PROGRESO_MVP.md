@@ -34,6 +34,9 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Arquitectura fase 2 continuo con `staff` y `players`: coaches/directors pasaron a `scouting_app/routes/staff.py`; listado, ficha, historial, atributos, edicion/baja, proyeccion y carga de jugadores pasaron a `scouting_app/routes/players.py`.
 - Se mantuvieron aliases legacy para endpoints usados por templates y redirects (`index`, `manage_players`, `player_detail`, `player_stats`, `player_attributes`, `predict_player`, `edit_player`, `delete_player`, `list_coaches`, `new_coach`, `edit_coach`, `delete_coach`, `list_directors`, `new_director`, `edit_director`, `delete_director`).
 - Validacion focal staff/players: `13 passed`. Validacion completa posterior: `51 passed` con `pytest -q --cov=scouting_app --cov-report=term-missing`, cobertura total reportada `77%`, con `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
+- Arquitectura fase 2 continuo con `compare` y `settings`: comparador simple/multiple pasaron a `scouting_app/routes/compare.py`; configuracion, pipeline y limpieza operativa pasaron a `scouting_app/routes/settings.py`.
+- Se mantuvieron aliases legacy para `compare_players`, `compare_multi` y `settings`, evitando romper `url_for(...)`, templates, redirects y tests.
+- Validacion focal compare/settings: `8 passed`. Validacion completa posterior: `52 passed` con `pytest -q --cov=scouting_app --cov-report=term-missing`, cobertura total reportada `77%`, con `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
 
 ## Actualizacion 2026-04-23
 
@@ -322,8 +325,8 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 ## Tests Ejecutados
 
 - La suite automatizada actual termina pasando en esta maquina.
-- Ultimo estado validado sin cobertura: `51 passed`, con `4 warnings` conocidos de scikit-learn
-- Ultimo estado validado con cobertura: `51 passed`, cobertura total `77%`
+- Ultimo estado validado sin cobertura: `52 passed`, con `4 warnings` conocidos de scikit-learn
+- Ultimo estado validado con cobertura: `52 passed`, cobertura total `77%`
 
 ## Puntos Mejorados De Forma Clara
 
@@ -357,7 +360,7 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Nomenclatura de sesiones SQLAlchemy mejorada en helpers y scripts
 - Type hints mejorados en helpers compartidos
 - Arquitectura fase 1: servicios y runtime ML separados de `app.py`
-- Arquitectura fase 2: rutas de autenticacion, staff y jugadores separadas en blueprints con compatibilidad de endpoints historicos
+- Arquitectura fase 2: rutas de autenticacion, staff, jugadores, comparadores y configuracion separadas en blueprints con compatibilidad de endpoints historicos
 
 ## Puntos Que Siguen Parciales O Pendientes
 
@@ -365,7 +368,7 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Optimizaciones adicionales de rendimiento
 - Nomenclatura `db` / `db_session` aceptada como parcial en endpoints Flask; no bloquea el MVP
 - Herramientas dev opcionales todavia parciales (`ruff`, `black`, `mypy`)
-- Rutas Flask parcialmente separadas en blueprints; quedan en `app.py` landing, health, dashboard, comparadores, settings, error handlers y helpers compartidos
+- Rutas Flask parcialmente separadas en blueprints; quedan en `app.py` landing, health, dashboard, error handlers y helpers compartidos
 - Correccion del documento Word, que todavia no se empezo en esta fase
 
 ## Bloques Restantes

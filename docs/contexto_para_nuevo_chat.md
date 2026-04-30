@@ -211,8 +211,11 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - Arquitectura fase 2 continuo con `staff`: `coaches` y `directors` se movieron a `scouting_app/routes/staff.py`.
 - Arquitectura fase 2 continuo con `players`: listado, ficha, historial de rendimiento, historial de atributos, edicion/baja, proyeccion y carga manual/masiva se movieron a `scouting_app/routes/players.py`.
 - Para reducir riesgo se conservan aliases historicos de staff y players (`index`, `manage_players`, `player_detail`, `player_stats`, `player_attributes`, `predict_player`, `edit_player`, `delete_player`, `list_coaches`, `new_coach`, `edit_coach`, `delete_coach`, `list_directors`, `new_director`, `edit_director`, `delete_director`).
-- Las rutas Flask que siguen en `app.py` son landing, health, dashboard, comparadores, settings, error handlers y helpers compartidos. Faltan blueprints por familia para `dashboard`, `compare` y `settings`.
-- Validacion posterior al refactor de arquitectura fase 2 staff/players: `51 passed` con cobertura total `77%`, con `4 warnings` conocidos de scikit-learn.
+- Arquitectura fase 2 continuo con `compare`: `scouting_app/routes/compare.py` contiene comparador simple y comparador multiple.
+- Arquitectura fase 2 continuo con `settings`: `scouting_app/routes/settings.py` contiene configuracion, pipeline y limpieza operativa.
+- Para reducir riesgo se conservan aliases historicos tambien en compare/settings (`compare_players`, `compare_multi`, `settings`).
+- Las rutas Flask que siguen en `app.py` son landing, health, dashboard, error handlers y helpers compartidos. El unico blueprint por familia pendiente es `dashboard`.
+- Validacion posterior al refactor de arquitectura fase 2 compare/settings: `52 passed` con cobertura total `77%`, con `4 warnings` conocidos de scikit-learn.
 
 ## Performance
 
@@ -234,7 +237,7 @@ cd C:\Tesis\TPScouting
 
 Resultado:
 
-- `51 passed`
+- `52 passed`
 - `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
 
 Ultima validacion completa con cobertura:
@@ -246,7 +249,7 @@ cd C:\Tesis\TPScouting
 
 Resultado:
 
-- `51 passed`
+- `52 passed`
 - cobertura total reportada: `77%`
 - `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
 
@@ -271,6 +274,17 @@ cd C:\Tesis\TPScouting
 Resultado:
 
 - `13 passed`
+
+Validacion focal de arquitectura fase 2 compare/settings:
+
+```powershell
+cd C:\Tesis\TPScouting
+.\.venv\Scripts\python.exe -m pytest tests\test_pages.py tests\test_mvp_regressions.py::test_mutating_post_routes_reject_missing_csrf -q
+```
+
+Resultado:
+
+- `8 passed`
 
 ## Comparacion Con Informe Del Profesor 2026-04-27
 
@@ -315,10 +329,12 @@ Bloques tecnicos ya iniciados en `reformas-complejas`:
 - Refactor de arquitectura fase 2 auth: `routes/auth.py` contiene login, logout y register con aliases legacy.
 - Refactor de arquitectura fase 2 staff: `routes/staff.py` contiene coaches y directors con aliases legacy.
 - Refactor de arquitectura fase 2 players: `routes/players.py` contiene listado, ficha, historial, atributos, edicion/baja, proyeccion y carga de jugadores con aliases legacy.
+- Refactor de arquitectura fase 2 compare: `routes/compare.py` contiene comparador simple y multiple con aliases legacy.
+- Refactor de arquitectura fase 2 settings: `routes/settings.py` contiene configuracion, pipeline y limpieza operativa con alias legacy.
 
 Prioridad recomendada para el proximo bloque de codigo:
 
-- Continuar arquitectura fase 2 con `dashboard`, `compare` o `settings`. Recomendacion: `compare` primero por menor acoplamiento que dashboard/settings.
+- Continuar arquitectura fase 2 con `dashboard`, que queda como unica familia de rutas pendiente.
 - Evaluar herramientas dev opcionales (`ruff`, `black`, `mypy`) solo si no abre un bloque grande.
 - Considerar pasar al documento Word de tesis para alinear la narrativa con el MVP real.
 
@@ -350,7 +366,7 @@ La rama `training` queda como base estable de las correcciones del MVP. La rama 
 Hay dos caminos razonables:
 
 - Continuar con falencias livianas restantes del informe del profesor: herramientas dev opcionales.
-- Continuar arquitectura fase 2: siguiente bloque recomendado `compare`, luego `dashboard` o `settings`.
+- Continuar arquitectura fase 2: siguiente bloque recomendado `dashboard`.
 - Pasar a documento de tesis: alinear Word con el MVP real y eliminar afirmaciones que no esten respaldadas por el repo.
 
 Antes de tocar codigo en el proximo chat, revisar:

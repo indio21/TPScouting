@@ -59,6 +59,13 @@ def test_players_blueprint_keeps_legacy_endpoint_names(app_module):
         assert url_for("delete_player", player_id=9) == "/delete_player/9"
 
 
+def test_compare_and_settings_blueprints_keep_legacy_endpoint_names(app_module):
+    with app_module.app.test_request_context():
+        assert url_for("compare_players") == "/compare"
+        assert url_for("compare_multi") == "/compare/multi"
+        assert url_for("settings") == "/settings"
+
+
 def test_compare_pages_ok_after_login(client, app_module, db):
     _create_user(db, app_module.User, "u4", "p4", role="scout")
     _login(client, "u4", "p4")

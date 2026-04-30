@@ -84,7 +84,9 @@ from services.security import (
 )
 from routes import register_legacy_endpoint_aliases
 from routes.auth import create_auth_blueprint
+from routes.compare import create_compare_blueprint
 from routes.players import create_players_blueprint
+from routes.settings import create_settings_blueprint
 from routes.staff import create_staff_blueprint
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -1496,488 +1498,59 @@ def dashboard():
     _cache_set(dashboard_cache_key, html)
     return html
 # ----------------------------------------------------
-# COMPARADORES
-@app.route("/compare", methods=["GET", "POST"])
-@login_required
-def compare_players():
-    db = Session()
-
-    rows = (
-        db.query(Player.id, Player.name, Player.position)
-        .order_by(Player.name.asc())
-        .limit(MAX_COMPARE_PLAYERS + 1)
-        .all()
+# COMPARADORES Y SETTINGS
+compare_blueprint = create_compare_blueprint(
+    deps=SimpleNamespace(
+        Session=Session,
+        Player=Player,
+        PlayerStat=PlayerStat,
+        login_required=login_required,
+        MAX_COMPARE_PLAYERS=MAX_COMPARE_PLAYERS,
+        normalized_position=normalized_position,
+        fetch_player_stats=fetch_player_stats,
+        summarize_stats=summarize_stats,
+        batch_project_players=batch_project_players,
+        position_weights=position_weights,
+        ATTRIBUTE_FIELDS=ATTRIBUTE_FIELDS,
+        ATTRIBUTE_LABELS=ATTRIBUTE_LABELS,
+        player_attribute_map=player_attribute_map,
+        weighted_score_from_attrs=weighted_score_from_attrs,
+        recommend_position_from_attrs=recommend_position_from_attrs,
     )
-    truncated = len(rows) > MAX_COMPARE_PLAYERS
-    if truncated:
-        rows = rows[:MAX_COMPARE_PLAYERS]
+)
+app.register_blueprint(compare_blueprint)
+register_legacy_endpoint_aliases(
+    app,
+    "compare",
+    (
+        ("compare_players", "/compare", ("GET", "POST")),
+        ("compare_multi", "/compare/multi", ("GET", "POST")),
+    ),
+)
 
-    # Usamos SimpleNamespace para tener player.id / player.name / player.position
-    players = [
-        SimpleNamespace(id=row[0], name=row[1], position=row[2])
-        for row in rows
-    ]
-
-    selected_one = None
-    selected_two = None
-    comparison = None
-    target_position = None
-
-    if request.method == "POST":
-        selected_one = request.form.get("player_one", type=int)
-        selected_two = request.form.get("player_two", type=int)
-        target_position_raw = request.form.get("target_position")
-        target_position = normalized_position(target_position_raw) if target_position_raw else None
-
-        if selected_one and selected_two and selected_one != selected_two:
-            # Traemos SOLO los dos jugadores seleccionados
-            selected = (
-                db.query(Player)
-                .filter(Player.id.in_([selected_one, selected_two]))
-                .all()
-            )
-            players_map = {p.id: p for p in selected}
-            player_one = players_map.get(selected_one)
-            player_two = players_map.get(selected_two)
-
-            if player_one and player_two:
-                # Stats solo de estos dos jugadores
-                stats_one = fetch_player_stats(player_one.id, db_session=db)
-                stats_two = fetch_player_stats(player_two.id, db_session=db)
-
-                summary_one = summarize_stats(stats_one)
-                summary_two = summarize_stats(stats_two)
-                avg_score_map = {
-                    player_one.id: summary_one.get("avg_final_score"),
-                    player_two.id: summary_two.get("avg_final_score"),
-                }
-
-                projections = batch_project_players([player_one, player_two], avg_score_map)
-                projection_one = projections.get(player_one.id)
-                projection_two = projections.get(player_two.id)
-
-                prob_one = projection_one["combined_prob"] if projection_one else 0.0
-                prob_two = projection_two["combined_prob"] if projection_two else 0.0
-
-                # Comparación atributo por atributo
-                attr_rows = []
-                score_one = 0
-                score_two = 0
-
-                base_position = target_position or normalized_position(player_one.position or player_two.position)
-                weights_map = position_weights(base_position)
-
-                for field in ATTRIBUTE_FIELDS:
-                    label = ATTRIBUTE_LABELS[field]
-                    value_one = getattr(player_one, field)
-                    value_two = getattr(player_two, field)
-                    weight = weights_map.get(field, 0.0)
-
-                    if value_one > value_two:
-                        winner = 1
-                        score_one += weight
-                    elif value_two > value_one:
-                        winner = 2
-                        score_two += weight
-                    else:
-                        winner = 0
-
-                    attr_rows.append(
-                        {
-                            "label": label,
-                            "value_one": value_one,
-                            "value_two": value_two,
-                            "weight": weight,
-                            "winner": winner,
-                        }
-                    )
-
-                avg_one = summary_one.get("avg_final_score")
-                avg_two = summary_two.get("avg_final_score")
-
-                attr_map_one = player_attribute_map(player_one)
-                attr_map_two = player_attribute_map(player_two)
-                total_one = weighted_score_from_attrs(attr_map_one, base_position) + (avg_one or 0)
-                total_two = weighted_score_from_attrs(attr_map_two, base_position) + (avg_two or 0)
-                best_pos_one, best_pos_one_score = recommend_position_from_attrs(attr_map_one)
-                best_pos_two, best_pos_two_score = recommend_position_from_attrs(attr_map_two)
-                fit_one = weighted_score_from_attrs(attr_map_one, base_position)
-                fit_two = weighted_score_from_attrs(attr_map_two, base_position)
-
-                if total_one > total_two:
-                    conclusion = (
-                        f"{player_one.name} presenta mejores indicadores generales "
-                        f"respecto a {player_two.name}."
-                    )
-                elif total_two > total_one:
-                    conclusion = (
-                        f"{player_two.name} presenta mejores indicadores generales "
-                        f"respecto a {player_one.name}."
-                    )
-                else:
-                    conclusion = (
-                        "Ambos jugadores presentan indicadores equivalentes "
-                        "en la comparación."
-                    )
-
-                comparison = {
-                    "player_one": {
-                        "name": player_one.name,
-                        "position": player_one.position,
-                        "probability": prob_one,
-                        "avg_score": avg_one,
-                        "fit_score": fit_one,
-                        "best_position": best_pos_one,
-                        "best_position_score": best_pos_one_score,
-                    },
-                    "player_two": {
-                        "name": player_two.name,
-                        "position": player_two.position,
-                        "probability": prob_two,
-                        "avg_score": avg_two,
-                        "fit_score": fit_two,
-                        "best_position": best_pos_two,
-                        "best_position_score": best_pos_two_score,
-                    },
-                    "attributes": attr_rows,
-                    "score_one": score_one,
-                    "score_two": score_two,
-                    "conclusion": conclusion,
-                    "target_position": base_position,
-                }
-
-    db.close()
-    return render_template(
-        "compare.html",
-        players=players,
-        selected_one=selected_one,
-        selected_two=selected_two,
-        comparison=comparison,
-        truncated=truncated,
-        max_players=MAX_COMPARE_PLAYERS,
-        target_position=target_position,
+settings_blueprint = create_settings_blueprint(
+    deps=SimpleNamespace(
+        roles_required=roles_required,
+        ROLE_ADMIN=ROLE_ADMIN,
+        require_csrf=_require_csrf,
+        pipeline_lock=_PIPELINE_LOCK,
+        update_database_pipeline=update_database_pipeline,
+        EVAL_POOL_MAX=EVAL_POOL_MAX,
+        SYNC_SHORTLIST_ENABLED=SYNC_SHORTLIST_ENABLED,
+        Session=Session,
+        cleanup_operational_data=cleanup_operational_data,
+        invalidate_dashboard_cache=invalidate_dashboard_cache,
+        compute_operational_data_quality=compute_operational_data_quality,
     )
-
-
-@app.route("/compare/multi", methods=["GET", "POST"])
-@login_required
-def compare_multi():
-    db = Session()
-
-    rows = (
-        db.query(Player.id, Player.name, Player.position)
-        .order_by(Player.name.asc())
-        .limit(MAX_COMPARE_PLAYERS + 1)
-        .all()
-    )
-    truncated = len(rows) > MAX_COMPARE_PLAYERS
-    if truncated:
-        rows = rows[:MAX_COMPARE_PLAYERS]
-
-    players = [
-        SimpleNamespace(id=row[0], name=row[1], position=row[2])
-        for row in rows
-    ]
-
-    selected_ids: List[int] = []
-    comparison = None
-    target_position = None
-
-    # Ranking global por puesto (4 pestañas): Arquero, Defensa, Mediocampista, Delantero.
-    # Nota: Lateral se agrupa en Defensa para simplificar lectura táctica.
-    position_tabs = [
-        {"key": "arquero", "label": "Arqueros", "bucket": "Portero"},
-        {"key": "defensa", "label": "Defensas", "bucket": "Defensa"},
-        {"key": "mediocampo", "label": "Mediocampistas", "bucket": "Mediocampista"},
-        {"key": "delantera", "label": "Delanteros", "bucket": "Delantero"},
-    ]
-    ranking_by_position: Dict[str, List[Dict[str, object]]] = {tab["key"]: [] for tab in position_tabs}
-
-    all_players_for_ranking = (
-        db.query(Player)
-        .options(
-            load_only(
-                Player.id,
-                Player.name,
-                Player.age,
-                Player.position,
-                Player.club,
-                Player.pace,
-                Player.shooting,
-                Player.passing,
-                Player.dribbling,
-                Player.defending,
-                Player.physical,
-                Player.vision,
-                Player.tackling,
-                Player.determination,
-                Player.technique,
-            )
-        )
-        .all()
-    )
-    ranking_avg_rows = (
-        db.query(PlayerStat.player_id, func.avg(PlayerStat.final_score))
-        .group_by(PlayerStat.player_id)
-        .all()
-    )
-    ranking_avg_score_map = {
-        player_id: (float(avg_score) if avg_score is not None else None)
-        for player_id, avg_score in ranking_avg_rows
-    }
-    ranking_projections = batch_project_players(all_players_for_ranking, ranking_avg_score_map)
-    for player in all_players_for_ranking:
-        projection = ranking_projections.get(player.id)
-        if not projection:
-            continue
-        normalized_pos = normalized_position(player.position)
-        if normalized_pos == "Lateral":
-            normalized_pos = "Defensa"
-
-        tab = next((tab for tab in position_tabs if tab["bucket"] == normalized_pos), None)
-        if not tab:
-            continue
-
-        ranking_by_position[tab["key"]].append(
-            {
-                "id": player.id,
-                "name": player.name,
-                "position": player.position,
-                "club": player.club,
-                "age": player.age,
-                "probability": round(float(projection["combined_prob"]) * 100, 1),
-                "category": projection["category"],
-            }
-        )
-
-    for tab in position_tabs:
-        rows = ranking_by_position[tab["key"]]
-        rows.sort(key=lambda item: item["probability"], reverse=True)
-        ranking_by_position[tab["key"]] = rows[:10]
-
-    if request.method == "POST":
-        raw_ids = request.form.getlist("players")
-        try:
-            selected_ids = [int(pid) for pid in raw_ids][:10]
-        except ValueError:
-            selected_ids = []
-        target_position_raw = request.form.get("target_position")
-        target_position = normalized_position(target_position_raw) if target_position_raw else None
-
-        if selected_ids:
-            selected_players = (
-                db.query(Player)
-                .filter(Player.id.in_(selected_ids))
-                .order_by(Player.name.asc())
-                .all()
-            )
-
-            if selected_players:
-                # Promedios de final_score solo para estos jugadores (se usa para el total)
-                score_rows = (
-                    db.query(PlayerStat.player_id, func.avg(PlayerStat.final_score))
-                    .filter(
-                        PlayerStat.player_id.in_([p.id for p in selected_players])
-                    )
-                    .group_by(PlayerStat.player_id)
-                    .all()
-                )
-                avg_score_map = {
-                    player_id: (float(avg) if avg is not None else None)
-                    for player_id, avg in score_rows
-                }
-                selected_projections = batch_project_players(selected_players, avg_score_map)
-
-                # Atributos a graficar (eran los del radar)
-                labels = [ATTRIBUTE_LABELS[field] for field in ATTRIBUTE_FIELDS]
-
-                # Datasets para gráfico de barras (uno por jugador)
-                datasets = []
-                colors = [
-                    "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
-                    "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
-                ]
-
-                ranking: List[dict] = []
-
-                base_position = target_position
-                for idx, player in enumerate(selected_players):
-                    values = [getattr(player, field) for field in ATTRIBUTE_FIELDS]
-                    color = colors[idx % len(colors)]
-
-                    datasets.append(
-                        {
-                            "label": player.name,
-                            "data": values,
-                            "backgroundColor": color,
-                            "borderColor": color,
-                            "borderWidth": 1,
-                        }
-                    )
-
-                    # Puntaje total = suma atributos + promedio histórico (si existe)
-                    attr_map = player_attribute_map(player)
-                    attribute_sum = weighted_score_from_attrs(attr_map, base_position or player.position)
-                    avg_score = avg_score_map.get(player.id)
-                    projection = selected_projections.get(player.id)
-                    total = attribute_sum + (avg_score or 0)
-
-                    # Mapa atributo -> valor (con los labels “bonitos”)
-                    attributes_map = {
-                        ATTRIBUTE_LABELS[f]: getattr(player, f) for f in ATTRIBUTE_FIELDS
-                    }
-
-                    ranking.append(
-                        {
-                            "name": player.name,
-                            "position": player.position,
-                            "attributes_map": attributes_map,
-                            "total": round(total, 2),
-                            "probability": round(float(projection["combined_prob"]) * 100, 1) if projection else None,
-                        }
-                    )
-
-                # Ordenamos ranking por total (desc)
-                ranking.sort(key=lambda item: item["total"], reverse=True)
-
-                # Gráfico de barras horizontal con promedios históricos (igual que antes)
-                score_labels = [r["name"] for r in ranking]
-                # Para no mostrar la columna "promedio" en la tabla, lo usamos solo en el gráfico
-                score_values = []
-                for r in ranking:
-                    # reconstruimos avg desde attributes_map+suma si quisiéramos, pero ya lo tenemos en avg_score_map
-                    # buscamos por nombre
-                    p = next((p for p in selected_players if p.name == r["name"]), None)
-                    avg_val = avg_score_map.get(p.id) if p else None
-                    score_values.append(avg_val or 0)
-
-                comparison = {
-                    "chart_payload": {
-                        "labels": labels,
-                        "datasets": datasets,
-                    },
-                    "score_payload": {
-                        "labels": score_labels,
-                        "datasets": [
-                            {
-                                "label": "Promedio historial",
-                                "data": score_values,
-                                "backgroundColor": "rgba(13, 110, 253, 0.6)",
-                                "borderColor": "#0d6efd",
-                            }
-                        ],
-                    },
-                    "ranking": ranking,   # ahora trae attributes_map y total
-                    "target_position": base_position,
-                }
-
-    db.close()
-    return render_template(
-        "compare_multi.html",
-        players=players,
-        selected_ids=selected_ids,
-        comparison=comparison,
-        truncated=truncated,
-        max_players=MAX_COMPARE_PLAYERS,
-        target_position=target_position,
-        position_tabs=position_tabs,
-        ranking_by_position=ranking_by_position,
-    )
-
-
-
-
-@app.route("/settings", methods=["GET", "POST"])
-@roles_required(ROLE_ADMIN)
-def settings():
-    # CSRF mínimo para POST
-    if request.method == "POST":
-        _require_csrf()
-
-    status_messages: List[str] = []
-    modal_message: Optional[str] = None
-
-    if request.method == "POST":
-        action = request.form.get("action")
-        if action == "update_database":
-            start = time.time()
-            if not _PIPELINE_LOCK.acquire(blocking=False):
-                status_messages = ["Ya hay una actualizacion en curso. Reintenta en unos minutos."]
-                flash("Ya hay una actualizacion en curso. Reintenta en unos minutos.", "warning")
-            else:
-                try:
-                    success, logs = update_database_pipeline(
-                        limit=EVAL_POOL_MAX,
-                        sync_shortlist=SYNC_SHORTLIST_ENABLED,
-                    )
-                    status_messages = logs
-                finally:
-                    duration = round(time.time() - start, 2)
-                    status_messages.append(f"Duracion total de la actualizacion: {duration}s")
-                    try:
-                        app.logger.info("Pipeline update_database finished in %ss", duration)
-                    except Exception:
-                        pass
-                    _PIPELINE_LOCK.release()
-
-                if success:
-                    if SYNC_SHORTLIST_ENABLED:
-                        modal_message = "Se actualizaron puntajes y se sincronizo la base operativa."
-                    else:
-                        modal_message = "Se actualizaron puntajes (sin sincronizar jugadores operativos)."
-                    flash("Listo: la actualizacion general finalizo correctamente.", "success")
-                else:
-                    flash("No se pudo completar la actualizacion. Revisa el detalle.", "danger")
-        elif action == "cleanup_demo_data":
-            db = Session()
-            try:
-                summary = cleanup_operational_data(db)
-                db.commit()
-                invalidate_dashboard_cache()
-                status_messages = [
-                    "Auditoria y limpieza de base operativa completadas.",
-                    f"Jugadores invalidos removidos: {summary['removed_invalid_players']}",
-                    f"Fotos completadas: {summary['photo_updates']}",
-                    f"Historial tecnico sincronizado: {summary['history_updates']}",
-                    f"Jugadores recortados por limite operativo: {summary['trimmed_players']}",
-                    (
-                        "Calidad actual -> "
-                        f"total={summary['players_total']}, "
-                        f"sin_dni={summary['missing_national_id']}, "
-                        f"edad_invalida={summary['invalid_age']}, "
-                        f"sin_nombre={summary['missing_name']}, "
-                        f"sin_posicion={summary['missing_position']}, "
-                        f"sin_foto={summary['missing_photo_url']}, "
-                        f"stats_huerfanos={summary['orphan_stats']}, "
-                        f"historial_huerfano={summary['orphan_attribute_history']}, "
-                        f"exceso_limite={summary['over_limit_players']}"
-                    ),
-                ]
-                if summary["removed_invalid_players"] or summary["trimmed_players"] or summary["photo_updates"]:
-                    flash("Listo: la base operativa quedo auditada y consistente para la demo.", "success")
-                else:
-                    flash("No se detectaron inconsistencias nuevas en la base operativa.", "info")
-            except Exception as exc:
-                db.rollback()
-                status_messages = [f"No se pudo completar la limpieza operativa: {exc}"]
-                flash("No se pudo completar la limpieza de la base operativa.", "danger")
-            finally:
-                db.close()
-
-    db = Session()
-    try:
-        data_quality = compute_operational_data_quality(db)
-    finally:
-        db.close()
-    return render_template(
-        "settings.html",
-        status_messages=status_messages,
-        modal_message=modal_message,
-        data_quality=data_quality,
-        eval_pool_max=EVAL_POOL_MAX,
-    )
-
-
+)
+app.register_blueprint(settings_blueprint)
+register_legacy_endpoint_aliases(
+    app,
+    "settings",
+    (
+        ("settings", "/settings", ("GET", "POST")),
+    ),
+)
 
 def parse_bool(value: Optional[str]) -> bool:
     if value is None:
