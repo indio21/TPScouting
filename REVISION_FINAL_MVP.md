@@ -142,4 +142,4 @@ Estos puntos siguen siendo reales y no se deben ocultar:
 
 ## Conclusion
 
-Con la evidencia actual, el MVP queda funcional, coherente con su alcance acotado y bastante mas defendible que al inicio de la revision. La rama `training` queda como base estable inicial, `reformas-finales` cerro las reformas livianas y `reformas-complejas` concentra los cambios estructurales. La siguiente etapa tecnica natural es continuar blueprints por familia; la siguiente etapa documental es corregir el Word para que refleje fielmente este estado real.
+Con la evidencia actual, el MVP queda funcional, coherente con su alcance acotado y bastante mas defendible que al inicio de la revision. La rama `training` queda como base estable inicial, `reformas-finales` cerro las reformas livianas y `reformas-complejas` concentro los cambios estructurales hasta cerrar la fase 2 de blueprints por familia en `9f02b3c`. La siguiente etapa ya no es seguir separando rutas, sino elegir entre tres frentes reales: pulido UX/UI y CRUDs para mejorar la demo, rendimiento del dashboard a escala, o correccion del Word para que refleje fielmente este estado real.

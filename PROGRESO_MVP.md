@@ -373,6 +373,14 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Rutas Flask parcialmente separadas en blueprints; quedan en `app.py` landing, health, error handlers y helpers compartidos
 - Correccion del documento Word, que todavia no se empezo en esta fase
 
+## Siguiente Decision Recomendada
+
+- La arquitectura por familias quedo cerrada en `reformas-complejas` con `9f02b3c`.
+- El siguiente bloque mas util ya no es otro refactor estructural chico.
+- Si la prioridad es demo/entrega visual: conviene abrir una rama nueva para `UX/UI + CRUD polish`.
+- Si la prioridad es academica: conviene pasar a alinear el Word con el MVP real.
+- Si la prioridad vuelve a ser tecnica: el siguiente frente fuerte es rendimiento del dashboard a escala.
+
 ## Bloques Restantes
 
 Tomando como base la checklist operativa del MVP:

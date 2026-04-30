@@ -91,4 +91,8 @@ Tras la fase 1 de arquitectura, quedan estos caminos posibles, de menor a mayor 
 
 Cerrar `reformas-finales` en `7763bb0` y usar `reformas-complejas` solo para trabajos mas grandes.
 
-El proximo paso mas util no necesariamente es mas codigo: conviene empezar a alinear el documento Word de tesis con esta evidencia. Si se decide seguir arquitectura, conviene mover rutas a blueprints por familia y con tests focales por cada grupo.
+El proximo paso mas util no necesariamente es mas codigo. Con arquitectura fase 2 ya cerrada, los tres caminos mas razonables son:
+
+1. Pulido `UX/UI + CRUDs` en rama nueva si la prioridad es la demo y la usabilidad.
+2. Rendimiento del dashboard a escala si la prioridad vuelve a ser tecnica.
+3. Documento Word de tesis si la prioridad pasa a la entrega academica.

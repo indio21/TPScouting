@@ -26,6 +26,13 @@ Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting`
 - Ultimos bloques tecnicos publicados en `reformas-finales`: cierre de revision de codigo, documentacion, CSRF/inputs invalidos, constantes/cache/conftest, normalizacion puntual `db_session` y type hints quirurgicos.
 - Estado al cierre tecnico: `reformas-finales` limpia y sincronizada con `origin/reformas-finales` en `7763bb0`.
 - `reformas-complejas` fue creada desde `7763bb0` para trabajos mas grandes.
+- Ultimos bloques tecnicos publicados en `reformas-complejas`:
+- `5ca89e1 refactor: extract app services and ml runtime`
+- `4f93808 refactor: move auth routes to blueprint`
+- `a3f1cea refactor: extract staff and player blueprints`
+- `60f94b3 refactor: extract compare and settings blueprints`
+- `9f02b3c refactor: extract dashboard blueprint`
+- Estado actual verificado: `reformas-complejas` limpia y sincronizada con `origin/reformas-complejas` en `9f02b3c`.
 - Entorno Python local: `C:\Tesis\TPScouting\.venv`
 
 Usar siempre la `.venv`; no usar el Python global.
@@ -377,11 +384,17 @@ Prioridad recomendada para el proximo bloque de codigo:
 
 La rama `training` queda como base estable de las correcciones del MVP. La rama `reformas-finales` queda cerrada como bloque liviano. Las reformas grandes deben continuar en `reformas-complejas`.
 
-Hay dos caminos razonables:
+Hay cuatro caminos razonables:
 
-- Continuar con falencias livianas restantes del informe del profesor: herramientas dev opcionales.
-- Proximo bloque recomendado: elegir entre pulido UX/UI y CRUDs, rendimiento del dashboard a escala, o alineacion del documento Word de tesis.
-- Pasar a documento de tesis: alinear Word con el MVP real y eliminar afirmaciones que no esten respaldadas por el repo.
+- Pulido UX/UI y CRUDs: menu, navegacion, jerarquia visual, formularios, links, mensajes y coherencia entre secciones. Recomendado si la prioridad es la demo/entrega visual.
+- Rendimiento dashboard a escala: dejar de depender de `.all()` y pasar a agregaciones SQL o resumen cacheado/persistido. Recomendado si la prioridad vuelve a ser tecnica.
+- Tooling dev opcional: `ruff`, `black`, `mypy` o una combinacion minima. Solo si se acepta ruido de formato/config.
+- Documento Word de tesis: alinear narrativa, capturas y afirmaciones con el MVP real ya corregido. Recomendado si la prioridad pasa a entrega academica.
+
+Recomendacion de arranque para el proximo chat:
+
+- Si la prioridad es mostrar mejor el producto: empezar por `UX/UI + CRUD polish` en una rama nueva.
+- Si la prioridad es cerrar evidencia academica: pasar al Word y corregirlo contra el repo real.
 
 Antes de tocar codigo en el proximo chat, revisar:
 
