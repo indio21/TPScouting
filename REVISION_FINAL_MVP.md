@@ -45,7 +45,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - nomenclatura de sesiones SQLAlchemy mejorada en helpers y scripts
 - type hints quirurgicos en helpers compartidos
 - arquitectura fase 1: cache, seguridad liviana, mantenimiento operativo y runtime ML separados de `app.py`
-- arquitectura fase 2: `auth`, `staff`, `players`, `compare` y `settings` separados en blueprints con aliases legacy para no romper templates ni redirects
+- arquitectura fase 2: `auth`, `staff`, `players`, `compare`, `settings` y `dashboard` separados en blueprints con aliases legacy para no romper templates ni redirects
 
 ### 1.1. Cierre De Observaciones De Codigo Fuente 2026-04-27
 
@@ -66,7 +66,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - Helpers operativos y `create_admin.py` usan `db_session`; la sesion temporal de entrenamiento usa `training_session`.
 - Se agregaron type hints en funciones compartidas sin tipar todos los endpoints Flask.
 - Se extrajeron servicios internos y runtime ML manteniendo endpoints y templates estables.
-- Se movieron rutas de autenticacion, staff, jugadores, comparadores y configuracion a blueprints, manteniendo nombres historicos de endpoints para compatibilidad.
+- Se movieron rutas de autenticacion, staff, jugadores, comparadores, configuracion y dashboard a blueprints, manteniendo nombres historicos de endpoints para compatibilidad.
 
 ### 2. Smoke funcional sobre la app real del repo
 
@@ -136,7 +136,7 @@ Estos puntos siguen siendo reales y no se deben ocultar:
 
 - despliegue final en Render todavia requiere cierre operativo completo
 - la app sigue siendo un MVP; no esta pensada para alta concurrencia
-- persisten deudas de calidad no criticas: dashboard sigue en `app.py`, aunque arquitectura fase 2 ya separo `auth`, `staff`, `players`, `compare` y `settings`; tambien quedan convenciones parciales en endpoints Flask y tooling dev opcional
+- persisten deudas de calidad no criticas: aunque arquitectura fase 2 ya separo `auth`, `staff`, `players`, `compare`, `settings` y `dashboard`, siguen quedando helpers compartidos en `app.py`, convenciones parciales en endpoints Flask y tooling dev opcional
 - el documento Word todavia no fue alineado con el estado corregido del MVP en esta fase
 - la evidencia del modelo sigue basada en datos sinteticos; no hay validacion externa con datos reales
 

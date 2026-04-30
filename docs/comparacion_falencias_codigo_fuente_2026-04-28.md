@@ -20,7 +20,7 @@ Validacion tecnica vigente del cierre:
 .\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
 ```
 
-Resultado validado tras arquitectura fase 2 compare/settings: `52 passed`, cobertura total `77%`, con 4 warnings conocidos de scikit-learn por fixtures con columnas all-NaN en tests.
+Resultado validado tras arquitectura fase 2 dashboard: `52 passed`, cobertura total `77%`, con 4 warnings conocidos de scikit-learn por fixtures con columnas all-NaN en tests.
 
 ## Resumen Ejecutivo
 
@@ -28,7 +28,7 @@ El estado actual es mucho mas solido que el descripto en el informe original:
 
 - Pendientes criticos: `0`.
 - Falencias cerradas o mitigadas de forma suficiente para el MVP: la gran mayoria.
-- Falencias que siguen abiertas como deuda real: dashboard todavia en `app.py`, rendimiento del dashboard a gran escala, tooling dev opcional y decisiones productivas de despliegue/concurrencia.
+- Falencias que siguen abiertas como deuda real: rendimiento del dashboard a gran escala, helpers compartidos todavia en `app.py`, tooling dev opcional y decisiones productivas de despliegue/concurrencia.
 
 La conclusion honesta es que `reformas-finales` puede cerrarse como rama de correcciones livianas. Lo que queda pertenece mejor a `reformas-complejas` o a la etapa de documento de tesis.
 
@@ -51,7 +51,7 @@ La conclusion honesta es que `reformas-finales` puede cerrarse como rama de corr
 | REND-01 N+1 listado jugadores | Listado y comparadores usan `batch_project_players` y mapas agregados. | Corregido | Nada critico pendiente. |
 | REND-02 dashboard carga todos los jugadores | El dashboard todavia hace consultas `.all()`, aunque existe `EVAL_POOL_MAX=100` y guardrails. | Parcial aceptable | Si crece el volumen: agregaciones SQL/paginacion/resumen persistido. |
 | REND-03 cache sin limite | Cache tiene TTL y `CACHE_MAX_ENTRIES`, default `128`. | Corregido para MVP | Cache externa si se busca escalabilidad real. |
-| CALIDAD-01 app.py monolitico | Fase 1 de arquitectura aplicada: cache, seguridad liviana, mantenimiento operativo y runtime ML pasaron a `services/` y `ml/`. Fase 2 avanzo con `auth`, `staff`, `players`, `compare` y `settings` en `routes/`, conservando aliases legacy. | Mejorado fuerte, todavia parcial | Falta blueprint `dashboard`; helpers compartidos siguen en `app.py`. |
+| CALIDAD-01 app.py monolitico | Fase 1 de arquitectura aplicada: cache, seguridad liviana, mantenimiento operativo y runtime ML pasaron a `services/` y `ml/`. Fase 2 quedo cerrada con `auth`, `staff`, `players`, `compare`, `settings` y `dashboard` en `routes/`, conservando aliases legacy. | Mejorado fuerte, todavia parcial | Quedan helpers compartidos, landing/health y handlers en `app.py`; una app factory seria un bloque aparte. |
 | CALIDAD-02 magic numbers | Paginacion, comparadores y rating pasaron a constantes/env vars. | Mejorado fuerte | Puede quedar deuda menor de literales de bajo riesgo. |
 | CALIDAD-03 nomenclatura db/db_session | Helpers/scripts usan `db_session` o `training_session`; endpoints conservan `db` local. | Mejorado parcial | Solo estandarizar todo si se acepta ruido de refactor. |
 | CALIDAD-04 type hints | Hints agregados en helpers compartidos de app, DB, sync y evaluacion. | Mejorado parcial | Tipado completo o `mypy` seria bloque nuevo. |
@@ -76,7 +76,7 @@ La conclusion honesta es que `reformas-finales` puede cerrarse como rama de corr
 - Testing paso de una cobertura estimada muy baja a una suite formal con cobertura visible en CI.
 - ML quedo mas defendible: checkpoint con metadata, validacion de `input_dim`, split reproducible y warnings de metricas.
 - Calidad mejoro sin abrir refactor grande primero: constantes, cache limitado, `db_session` puntual y type hints quirurgicos.
-- En `reformas-complejas` ya avanzo el refactor de arquitectura con servicios y runtime ML extraidos, y con rutas de `auth`, `staff`, `players`, `compare` y `settings` movidas a blueprints.
+- En `reformas-complejas` ya avanzo el refactor de arquitectura con servicios y runtime ML extraidos, y con rutas de `auth`, `staff`, `players`, `compare`, `settings` y `dashboard` movidas a blueprints.
 
 ## Que Falta De Verdad
 
@@ -84,7 +84,7 @@ Tras la fase 1 de arquitectura, quedan estos caminos posibles, de menor a mayor 
 
 1. Tooling dev opcional: `ruff`, `black`, `mypy` o una combinacion minima. Riesgo: puede generar ruido de formato.
 2. Rendimiento dashboard a escala: dejar de depender de `.all()` y pasar a agregaciones SQL o resumen cacheado/persistido.
-3. Refactor de arquitectura fase 2: continuar rutas a blueprints por dominio. `auth`, `staff`, `players`, `compare` y `settings` ya fueron movidos; queda `dashboard`.
+3. Refactor de arquitectura post-blueprints: decidir si vale la pena seguir extrayendo helpers compartidos desde `app.py` hacia servicios o una app factory. Es mejora real, pero ya no es un cambio chico.
 4. Documento Word de tesis: alinear narrativa, capturas y afirmaciones con el MVP real ya corregido.
 
 ## Recomendacion

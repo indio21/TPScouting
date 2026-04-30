@@ -78,6 +78,18 @@ Se conservaron aliases legacy para los endpoints usados por templates, redirects
 
 En `settings` se uso `current_app.logger` dentro del blueprint para evitar depender del objeto `app` global. En `compare` se inyectaron solo los helpers y modelos que esa familia usa realmente.
 
+## Fase 2 Dashboard
+
+Finalmente se movio la ultima familia grande de rutas:
+
+- `scouting_app/routes/dashboard.py`: dashboard principal con cache, filtros de periodo, agregados por posicion, potencial y evolucion.
+
+Se conservo alias legacy para el endpoint usado historicamente por templates, tests y redirects:
+
+- dashboard: `dashboard`.
+
+La decision tecnica fue no congelar el modelo en el momento de registrar el blueprint. En su lugar se inyecto `get_model=lambda: model`, asi el dashboard sigue viendo el runtime actual si el pipeline recarga artefactos en memoria.
+
 ## Que No Se Toco A Proposito
 
 No se movieron todavia todas las rutas a blueprints.
@@ -118,7 +130,7 @@ Despues de esta fase:
 
 Medicion aproximada tras el corte:
 
-- `app.py`: `1718` lineas;
+- `app.py`: `1580` lineas;
 - `services/cache.py`: `40` lineas;
 - `services/security.py`: `55` lineas;
 - `services/operational_data.py`: `206` lineas;
@@ -128,6 +140,7 @@ Medicion aproximada tras el corte:
 - `routes/players.py`: `854` lineas.
 - `routes/compare.py`: `395` lineas.
 - `routes/settings.py`: `104` lineas.
+- `routes/dashboard.py`: `216` lineas.
 
 ## Validacion
 
@@ -203,6 +216,28 @@ Resultado:
 - cobertura total `77%`
 - `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
 
+Validacion focal posterior a fase 2 dashboard:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests\test_pages.py -q
+```
+
+Resultado:
+
+- `7 passed`
+
+Validacion completa con cobertura posterior a fase 2 dashboard:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
+```
+
+Resultado:
+
+- `52 passed`
+- cobertura total `77%`
+- `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
+
 ## Riesgos Que Se Redujeron
 
 - Menos logica de infraestructura mezclada con rutas.
@@ -212,8 +247,8 @@ Resultado:
 
 ## Riesgos Que Siguen
 
-- Todavia quedan rutas en `app.py`: landing, health, dashboard, handlers de error y helpers compartidos.
-- Ya estan separados `auth`, `staff`, `players`, `compare` y `settings`.
+- Todavia quedan en `app.py`: landing, health, handlers de error y helpers compartidos.
+- Ya estan separados `auth`, `staff`, `players`, `compare`, `settings` y `dashboard`.
 - Los nombres de endpoints siguen dependiendo de una capa de compatibilidad mientras se migra por familias.
 - El dashboard todavia tiene deuda de rendimiento a escala.
 - Las siguientes familias de blueprints todavia requieren revisar templates, redirects y tests.
@@ -227,6 +262,6 @@ El siguiente corte razonable es seguir moviendo rutas por dominio, de a una fami
 3. `routes/players.py`: listado, alta/edicion/baja, ficha, stats, atributos y proyeccion. Hecho.
 4. `routes/compare.py`: comparadores. Hecho.
 5. `routes/settings.py`: configuracion y pipeline. Hecho.
-6. `routes/dashboard.py`: dashboard. Pendiente.
+6. `routes/dashboard.py`: dashboard. Hecho.
 
-Para cerrar la fase 2 con seguridad falta una sola familia relevante: `dashboard`. Conviene mantener la misma estrategia de aliases legacy para no romper `url_for(...)`, templates ni tests.
+La fase 2 de blueprints por familia queda cerrada. Si se quisiera seguir profundizando arquitectura, el paso siguiente ya no seria mover rutas sino extraer mas helpers compartidos de `app.py` hacia servicios o una app factory.

@@ -61,6 +61,7 @@ def test_players_blueprint_keeps_legacy_endpoint_names(app_module):
 
 def test_compare_and_settings_blueprints_keep_legacy_endpoint_names(app_module):
     with app_module.app.test_request_context():
+        assert url_for("dashboard") == "/dashboard"
         assert url_for("compare_players") == "/compare"
         assert url_for("compare_multi") == "/compare/multi"
         assert url_for("settings") == "/settings"

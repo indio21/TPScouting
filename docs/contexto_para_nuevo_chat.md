@@ -214,8 +214,10 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - Arquitectura fase 2 continuo con `compare`: `scouting_app/routes/compare.py` contiene comparador simple y comparador multiple.
 - Arquitectura fase 2 continuo con `settings`: `scouting_app/routes/settings.py` contiene configuracion, pipeline y limpieza operativa.
 - Para reducir riesgo se conservan aliases historicos tambien en compare/settings (`compare_players`, `compare_multi`, `settings`).
-- Las rutas Flask que siguen en `app.py` son landing, health, dashboard, error handlers y helpers compartidos. El unico blueprint por familia pendiente es `dashboard`.
-- Validacion posterior al refactor de arquitectura fase 2 compare/settings: `52 passed` con cobertura total `77%`, con `4 warnings` conocidos de scikit-learn.
+- Arquitectura fase 2 cerro con `dashboard`: `scouting_app/routes/dashboard.py` contiene el dashboard principal con cache, filtros de periodo, agregados por posicion, potencial y evolucion.
+- Para reducir riesgo se conserva tambien el alias historico `dashboard`.
+- Las rutas Flask que siguen en `app.py` son landing, health, error handlers y helpers compartidos. Ya no quedan familias de blueprints pendientes.
+- Validacion posterior al refactor de arquitectura fase 2 dashboard: `52 passed` con cobertura total `77%`, con `4 warnings` conocidos de scikit-learn.
 
 ## Performance
 
@@ -286,6 +288,17 @@ Resultado:
 
 - `8 passed`
 
+Validacion focal de arquitectura fase 2 dashboard:
+
+```powershell
+cd C:\Tesis\TPScouting
+.\.venv\Scripts\python.exe -m pytest tests\test_pages.py -q
+```
+
+Resultado:
+
+- `7 passed`
+
 ## Comparacion Con Informe Del Profesor 2026-04-27
 
 Documento analizado:
@@ -331,10 +344,11 @@ Bloques tecnicos ya iniciados en `reformas-complejas`:
 - Refactor de arquitectura fase 2 players: `routes/players.py` contiene listado, ficha, historial, atributos, edicion/baja, proyeccion y carga de jugadores con aliases legacy.
 - Refactor de arquitectura fase 2 compare: `routes/compare.py` contiene comparador simple y multiple con aliases legacy.
 - Refactor de arquitectura fase 2 settings: `routes/settings.py` contiene configuracion, pipeline y limpieza operativa con alias legacy.
+- Refactor de arquitectura fase 2 dashboard: `routes/dashboard.py` contiene el dashboard con alias legacy `dashboard`.
 
 Prioridad recomendada para el proximo bloque de codigo:
 
-- Continuar arquitectura fase 2 con `dashboard`, que queda como unica familia de rutas pendiente.
+- Arquitectura fase 2 de blueprints por familia ya quedo cerrada.
 - Evaluar herramientas dev opcionales (`ruff`, `black`, `mypy`) solo si no abre un bloque grande.
 - Considerar pasar al documento Word de tesis para alinear la narrativa con el MVP real.
 
@@ -366,7 +380,7 @@ La rama `training` queda como base estable de las correcciones del MVP. La rama 
 Hay dos caminos razonables:
 
 - Continuar con falencias livianas restantes del informe del profesor: herramientas dev opcionales.
-- Continuar arquitectura fase 2: siguiente bloque recomendado `dashboard`.
+- Proximo bloque recomendado: elegir entre pulido UX/UI y CRUDs, rendimiento del dashboard a escala, o alineacion del documento Word de tesis.
 - Pasar a documento de tesis: alinear Word con el MVP real y eliminar afirmaciones que no esten respaldadas por el repo.
 
 Antes de tocar codigo en el proximo chat, revisar:
