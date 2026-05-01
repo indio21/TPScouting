@@ -1,6 +1,6 @@
 # Progreso Del MVP
 
-Fecha de actualizacion: 2026-04-29
+Fecha de actualizacion: 2026-04-30
 
 Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP real del proyecto `TPScouting`.
 
@@ -39,6 +39,11 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Validacion focal compare/settings: `8 passed`. Validacion completa posterior: `52 passed` con `pytest -q --cov=scouting_app --cov-report=term-missing`, cobertura total reportada `77%`, con `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
 - Arquitectura fase 2 cerro con `dashboard`: el panel principal paso a `scouting_app/routes/dashboard.py`, manteniendo el alias legacy `dashboard`.
 - Validacion focal dashboard: `7 passed` en `tests/test_pages.py`. Validacion completa posterior: `52 passed` con `pytest -q --cov=scouting_app --cov-report=term-missing`, cobertura total reportada `77%`, con `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
+- Se creo la rama `ux-crud-polish` desde `reformas-complejas` para pulido visual y usabilidad.
+- UX/UI etapa 1: menu agrupado con links activos, `Panel general`, dropdowns `Jugadores`, `Comparadores`, `Staff` y `Administracion`.
+- UX/UI etapa 1: `Jugadores` separa `Listado` y `Gestion`; comparadores quedan en un unico menu; cuerpo tecnico y dirigentes quedan bajo `Staff`.
+- UX/UI etapa 1: mensajes flash con icono/cierre, acciones CRUD compactas y formularios principales ordenados por secciones.
+- Validacion UX/UI etapa 1: `7 passed` en `tests/test_pages.py`; suite completa `52 passed` con cobertura total `77%`, con `4 warnings` conocidos de scikit-learn.
 
 ## Actualizacion 2026-04-23
 
@@ -70,15 +75,16 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 
 ## Estado Git
 
-- Rama local actual: `reformas-complejas`
+- Rama local actual: `ux-crud-polish`
 - Remoto configurado: `origin -> https://github.com/indio21/TPScouting.git`
 - Ultimo commit publicado en `main`: `bd8e4ef`
 - Rama estable cerrada del MVP corregido: `training`
 - Rama cerrada para reformas livianas: `reformas-finales`
-- Rama activa para cambios complejos: `reformas-complejas`
+- Rama activa para UX/UI: `ux-crud-polish`
+- Rama base de cambios complejos cerrados: `reformas-complejas`
 - Ultimo commit comun al crear `reformas-finales`: `b6c21ea`
 - Ultimos bloques tecnicos publicados en `reformas-finales`: revision de codigo fuente, documentacion, CSRF/inputs invalidos, constantes/cache/conftest, normalizacion puntual de sesiones y type hints quirurgicos.
-- Estado tecnico documentado: `reformas-finales` cerrada en `7763bb0`; `reformas-complejas` continua desde ese punto.
+- Estado tecnico documentado: `reformas-finales` cerrada en `7763bb0`; `reformas-complejas` cerro arquitectura en `a6d5a36`; `ux-crud-polish` continua el pulido visual desde ese punto.
 
 ## Etapas Ya Trabajadas
 
@@ -363,6 +369,7 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Type hints mejorados en helpers compartidos
 - Arquitectura fase 1: servicios y runtime ML separados de `app.py`
 - Arquitectura fase 2: rutas de autenticacion, staff, jugadores, comparadores, configuracion y dashboard separadas en blueprints con compatibilidad de endpoints historicos
+- UX/UI etapa 1: navegacion agrupada, links activos, acciones CRUD consistentes, flash mejorado y formularios principales por secciones
 
 ## Puntos Que Siguen Parciales O Pendientes
 
@@ -375,9 +382,9 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 
 ## Siguiente Decision Recomendada
 
-- La arquitectura por familias quedo cerrada en `reformas-complejas` con `9f02b3c`.
-- El siguiente bloque mas util ya no es otro refactor estructural chico.
-- Si la prioridad es demo/entrega visual: conviene abrir una rama nueva para `UX/UI + CRUD polish`.
+- La arquitectura por familias quedo cerrada en `reformas-complejas` con `a6d5a36`.
+- El pulido demo/entrega visual inicio en `ux-crud-polish`.
+- Siguiente UX recomendado: detalle de jugador, historial, atributos, comparadores y settings.
 - Si la prioridad es academica: conviene pasar a alinear el Word con el MVP real.
 - Si la prioridad vuelve a ser tecnica: el siguiente frente fuerte es rendimiento del dashboard a escala.
 

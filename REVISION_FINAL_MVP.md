@@ -46,6 +46,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - type hints quirurgicos en helpers compartidos
 - arquitectura fase 1: cache, seguridad liviana, mantenimiento operativo y runtime ML separados de `app.py`
 - arquitectura fase 2: `auth`, `staff`, `players`, `compare`, `settings` y `dashboard` separados en blueprints con aliases legacy para no romper templates ni redirects
+- UX/UI etapa 1: menu agrupado, links activos, acciones CRUD consistentes, flash mejorado y formularios principales por secciones
 
 ### 1.1. Cierre De Observaciones De Codigo Fuente 2026-04-27
 
@@ -67,6 +68,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - Se agregaron type hints en funciones compartidas sin tipar todos los endpoints Flask.
 - Se extrajeron servicios internos y runtime ML manteniendo endpoints y templates estables.
 - Se movieron rutas de autenticacion, staff, jugadores, comparadores, configuracion y dashboard a blueprints, manteniendo nombres historicos de endpoints para compatibilidad.
+- Se inicio pulido visual en `ux-crud-polish`: navegacion mas clara, `Panel general`, dropdowns por familia, listados CRUD compactos y formularios ordenados.
 
 ### 2. Smoke funcional sobre la app real del repo
 

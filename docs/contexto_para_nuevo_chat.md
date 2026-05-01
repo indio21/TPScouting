@@ -1,6 +1,6 @@
 # Contexto Para Nuevo Chat
 
-Fecha: 2026-04-29
+Fecha: 2026-04-30
 
 Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting` en un chat nuevo sin arrastrar toda la conversacion anterior.
 
@@ -21,7 +21,8 @@ Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting`
 - Carpeta local: `C:\Tesis\TPScouting`
 - Rama estable cerrada del MVP corregido: `training`
 - Rama cerrada para reformas livianas: `reformas-finales`
-- Rama activa para cambios complejos: `reformas-complejas`
+- Rama activa para UX/UI: `ux-crud-polish`
+- Rama base de cambios complejos cerrados: `reformas-complejas`
 - Ultimo commit comun al crear `reformas-finales`: `b6c21ea docs: explain app prediction indicators`
 - Ultimos bloques tecnicos publicados en `reformas-finales`: cierre de revision de codigo, documentacion, CSRF/inputs invalidos, constantes/cache/conftest, normalizacion puntual `db_session` y type hints quirurgicos.
 - Estado al cierre tecnico: `reformas-finales` limpia y sincronizada con `origin/reformas-finales` en `7763bb0`.
@@ -32,7 +33,8 @@ Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting`
 - `a3f1cea refactor: extract staff and player blueprints`
 - `60f94b3 refactor: extract compare and settings blueprints`
 - `9f02b3c refactor: extract dashboard blueprint`
-- Estado actual verificado: `reformas-complejas` limpia y sincronizada con `origin/reformas-complejas` en `9f02b3c`.
+- Estado de arquitectura verificado: `reformas-complejas` limpia y sincronizada con `origin/reformas-complejas` en `a6d5a36`.
+- Rama `ux-crud-polish` creada desde `a6d5a36` para pulido UX/UI y CRUDs.
 - Entorno Python local: `C:\Tesis\TPScouting\.venv`
 
 Usar siempre la `.venv`; no usar el Python global.
@@ -225,6 +227,15 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - Para reducir riesgo se conserva tambien el alias historico `dashboard`.
 - Las rutas Flask que siguen en `app.py` son landing, health, error handlers y helpers compartidos. Ya no quedan familias de blueprints pendientes.
 - Validacion posterior al refactor de arquitectura fase 2 dashboard: `52 passed` con cobertura total `77%`, con `4 warnings` conocidos de scikit-learn.
+- UX/UI primera etapa iniciada en `ux-crud-polish`: menu agrupado con links activos, `Panel general`, dropdowns `Jugadores`, `Comparadores`, `Staff` y `Administracion`.
+- Se separo visualmente `Jugadores > Listado` y `Jugadores > Gestion`.
+- Se agruparon comparadores en un solo menu con `Comparar 2 jugadores` y `Ranking multiple`.
+- Se agruparon `Cuerpo tecnico` y `Dirigentes` bajo `Staff`.
+- Los mensajes flash ahora tienen icono, boton de cierre y estilos diferenciados.
+- Listados CRUD de jugadores, cuerpo tecnico y dirigentes usan acciones compactas y consistentes.
+- Formularios activos de jugadores y staff separan datos personales, deportivos/institucionales y atributos.
+- `Dashboard` se renombro visualmente a `Panel general`.
+- Validacion posterior a UX/UI etapa 1: `52 passed`, cobertura total `77%`, con `4 warnings` conocidos de scikit-learn.
 
 ## Performance
 
@@ -259,6 +270,21 @@ cd C:\Tesis\TPScouting
 Resultado:
 
 - `52 passed`
+- cobertura total reportada: `77%`
+- `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
+
+Validacion UX/UI etapa 1:
+
+```powershell
+cd C:\Tesis\TPScouting
+.\.venv\Scripts\python.exe -m pytest tests\test_pages.py -q
+.\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
+```
+
+Resultado:
+
+- focal: `7 passed`
+- completa: `52 passed`
 - cobertura total reportada: `77%`
 - `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
 
@@ -352,6 +378,7 @@ Bloques tecnicos ya iniciados en `reformas-complejas`:
 - Refactor de arquitectura fase 2 compare: `routes/compare.py` contiene comparador simple y multiple con aliases legacy.
 - Refactor de arquitectura fase 2 settings: `routes/settings.py` contiene configuracion, pipeline y limpieza operativa con alias legacy.
 - Refactor de arquitectura fase 2 dashboard: `routes/dashboard.py` contiene el dashboard con alias legacy `dashboard`.
+- UX/UI etapa 1: menu agrupado, links activos, panel general, listados CRUD compactos, flash mejorado y formularios principales ordenados por secciones.
 
 Prioridad recomendada para el proximo bloque de codigo:
 
@@ -382,18 +409,18 @@ Prioridad recomendada para el proximo bloque de codigo:
 
 ## Proximo Paso Probable
 
-La rama `training` queda como base estable de las correcciones del MVP. La rama `reformas-finales` queda cerrada como bloque liviano. Las reformas grandes deben continuar en `reformas-complejas`.
+La rama `training` queda como base estable de las correcciones del MVP. La rama `reformas-finales` queda cerrada como bloque liviano. La arquitectura grande quedo cerrada en `reformas-complejas`; el pulido visual continua en `ux-crud-polish`.
 
 Hay cuatro caminos razonables:
 
-- Pulido UX/UI y CRUDs: menu, navegacion, jerarquia visual, formularios, links, mensajes y coherencia entre secciones. Recomendado si la prioridad es la demo/entrega visual.
+- Continuar pulido UX/UI y CRUDs: revisar detalle de jugador, historial, atributos, comparadores y settings para llevar la misma consistencia visual.
 - Rendimiento dashboard a escala: dejar de depender de `.all()` y pasar a agregaciones SQL o resumen cacheado/persistido. Recomendado si la prioridad vuelve a ser tecnica.
 - Tooling dev opcional: `ruff`, `black`, `mypy` o una combinacion minima. Solo si se acepta ruido de formato/config.
 - Documento Word de tesis: alinear narrativa, capturas y afirmaciones con el MVP real ya corregido. Recomendado si la prioridad pasa a entrega academica.
 
 Recomendacion de arranque para el proximo chat:
 
-- Si la prioridad es mostrar mejor el producto: empezar por `UX/UI + CRUD polish` en una rama nueva.
+- Si la prioridad es mostrar mejor el producto: continuar desde `ux-crud-polish` con detalle de jugador, comparadores y settings.
 - Si la prioridad es cerrar evidencia academica: pasar al Word y corregirlo contra el repo real.
 
 Antes de tocar codigo en el proximo chat, revisar:
