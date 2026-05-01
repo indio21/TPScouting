@@ -5,7 +5,7 @@ Este documento deja preparado el siguiente bloque chico y verificable para conti
 ## Estado Actual
 
 - Rama activa: `ux-crud-polish`.
-- Ultimo commit publicado: `06fb998 docs: prepare next ux polish step`.
+- Commit base del contexto para retomar: `06fb998 docs: prepare next ux polish step`.
 - Commit UX principal ya publicado: `8414d06 ux: polish navigation and crud screens`.
 - La rama esta sincronizada con `origin/ux-crud-polish`.
 - El servidor local quedo probado en `http://127.0.0.1:5000/`.
