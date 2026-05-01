@@ -492,8 +492,6 @@ def init_admin_user() -> None:
         db_session.commit()
     db_session.close()
 
-init_admin_user()
-
 # ----------------------------------------------------
 # Landing
 @app.route("/")
@@ -569,6 +567,9 @@ def is_strong_password(password: str) -> bool:
     has_letter = any(char.isalpha() for char in password)
     has_digit = any(char.isdigit() for char in password)
     return has_letter and has_digit
+
+
+init_admin_user()
 
 
 ROLE_ADMIN = "administrador"

@@ -236,6 +236,8 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - Formularios activos de jugadores y staff separan datos personales, deportivos/institucionales y atributos.
 - `Dashboard` se renombro visualmente a `Panel general`.
 - Validacion posterior a UX/UI etapa 1: `52 passed`, cobertura total `77%`, con `4 warnings` conocidos de scikit-learn.
+- Durante el smoke del servidor local se corrigio un bug de orden de inicializacion: `init_admin_user()` se ejecutaba antes de que existiera `is_strong_password()` cuando `ADMIN_PASSWORD` estaba configurado.
+- Smoke local posterior: `GET /health`, `GET /` y `GET /login` respondieron `200` en `http://127.0.0.1:5000/`.
 
 ## Performance
 

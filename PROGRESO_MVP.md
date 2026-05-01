@@ -44,6 +44,8 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - UX/UI etapa 1: `Jugadores` separa `Listado` y `Gestion`; comparadores quedan en un unico menu; cuerpo tecnico y dirigentes quedan bajo `Staff`.
 - UX/UI etapa 1: mensajes flash con icono/cierre, acciones CRUD compactas y formularios principales ordenados por secciones.
 - Validacion UX/UI etapa 1: `7 passed` en `tests/test_pages.py`; suite completa `52 passed` con cobertura total `77%`, con `4 warnings` conocidos de scikit-learn.
+- Correccion post-smoke: `init_admin_user()` ahora se ejecuta despues de definir `is_strong_password()`, evitando un `NameError` al levantar la app con `ADMIN_PASSWORD`.
+- Smoke local posterior: `GET /health`, `GET /` y `GET /login` respondieron `200` en `http://127.0.0.1:5000/`.
 
 ## Actualizacion 2026-04-23
 
@@ -370,6 +372,7 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Arquitectura fase 1: servicios y runtime ML separados de `app.py`
 - Arquitectura fase 2: rutas de autenticacion, staff, jugadores, comparadores, configuracion y dashboard separadas en blueprints con compatibilidad de endpoints historicos
 - UX/UI etapa 1: navegacion agrupada, links activos, acciones CRUD consistentes, flash mejorado y formularios principales por secciones
+- Correccion de arranque local con `ADMIN_PASSWORD` configurado
 
 ## Puntos Que Siguen Parciales O Pendientes
 
