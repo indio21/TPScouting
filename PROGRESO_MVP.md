@@ -387,7 +387,9 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 
 - La arquitectura por familias quedo cerrada en `reformas-complejas` con `a6d5a36`.
 - El pulido demo/entrega visual inicio en `ux-crud-polish`.
-- Siguiente UX recomendado: detalle de jugador, historial, atributos, comparadores y settings.
+- Siguiente UX recomendado para 2026-05-01: seguir el plan de `docs/ux_ui_crud_polish_next_step_2026-05-01.md`.
+- Primer bloque sugerido: detalle y proyeccion de jugador (`player_detail.html` y `prediction.html`), sin tocar logica backend salvo bug verificable.
+- Despues: historial/atributos, comparadores y pantallas de administracion/configuracion.
 - Si la prioridad es academica: conviene pasar a alinear el Word con el MVP real.
 - Si la prioridad vuelve a ser tecnica: el siguiente frente fuerte es rendimiento del dashboard a escala.
 

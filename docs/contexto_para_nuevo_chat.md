@@ -400,6 +400,7 @@ Prioridad recomendada para el proximo bloque de codigo:
 - `docs/flujo_reproducible_mvp.md`
 - `docs/guia_indicadores_app.md`
 - `docs/refactor_arquitectura_2026-04-28.md`
+- `docs/ux_ui_crud_polish_next_step_2026-05-01.md`
 - `docs/model_training_evidence.md`
 - `docs/model_training_evidence.docx`
 - `docs/model_training_plan.md`
@@ -422,7 +423,10 @@ Hay cuatro caminos razonables:
 
 Recomendacion de arranque para el proximo chat:
 
-- Si la prioridad es mostrar mejor el producto: continuar desde `ux-crud-polish` con detalle de jugador, comparadores y settings.
+- Si la prioridad es mostrar mejor el producto: continuar desde `ux-crud-polish` con el plan de `docs/ux_ui_crud_polish_next_step_2026-05-01.md`.
+- Primer bloque recomendado: detalle y proyeccion de jugador (`player_detail.html` y `prediction.html`).
+- Segundo bloque recomendado: historial y atributos (`player_stats.html` y `player_attributes.html`).
+- Tercer bloque recomendado: comparadores y administracion (`compare.html`, `compare_multi.html`, `settings.html`, `register.html`).
 - Si la prioridad es cerrar evidencia academica: pasar al Word y corregirlo contra el repo real.
 
 Antes de tocar codigo en el proximo chat, revisar:
