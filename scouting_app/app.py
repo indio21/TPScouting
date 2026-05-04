@@ -1379,6 +1379,7 @@ compare_blueprint = create_compare_blueprint(
         player_attribute_map=player_attribute_map,
         weighted_score_from_attrs=weighted_score_from_attrs,
         recommend_position_from_attrs=recommend_position_from_attrs,
+        default_player_photo_url=default_player_photo_url,
     )
 )
 app.register_blueprint(compare_blueprint)

@@ -63,11 +63,27 @@ Validacion del segundo bloque:
 - Smoke especifico con test client sobre jugador real demo: `/player/30101/stats` y `/player/30101/attributes` respondieron `200`.
 - Smoke HTTP local: `/health`, `/` y `/login` respondieron `200` en `http://127.0.0.1:5000/`.
 
+Tercer bloque de UX/UI etapa 2 aplicado:
+
+- `scouting_app/templates/compare.html` adopta cabecera visual, selector compacto, tarjetas 1v1, radar de atributos y tabla densa.
+- `scouting_app/templates/compare_multi.html` adopta cabecera visual, ranking por puesto, selector compacto y mapa visual de talento.
+- `scouting_app/routes/compare.py` agrega datos visuales ya existentes (`photo_url`, edad, club y fit score) para renderizar el mapa sin cambiar la logica de negocio.
+- El mapa de talento usa hasta 40 jugadores: top 10 por cada familia de puesto.
+
+Validacion del tercer bloque:
+
+- `tests/test_pages.py`: `7 passed`.
+- Suite completa: `52 passed`, cobertura total `77%`, con los `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
+- Smoke especifico con test client: `GET /compare`, `GET /compare/multi`, `POST /compare` y `POST /compare/multi` respondieron `200`.
+- Smoke HTTP local: `/health`, `/` y `/login` respondieron `200` en `http://127.0.0.1:5000/`.
+
 Orden restante recomendado, de menor a mayor riesgo:
 
-1. Comparadores:
-   - `scouting_app/templates/compare.html`
-   - `scouting_app/templates/compare_multi.html`
+1. Analizar UX de CRUD de jugadores antes de implementar:
+   - carga/edicion de rendimiento
+   - carga/edicion de atributos
+   - historiales asociados a jugador
+   - posible uso de modales para separar carga de visualizacion
 2. Administracion/configuracion:
    - `scouting_app/templates/settings.html`
    - `scouting_app/templates/register.html`
@@ -114,4 +130,4 @@ git status -sb
 git log --oneline --decorate -5
 ```
 
-Luego revisar visualmente `compare.html` y `compare_multi.html`. En ese bloque se puede evaluar el grafico tipo ejes/scatter con imagenes de jugadores, manteniendo la misma linea visual.
+Luego analizar el flujo CRUD de jugadores antes de tocar codigo. La idea a evaluar es separar visualizacion de carga/edicion/eliminacion, posiblemente con modales o pantallas dedicadas, sin ocultar los datos principales.

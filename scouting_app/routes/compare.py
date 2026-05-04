@@ -17,6 +17,13 @@ def create_compare_blueprint(*, deps: SimpleNamespace) -> Blueprint:
     Player = deps.Player
     PlayerStat = deps.PlayerStat
 
+    def player_photo_url(player) -> str:
+        return player.photo_url or deps.default_player_photo_url(
+            name=player.name,
+            national_id=player.national_id,
+            fallback=str(player.id),
+        )
+
     @bp.route("/compare", methods=["GET", "POST"])
     @deps.login_required
     def compare_players():
@@ -138,8 +145,13 @@ def create_compare_blueprint(*, deps: SimpleNamespace) -> Blueprint:
 
                     comparison = {
                         "player_one": {
+                            "id": player_one.id,
                             "name": player_one.name,
                             "position": player_one.position,
+                            "age": player_one.age,
+                            "club": player_one.club,
+                            "country": player_one.country,
+                            "photo_url": player_photo_url(player_one),
                             "probability": prob_one,
                             "avg_score": avg_one,
                             "fit_score": fit_one,
@@ -147,8 +159,13 @@ def create_compare_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                             "best_position_score": best_pos_one_score,
                         },
                         "player_two": {
+                            "id": player_two.id,
                             "name": player_two.name,
                             "position": player_two.position,
+                            "age": player_two.age,
+                            "club": player_two.club,
+                            "country": player_two.country,
+                            "photo_url": player_photo_url(player_two),
                             "probability": prob_two,
                             "avg_score": avg_two,
                             "fit_score": fit_two,
@@ -212,9 +229,11 @@ def create_compare_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                 load_only(
                     Player.id,
                     Player.name,
+                    Player.national_id,
                     Player.age,
                     Player.position,
                     Player.club,
+                    Player.photo_url,
                     Player.pace,
                     Player.shooting,
                     Player.passing,
@@ -251,6 +270,9 @@ def create_compare_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             if not tab:
                 continue
 
+            attr_map = deps.player_attribute_map(player)
+            fit_score = deps.weighted_score_from_attrs(attr_map, tab["bucket"])
+
             ranking_by_position[tab["key"]].append(
                 {
                     "id": player.id,
@@ -258,15 +280,33 @@ def create_compare_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                     "position": player.position,
                     "club": player.club,
                     "age": player.age,
+                    "photo_url": player_photo_url(player),
+                    "fit_score": round(float(fit_score), 1),
                     "probability": round(float(projection["combined_prob"]) * 100, 1),
                     "category": projection["category"],
                 }
             )
 
+        talent_map_rows: List[Dict[str, object]] = []
         for tab in position_tabs:
             tab_rows = ranking_by_position[tab["key"]]
             tab_rows.sort(key=lambda item: item["probability"], reverse=True)
             ranking_by_position[tab["key"]] = tab_rows[:10]
+            for row in ranking_by_position[tab["key"]]:
+                talent_map_rows.append({**row, "bucket": tab["label"]})
+
+        if talent_map_rows:
+            avg_probability = round(
+                sum(float(row["probability"]) for row in talent_map_rows) / len(talent_map_rows),
+                1,
+            )
+            avg_fit_score = round(
+                sum(float(row["fit_score"]) for row in talent_map_rows) / len(talent_map_rows),
+                1,
+            )
+        else:
+            avg_probability = 0.0
+            avg_fit_score = 0.0
 
         if request.method == "POST":
             raw_ids = request.form.getlist("players")
@@ -390,6 +430,9 @@ def create_compare_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             target_position=target_position,
             position_tabs=position_tabs,
             ranking_by_position=ranking_by_position,
+            talent_map_rows=talent_map_rows,
+            talent_map_avg_probability=avg_probability,
+            talent_map_avg_fit_score=avg_fit_score,
         )
 
     return bp

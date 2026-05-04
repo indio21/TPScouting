@@ -52,6 +52,9 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Regla visual aprobada: mantener la misma linea en todas las secciones, con cabecera tipo ficha, verde/azul oscuro, metricas en tarjetas blancas, acciones compactas con iconos y formularios por secciones.
 - UX/UI etapa 2 segundo bloque: `player_stats.html` y `player_attributes.html` quedan alineadas al mismo formato visual, sin tocar logica backend.
 - Validacion UX/UI etapa 2 segundo bloque: `7 passed` en `tests/test_pages.py`; suite completa `52 passed` con cobertura total `77%`; smoke especifico de historial/atributos sobre jugador real demo respondio `200`.
+- UX/UI etapa 2 tercer bloque: `compare.html` y `compare_multi.html` quedan alineadas al mismo formato visual; el comparador multiple suma mapa visual de talento con fotos de hasta 40 jugadores.
+- La ruta de comparadores solo agrega datos visuales existentes para renderizado (`photo_url`, edad, club y fit score), sin cambiar la logica de negocio.
+- Validacion UX/UI etapa 2 tercer bloque: `7 passed` en `tests/test_pages.py`; suite completa `52 passed` con cobertura total `77%`; smoke especifico de comparadores `GET/POST` respondio `200`.
 
 ## Actualizacion 2026-04-23
 
@@ -380,6 +383,7 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - UX/UI etapa 1: navegacion agrupada, links activos, acciones CRUD consistentes, flash mejorado y formularios principales por secciones
 - UX/UI etapa 2 primer bloque: ficha de jugador y proyeccion visualmente pulidas
 - UX/UI etapa 2 segundo bloque: historial de rendimiento y atributos visualmente pulidos
+- UX/UI etapa 2 tercer bloque: comparadores visualmente pulidos con mapa de talento
 - Correccion de arranque local con `ADMIN_PASSWORD` configurado
 
 ## Puntos Que Siguen Parciales O Pendientes
@@ -398,7 +402,8 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Siguiente UX recomendado para 2026-05-01: seguir el plan de `docs/ux_ui_crud_polish_next_step_2026-05-01.md`.
 - Primer bloque de etapa 2 ya aplicado: detalle y proyeccion de jugador (`player_detail.html` y `prediction.html`), sin tocar logica backend.
 - Segundo bloque de etapa 2 aplicado: historial/atributos (`player_stats.html` y `player_attributes.html`), sin tocar logica backend.
-- Siguiente bloque sugerido: comparadores, incluyendo evaluar grafico tipo ejes/scatter.
+- Tercer bloque de etapa 2 aplicado: comparadores (`compare.html` y `compare_multi.html`) con mapa de talento.
+- Siguiente bloque sugerido: analizar UX de CRUD de jugadores antes de implementar cambios, especialmente carga/edicion/eliminacion en modales o pantallas separadas de la visualizacion.
 - Despues: pantallas de administracion/configuracion.
 - Si la prioridad es academica: conviene pasar a alinear el Word con el MVP real.
 - Si la prioridad vuelve a ser tecnica: el siguiente frente fuerte es rendimiento del dashboard a escala.

@@ -49,6 +49,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - UX/UI etapa 1: menu agrupado, links activos, acciones CRUD consistentes, flash mejorado y formularios principales por secciones
 - UX/UI etapa 2 primer bloque: ficha de jugador y proyeccion con estructura visual mas clara
 - UX/UI etapa 2 segundo bloque: historial de rendimiento y atributos con la misma linea visual
+- UX/UI etapa 2 tercer bloque: comparadores con la misma linea visual y mapa de talento
 - correccion de arranque local con `ADMIN_PASSWORD` configurado
 
 ### 1.1. Cierre De Observaciones De Codigo Fuente 2026-04-27
@@ -74,6 +75,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - Se inicio pulido visual en `ux-crud-polish`: navegacion mas clara, `Panel general`, dropdowns por familia, listados CRUD compactos y formularios ordenados.
 - Se avanzo el primer bloque de UX/UI etapa 2 sobre `player_detail.html` y `prediction.html`.
 - Se avanzo el segundo bloque de UX/UI etapa 2 sobre `player_stats.html` y `player_attributes.html`.
+- Se avanzo el tercer bloque de UX/UI etapa 2 sobre `compare.html` y `compare_multi.html`.
 - Se corrigio el orden de inicializacion del bootstrap de administrador para que el servidor local arranque correctamente con `ADMIN_PASSWORD`.
 
 ### 2. Smoke funcional sobre la app real del repo
