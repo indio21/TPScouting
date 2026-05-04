@@ -46,6 +46,9 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Validacion UX/UI etapa 1: `7 passed` en `tests/test_pages.py`; suite completa `52 passed` con cobertura total `77%`, con `4 warnings` conocidos de scikit-learn.
 - Correccion post-smoke: `init_admin_user()` ahora se ejecuta despues de definir `is_strong_password()`, evitando un `NameError` al levantar la app con `ADMIN_PASSWORD`.
 - Smoke local posterior: `GET /health`, `GET /` y `GET /login` respondieron `200` en `http://127.0.0.1:5000/`.
+- UX/UI etapa 2 primer bloque: `player_detail.html` y `prediction.html` quedan con cabecera visual de ficha, metricas clave, acciones compactas, ranking de puestos, atributos densos y panel de decision para la proyeccion.
+- Se deja para comparadores la evaluacion del grafico tipo ejes/scatter con imagenes de jugadores.
+- Validacion UX/UI etapa 2 primer bloque: `7 passed` en `tests/test_pages.py`; suite completa `52 passed` con cobertura total `77%`; smoke especifico de detalle/proyeccion sobre jugador real demo respondio `200`.
 
 ## Actualizacion 2026-04-23
 
@@ -372,6 +375,7 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Arquitectura fase 1: servicios y runtime ML separados de `app.py`
 - Arquitectura fase 2: rutas de autenticacion, staff, jugadores, comparadores, configuracion y dashboard separadas en blueprints con compatibilidad de endpoints historicos
 - UX/UI etapa 1: navegacion agrupada, links activos, acciones CRUD consistentes, flash mejorado y formularios principales por secciones
+- UX/UI etapa 2 primer bloque: ficha de jugador y proyeccion visualmente pulidas
 - Correccion de arranque local con `ADMIN_PASSWORD` configurado
 
 ## Puntos Que Siguen Parciales O Pendientes
@@ -388,8 +392,9 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - La arquitectura por familias quedo cerrada en `reformas-complejas` con `a6d5a36`.
 - El pulido demo/entrega visual inicio en `ux-crud-polish`.
 - Siguiente UX recomendado para 2026-05-01: seguir el plan de `docs/ux_ui_crud_polish_next_step_2026-05-01.md`.
-- Primer bloque sugerido: detalle y proyeccion de jugador (`player_detail.html` y `prediction.html`), sin tocar logica backend salvo bug verificable.
-- Despues: historial/atributos, comparadores y pantallas de administracion/configuracion.
+- Primer bloque de etapa 2 ya aplicado: detalle y proyeccion de jugador (`player_detail.html` y `prediction.html`), sin tocar logica backend.
+- Siguiente bloque sugerido: historial/atributos (`player_stats.html` y `player_attributes.html`).
+- Despues: comparadores, incluyendo evaluar grafico tipo ejes/scatter, y pantallas de administracion/configuracion.
 - Si la prioridad es academica: conviene pasar a alinear el Word con el MVP real.
 - Si la prioridad vuelve a ser tecnica: el siguiente frente fuerte es rendimiento del dashboard a escala.
 

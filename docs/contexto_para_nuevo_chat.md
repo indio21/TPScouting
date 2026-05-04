@@ -238,6 +238,9 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - Validacion posterior a UX/UI etapa 1: `52 passed`, cobertura total `77%`, con `4 warnings` conocidos de scikit-learn.
 - Durante el smoke del servidor local se corrigio un bug de orden de inicializacion: `init_admin_user()` se ejecutaba antes de que existiera `is_strong_password()` cuando `ADMIN_PASSWORD` estaba configurado.
 - Smoke local posterior: `GET /health`, `GET /` y `GET /login` respondieron `200` en `http://127.0.0.1:5000/`.
+- UX/UI etapa 2 primer bloque: `player_detail.html` y `prediction.html` fueron redisenadas como ficha/proyeccion de scouting con cabecera visual, metricas clave, acciones compactas, ranking de puestos, atributos densos y panel de decision.
+- La idea de grafico con ejes e imagenes/logos queda para el bloque de comparadores, no para este primer bloque.
+- Validacion UX/UI etapa 2 primer bloque: `7 passed` en `tests/test_pages.py`; suite completa `52 passed`, cobertura total `77%`, con `4 warnings` conocidos; smoke especifico `/player/30101` y `/player/30101/predict` respondio `200`; smoke HTTP local `/health`, `/` y `/login` respondio `200`.
 
 ## Performance
 
@@ -424,9 +427,9 @@ Hay cuatro caminos razonables:
 Recomendacion de arranque para el proximo chat:
 
 - Si la prioridad es mostrar mejor el producto: continuar desde `ux-crud-polish` con el plan de `docs/ux_ui_crud_polish_next_step_2026-05-01.md`.
-- Primer bloque recomendado: detalle y proyeccion de jugador (`player_detail.html` y `prediction.html`).
-- Segundo bloque recomendado: historial y atributos (`player_stats.html` y `player_attributes.html`).
-- Tercer bloque recomendado: comparadores y administracion (`compare.html`, `compare_multi.html`, `settings.html`, `register.html`).
+- Siguiente bloque recomendado: historial y atributos (`player_stats.html` y `player_attributes.html`).
+- Luego: comparadores, incluyendo evaluar el grafico tipo ejes/scatter con imagenes de jugadores (`compare.html`, `compare_multi.html`).
+- Despues: administracion/configuracion (`settings.html`, `register.html`).
 - Si la prioridad es cerrar evidencia academica: pasar al Word y corregirlo contra el repo real.
 
 Antes de tocar codigo en el proximo chat, revisar:

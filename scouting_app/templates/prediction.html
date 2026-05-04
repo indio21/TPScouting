@@ -2,23 +2,111 @@
 {% block title %}Proyeccion de potencial{% endblock %}
 
 {% block content %}
-<section class="card mb-4">
-    <div class="card-body">
-        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
-            <div class="d-flex align-items-center gap-3">
-                <img src="{{ player.photo_url }}" alt="Foto {{ player.name }}" class="player-avatar-md" loading="lazy">
-                <div>
-                <h1 class="mb-1">Proyeccion actual: {{ player.name }}</h1>
-                <p class="text-muted mb-0">
-                    Resultado general de la ficha actual y el historial cargado. Mantene los datos al dia para una lectura mas precisa.
-                </p>
+{% set prob_value = probability.replace('%','') | float %}
+{% set probability_class = 'is-success' if category == 'Alto potencial' else 'is-warning' if category == 'Potencial medio' else '' %}
+
+<section class="profile-hero mb-4">
+    <div class="profile-hero-body">
+        <div class="profile-identity">
+            <img src="{{ player.photo_url }}" alt="Foto {{ player.name }}" class="player-avatar-xl" loading="lazy">
+            <div class="profile-title-stack">
+                <span class="profile-eyebrow">Proyeccion de potencial</span>
+                <h1>{{ player.name }}</h1>
+                <div class="profile-meta">
+                    <span class="profile-chip"><i class="bi bi-person-badge"></i> {{ display_position(player.position) }}</span>
+                    <span class="profile-chip"><i class="bi bi-calendar3"></i> {{ player.age }} anos</span>
+                    {% if player.club %}
+                    <span class="profile-chip"><i class="bi bi-shield"></i> {{ player.club }}</span>
+                    {% endif %}
+                    {% if player.country %}
+                    <span class="profile-chip"><i class="bi bi-geo-alt"></i> {{ player.country }}</span>
+                    {% endif %}
+                    <span class="profile-chip {{ probability_class }}"><i class="bi bi-stars"></i> {{ category }}</span>
                 </div>
             </div>
-            <div class="btn-group flex-wrap">
-                <a class="btn btn-outline-primary btn-sm" href="{{ url_for('player_detail', player_id=player.id) }}">Ver ficha</a>
+        </div>
+
+        <div class="profile-actions">
+            <div class="profile-score">
+                <div class="label">Resultado actual</div>
+                <div class="value">{{ probability }}</div>
+                <div class="note">Ficha: {{ probability_base }}</div>
+            </div>
+            <div class="profile-action-bar">
+                <a class="btn btn-light btn-sm d-flex align-items-center gap-2" href="{{ url_for('player_detail', player_id=player.id) }}">
+                    <i class="bi bi-eye"></i> Ver ficha
+                </a>
                 {% if can_edit_player_data %}
-                <a class="btn btn-outline-success btn-sm" href="{{ url_for('player_attributes', player_id=player.id) }}">Actualizar atributos</a>
-                <a class="btn btn-outline-success btn-sm" href="{{ url_for('player_stats', player_id=player.id) }}">Actualizar historial</a>
+                <a class="btn btn-outline-light btn-sm d-flex align-items-center gap-2" href="{{ url_for('player_attributes', player_id=player.id) }}">
+                    <i class="bi bi-bar-chart"></i> Atributos
+                </a>
+                <a class="btn btn-outline-light btn-sm d-flex align-items-center gap-2" href="{{ url_for('player_stats', player_id=player.id) }}">
+                    <i class="bi bi-plus-lg"></i> Historial
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="projection-panel mb-4">
+    <div class="projection-result">
+        <div class="probability-figure">
+            <canvas id="probChart"></canvas>
+        </div>
+        <div>
+            <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
+                <div>
+                    <h2 class="mb-1">Lectura de decision</h2>
+                    <p class="text-muted mb-0">Resultado de la ficha actual ajustado con historial cargado.</p>
+                </div>
+                <span class="badge {% if category == 'Alto potencial' %}bg-success{% elif category == 'Potencial medio' %}bg-warning text-dark{% else %}bg-secondary{% endif %} align-self-start">
+                    {{ category }}
+                </span>
+            </div>
+
+            <div class="progress mb-4" style="height: 18px;">
+                <div class="progress-bar {% if prob_value >= 70 %}bg-success{% elif prob_value >= 40 %}bg-warning text-dark{% else %}bg-secondary{% endif %}"
+                     role="progressbar" style="width: {{ prob_value }}%;" aria-valuenow="{{ prob_value }}" aria-valuemin="0" aria-valuemax="100">
+                    {{ prob_value|round(1) }}%
+                </div>
+            </div>
+
+            <div class="decision-grid">
+                <div class="decision-card">
+                    <span class="label">Puntaje de ficha</span>
+                    <span class="value">{{ probability_base }}</span>
+                    <small class="text-muted">Modelo base sobre atributos actuales.</small>
+                </div>
+                <div class="decision-card">
+                    <span class="label">Ajuste historial</span>
+                    <span class="value">
+                        {% if probability_delta > 0 %}
+                        +{{ probability_delta|round(1) }} pts
+                        {% elif probability_delta < 0 %}
+                        {{ probability_delta|round(1) }} pts
+                        {% else %}
+                        0 pts
+                        {% endif %}
+                    </span>
+                    <small class="text-muted">Impacto de datos recientes.</small>
+                </div>
+                <div class="decision-card">
+                    <span class="label">Puesto recomendado</span>
+                    <span class="value">{{ display_position(best_position) }}</span>
+                    <small class="text-muted">Score {{ best_position_score|round(1) }}.</small>
+                </div>
+                <div class="decision-card">
+                    <span class="label">Puesto natural</span>
+                    <span class="value">{{ current_fit|round(1) }}</span>
+                    <small class="text-muted">{{ display_position(player.position) }}.</small>
+                </div>
+                {% if probability_calibrated %}
+                <div class="decision-card">
+                    <span class="label">Referencia calibrada</span>
+                    <span class="value">{{ probability_calibrated }}</span>
+                    <small class="text-muted">Referencia secundaria documentada.</small>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -26,93 +114,85 @@
 </section>
 
 <div class="row g-4">
-    <div class="col-lg-4">
-        <div class="card h-100">
-            <div class="card-header">Probabilidad de llegar a profesional</div>
-            <div class="card-body">
-                <div class="display-4 fw-bold">{{ probability }}</div>
-                <span class="badge {% if category == 'Alto potencial' %}bg-success{% elif category == 'Potencial medio' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
-                    {{ category }}
-                </span>
-                <p class="mt-3 mb-1 text-muted small">Puntaje de ficha: {{ probability_base }}</p>
-                {% if probability_calibrated %}
-                <p class="text-muted small mb-1">Referencia calibrada: {{ probability_calibrated }}</p>
-                {% endif %}
-                <p class="text-muted small">
-                    Ajuste por historial:
-                    {% if probability_delta > 0 %}
-                        <span class="text-success">+{{ probability_delta|round(1) }} pts</span>
-                    {% elif probability_delta < 0 %}
-                        <span class="text-danger">{{ probability_delta|round(1) }} pts</span>
-                    {% else %}
-                        sin cambios
-                    {% endif %}
-                </p>
-                <p class="mb-0">
-                    <strong>Puesto alternativo recomendado:</strong> {{ display_position(best_position) }} ({{ best_position_score|round(1) }})
-                </p>
-                <p class="text-muted small">Rendimiento en su puesto natural: {{ current_fit|round(1) }}</p>
-
-                <div class="progress mt-3" style="height: 18px;">
-                    {% set prob_value = probability.replace('%','') | float %}
-                    <div class="progress-bar {% if prob_value >= 70 %}bg-success{% elif prob_value >= 40 %}bg-warning text-dark{% else %}bg-secondary{% endif %}"
-                         role="progressbar" style="width: {{ prob_value }}%;" aria-valuenow="{{ prob_value }}" aria-valuemin="0" aria-valuemax="100">
-                        {{ prob_value|round(1) }}%
-                    </div>
-                </div>
-
-                <div class="mt-4">
-                    <canvas id="probChart"></canvas>
-                </div>
+    <div class="col-lg-5">
+        <section class="card h-100">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-bullseye"></i> Sugerencias de mejora
             </div>
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card h-100">
-            <div class="card-header">Sugerencias de mejora (umbral 15)</div>
             <div class="card-body">
                 {% if suggestions %}
-                <ul class="list-group list-group-flush">
+                <div class="suggestion-list">
                     {% for name, gap in suggestions %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>{{ name }}</span>
-                        <span class="badge bg-primary rounded-pill">+{{ gap }}</span>
-                    </li>
+                    <div class="suggestion-item">
+                        <div>
+                            <strong>{{ name }}</strong>
+                            <div class="text-muted small">Margen contra umbral de seguimiento.</div>
+                        </div>
+                        <span class="badge bg-primary">+{{ gap }}</span>
+                    </div>
                     {% endfor %}
-                </ul>
+                </div>
                 {% else %}
                 <p class="text-muted mb-0">Sin recomendaciones especificas. Mantener seguimiento.</p>
                 {% endif %}
             </div>
-        </div>
+        </section>
     </div>
-    <div class="col-lg-4">
-        <div class="card h-100">
-            <div class="card-header">Resumen del historial</div>
+
+    <div class="col-lg-7">
+        <section class="card h-100">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-clock-history"></i> Resumen del historial
+            </div>
             <div class="card-body">
                 {% if stats_summary.entries == 0 %}
-                <p class="text-muted mb-0">Carga datos desde "Actualizar historial" para enriquecer el calculo.</p>
+                <p class="text-muted mb-0">Carga datos desde "Historial" para enriquecer el calculo.</p>
                 {% else %}
-                <ul class="list-group list-group-flush small">
-                    <li class="list-group-item d-flex justify-content-between"><span>Registros</span><span>{{ stats_summary.entries }}</span></li>
-                    <li class="list-group-item d-flex justify-content-between"><span>Partidos</span><span>{{ stats_summary.total_matches }}</span></li>
-                    <li class="list-group-item d-flex justify-content-between"><span>Goles</span><span>{{ stats_summary.total_goals }}</span></li>
-                    <li class="list-group-item d-flex justify-content-between"><span>Asistencias</span><span>{{ stats_summary.total_assists }}</span></li>
-                    <li class="list-group-item d-flex justify-content-between"><span>Minutos</span><span>{{ stats_summary.total_minutes }}</span></li>
-                    <li class="list-group-item d-flex justify-content-between"><span>Puntaje medio</span><span>{{ stats_summary.avg_final_score or '--' }}</span></li>
-                </ul>
-                <small class="text-muted d-block mt-2">Ultima actualizacion: {{ stats_summary.latest_date or 'Sin registros' }}</small>
+                <div class="profile-metric-grid mb-0">
+                    <div class="profile-metric-card">
+                        <span class="label">Registros</span>
+                        <span class="value">{{ stats_summary.entries }}</span>
+                        <span class="hint">Ultima: {{ stats_summary.latest_date or 'Sin fecha' }}</span>
+                    </div>
+                    <div class="profile-metric-card">
+                        <span class="label">Partidos</span>
+                        <span class="value">{{ stats_summary.total_matches }}</span>
+                        <span class="hint">{{ stats_summary.total_minutes }} minutos</span>
+                    </div>
+                    <div class="profile-metric-card">
+                        <span class="label">Produccion</span>
+                        <span class="value">{{ stats_summary.total_goals }} / {{ stats_summary.total_assists }}</span>
+                        <span class="hint">Goles / asistencias</span>
+                    </div>
+                    <div class="profile-metric-card">
+                        <span class="label">Puntaje medio</span>
+                        <span class="value">{{ stats_summary.avg_final_score or '--' }}</span>
+                        <span class="hint">Escala 1-10</span>
+                    </div>
+                </div>
                 {% endif %}
             </div>
-        </div>
+        </section>
     </div>
 </div>
 
 <section class="card mt-4">
-    <div class="card-header">Progresion de atributos</div>
+    <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
+        <div>
+            <span>Progresion de atributos</span>
+            <small class="text-muted d-block">Evolucion tecnica en escala 0-20.</small>
+        </div>
+        {% if can_edit_player_data %}
+        <a class="btn btn-outline-success btn-sm d-flex align-items-center gap-2" href="{{ url_for('player_attributes', player_id=player.id) }}">
+            <i class="bi bi-plus-lg"></i> Cargar atributos
+        </a>
+        {% endif %}
+    </div>
     <div class="card-body">
         {% if attribute_payload.labels %}
-        <canvas id="attributeChart" height="240"></canvas>
+        <div class="timeline-wrapper">
+            <canvas id="attributeChart" height="240"></canvas>
+        </div>
         {% else %}
         <p class="text-muted mb-0">Carga registros de atributos para visualizar la evolucion tecnica.</p>
         {% endif %}
@@ -120,34 +200,52 @@
 </section>
 
 <section class="card mt-4">
-    <div class="card-header">Evolucion en el tiempo</div>
+    <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
+        <div>
+            <span>Evolucion en el tiempo</span>
+            <small class="text-muted d-block">Cruza puntaje final, pases, remates y duelos.</small>
+        </div>
+        {% if can_edit_player_data %}
+        <a class="btn btn-outline-success btn-sm d-flex align-items-center gap-2" href="{{ url_for('player_stats', player_id=player.id) }}">
+            <i class="bi bi-plus-lg"></i> Cargar historial
+        </a>
+        {% endif %}
+    </div>
     <div class="card-body">
         {% if history_payload.labels %}
-        <canvas id="historyChart" height="240"></canvas>
+        <div class="timeline-wrapper">
+            <canvas id="historyChart" height="240"></canvas>
+        </div>
         {% else %}
         <p class="text-muted mb-0">Todavia no hay datos para construir la linea de tiempo.</p>
         {% endif %}
     </div>
 </section>
 
-<div class="card mt-4">
+<section class="card mt-4">
     <div class="card-header">Como se calcula</div>
     <div class="card-body">
         <p class="mb-2">
             El puntaje inicial se arma con los atributos tecnicos y fisicos actuales del jugador.
-            Luego se ajusta segun la regularidad del historial y el rendimiento sostenido en el tiempo.
+            Luego se ajusta segun regularidad, historial cargado y rendimiento sostenido.
         </p>
         <p class="mb-0">
-            Para mejorar el resultado, enfocate en los atributos con mayor margen de crecimiento y actualiza la ficha despues de cada partido o bloque de entrenamiento.
+            Para mejorar el resultado, conviene enfocar trabajo en los atributos con mayor brecha y actualizar la ficha despues de cada bloque competitivo.
         </p>
     </div>
-</div>
+</section>
 
-<div class="mt-4 d-flex flex-wrap gap-2">
-    <a class="btn btn-secondary" href="{{ url_for('player_detail', player_id=player.id) }}">Volver</a>
+<div class="mt-4 crud-actions">
+    <a class="btn btn-secondary d-flex align-items-center gap-2" href="{{ url_for('player_detail', player_id=player.id) }}">
+        <i class="bi bi-arrow-left"></i> Volver a ficha
+    </a>
     {% if can_edit_player_data %}
-    <a class="btn btn-outline-success" href="{{ url_for('player_attributes', player_id=player.id) }}">Cargar atributos</a>
-    <a class="btn btn-outline-success" href="{{ url_for('player_stats', player_id=player.id) }}">Cargar nuevo registro</a>
+    <a class="btn btn-outline-success d-flex align-items-center gap-2" href="{{ url_for('player_attributes', player_id=player.id) }}">
+        <i class="bi bi-bar-chart"></i> Cargar atributos
+    </a>
+    <a class="btn btn-outline-success d-flex align-items-center gap-2" href="{{ url_for('player_stats', player_id=player.id) }}">
+        <i class="bi bi-plus-lg"></i> Cargar historial
+    </a>
     {% endif %}
 </div>
 {% endblock %}
@@ -162,8 +260,8 @@
         const remaining = Math.max(0, 100 - probValue);
         let color;
         if (probValue >= 70) color = 'rgba(25, 135, 84, 0.9)';
-        else if (probValue >= 40) color = 'rgba(255, 193, 7, 0.9)';
-        else color = 'rgba(108, 117, 125, 0.9)';
+        else if (probValue >= 40) color = 'rgba(245, 158, 11, 0.9)';
+        else color = 'rgba(100, 116, 139, 0.9)';
 
         new Chart(probCanvas, {
             type: 'doughnut',
@@ -171,7 +269,7 @@
                 labels: ['Probabilidad', 'Restante'],
                 datasets: [{
                     data: [probValue, remaining],
-                    backgroundColor: [color, 'rgba(231, 233, 237, 0.9)'],
+                    backgroundColor: [color, 'rgba(226, 232, 240, 0.95)'],
                     borderWidth: 0
                 }]
             },

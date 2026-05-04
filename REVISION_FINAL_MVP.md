@@ -47,6 +47,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - arquitectura fase 1: cache, seguridad liviana, mantenimiento operativo y runtime ML separados de `app.py`
 - arquitectura fase 2: `auth`, `staff`, `players`, `compare`, `settings` y `dashboard` separados en blueprints con aliases legacy para no romper templates ni redirects
 - UX/UI etapa 1: menu agrupado, links activos, acciones CRUD consistentes, flash mejorado y formularios principales por secciones
+- UX/UI etapa 2 primer bloque: ficha de jugador y proyeccion con estructura visual mas clara
 - correccion de arranque local con `ADMIN_PASSWORD` configurado
 
 ### 1.1. Cierre De Observaciones De Codigo Fuente 2026-04-27
@@ -70,6 +71,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - Se extrajeron servicios internos y runtime ML manteniendo endpoints y templates estables.
 - Se movieron rutas de autenticacion, staff, jugadores, comparadores, configuracion y dashboard a blueprints, manteniendo nombres historicos de endpoints para compatibilidad.
 - Se inicio pulido visual en `ux-crud-polish`: navegacion mas clara, `Panel general`, dropdowns por familia, listados CRUD compactos y formularios ordenados.
+- Se avanzo el primer bloque de UX/UI etapa 2 sobre `player_detail.html` y `prediction.html`.
 - Se corrigio el orden de inicializacion del bootstrap de administrador para que el servidor local arranque correctamente con `ADMIN_PASSWORD`.
 
 ### 2. Smoke funcional sobre la app real del repo

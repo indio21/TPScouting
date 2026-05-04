@@ -27,18 +27,32 @@ Este documento deja preparado el siguiente bloque chico y verificable para conti
 
 UX/UI etapa 2: llevar la misma consistencia visual a pantallas internas que todavia quedaron mas heterogeneas.
 
-Orden recomendado, de menor a mayor riesgo:
+## Avance 2026-05-04
 
-1. Detalle y proyeccion de jugador:
-   - `scouting_app/templates/player_detail.html`
-   - `scouting_app/templates/prediction.html`
-2. Historial y atributos:
+Primer bloque de UX/UI etapa 2 aplicado:
+
+- `scouting_app/templates/player_detail.html` paso a una ficha mas visual, con cabecera de jugador, metricas clave, acciones compactas, ranking de puestos y atributos en formato denso.
+- `scouting_app/templates/prediction.html` paso a una pantalla de decision con resultado principal, desglose de ficha/historial, puesto recomendado, sugerencias y graficos existentes mejor integrados.
+- `scouting_app/static/styles.css` incorpora clases reutilizables para cabecera de perfil, metricas, atributos, sugerencias y paneles de proyeccion.
+- La referencia visual de ficha de jugador se uso solo como inspiracion de estructura. No se copiaron logos ni datos externos.
+- El grafico tipo ejes/scatter con imagenes de jugadores queda reservado para el bloque de comparadores, porque requiere diseno y validacion especificos de esa pantalla.
+
+Validacion del bloque:
+
+- `tests/test_pages.py`: `7 passed`.
+- Suite completa: `52 passed`, cobertura total `77%`, con los `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
+- Smoke especifico con test client sobre jugador real demo: `/player/30101` y `/player/30101/predict` respondieron `200`.
+- Smoke HTTP local: `/health`, `/` y `/login` respondieron `200` en `http://127.0.0.1:5000/`.
+
+Orden restante recomendado, de menor a mayor riesgo:
+
+1. Historial y atributos:
    - `scouting_app/templates/player_stats.html`
    - `scouting_app/templates/player_attributes.html`
-3. Comparadores:
+2. Comparadores:
    - `scouting_app/templates/compare.html`
    - `scouting_app/templates/compare_multi.html`
-4. Administracion/configuracion:
+3. Administracion/configuracion:
    - `scouting_app/templates/settings.html`
    - `scouting_app/templates/register.html`
 
@@ -84,4 +98,4 @@ git status -sb
 git log --oneline --decorate -5
 ```
 
-Luego revisar visualmente primero las plantillas de detalle/proyeccion y aplicar un cambio acotado. Si ese bloque pasa tests y smoke, seguir con historial/atributos.
+Luego revisar visualmente `player_stats.html` y `player_attributes.html`. Si ese bloque pasa tests y smoke, seguir con comparadores.
