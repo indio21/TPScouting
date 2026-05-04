@@ -241,6 +241,9 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - UX/UI etapa 2 primer bloque: `player_detail.html` y `prediction.html` fueron redisenadas como ficha/proyeccion de scouting con cabecera visual, metricas clave, acciones compactas, ranking de puestos, atributos densos y panel de decision.
 - La idea de grafico con ejes e imagenes/logos queda para el bloque de comparadores, no para este primer bloque.
 - Validacion UX/UI etapa 2 primer bloque: `7 passed` en `tests/test_pages.py`; suite completa `52 passed`, cobertura total `77%`, con `4 warnings` conocidos; smoke especifico `/player/30101` y `/player/30101/predict` respondio `200`; smoke HTTP local `/health`, `/` y `/login` respondio `200`.
+- Regla visual aprobada por el usuario: seguir la misma linea en todas las secciones, con cabecera tipo ficha profesional, verde/azul oscuro, metricas en tarjetas blancas, acciones compactas con iconos y formularios por secciones.
+- UX/UI etapa 2 segundo bloque: `player_stats.html` y `player_attributes.html` fueron redisenadas con esa misma linea visual, manteniendo cambios limitados a templates/CSS.
+- Validacion UX/UI etapa 2 segundo bloque: `7 passed` en `tests/test_pages.py`; suite completa `52 passed`, cobertura total `77%`, con `4 warnings` conocidos; smoke especifico `/player/30101/stats` y `/player/30101/attributes` respondio `200`; smoke HTTP local `/health`, `/` y `/login` respondio `200`.
 
 ## Performance
 
@@ -427,9 +430,8 @@ Hay cuatro caminos razonables:
 Recomendacion de arranque para el proximo chat:
 
 - Si la prioridad es mostrar mejor el producto: continuar desde `ux-crud-polish` con el plan de `docs/ux_ui_crud_polish_next_step_2026-05-01.md`.
-- Siguiente bloque recomendado: historial y atributos (`player_stats.html` y `player_attributes.html`).
-- Luego: comparadores, incluyendo evaluar el grafico tipo ejes/scatter con imagenes de jugadores (`compare.html`, `compare_multi.html`).
-- Despues: administracion/configuracion (`settings.html`, `register.html`).
+- Siguiente bloque recomendado: comparadores, incluyendo evaluar el grafico tipo ejes/scatter con imagenes de jugadores (`compare.html`, `compare_multi.html`).
+- Luego: administracion/configuracion (`settings.html`, `register.html`).
 - Si la prioridad es cerrar evidencia academica: pasar al Word y corregirlo contra el repo real.
 
 Antes de tocar codigo en el proximo chat, revisar:

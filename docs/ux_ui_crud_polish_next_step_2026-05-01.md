@@ -27,6 +27,12 @@ Este documento deja preparado el siguiente bloque chico y verificable para conti
 
 UX/UI etapa 2: llevar la misma consistencia visual a pantallas internas que todavia quedaron mas heterogeneas.
 
+## Regla Visual A Mantener
+
+- Mantener la misma linea visual ya aprobada: cabecera tipo ficha profesional, fondo verde/azul oscuro, metricas clave en tarjetas blancas, acciones compactas con iconos y formularios por secciones.
+- Usar la pantalla de ficha/proyeccion como referencia para nuevas secciones: estructura densa, sobria y de scouting, sin estilo de landing ni tarjetas decorativas innecesarias.
+- Priorizar consistencia entre pantallas antes que sumar efectos visuales nuevos.
+
 ## Avance 2026-05-04
 
 Primer bloque de UX/UI etapa 2 aplicado:
@@ -44,15 +50,25 @@ Validacion del bloque:
 - Smoke especifico con test client sobre jugador real demo: `/player/30101` y `/player/30101/predict` respondieron `200`.
 - Smoke HTTP local: `/health`, `/` y `/login` respondieron `200` en `http://127.0.0.1:5000/`.
 
+Segundo bloque de UX/UI etapa 2 aplicado:
+
+- `scouting_app/templates/player_stats.html` adopta la misma cabecera visual, metricas clave, formulario por secciones y tabla compacta de historial.
+- `scouting_app/templates/player_attributes.html` adopta cabecera visual, metricas clave, formulario de atributos por secciones, grafico integrado y tabla compacta.
+- `scouting_app/static/styles.css` suma utilidades reutilizables para icono de perfil, layout de carga/historial y tablas densas.
+
+Validacion del segundo bloque:
+
+- `tests/test_pages.py`: `7 passed`.
+- Suite completa: `52 passed`, cobertura total `77%`, con los `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
+- Smoke especifico con test client sobre jugador real demo: `/player/30101/stats` y `/player/30101/attributes` respondieron `200`.
+- Smoke HTTP local: `/health`, `/` y `/login` respondieron `200` en `http://127.0.0.1:5000/`.
+
 Orden restante recomendado, de menor a mayor riesgo:
 
-1. Historial y atributos:
-   - `scouting_app/templates/player_stats.html`
-   - `scouting_app/templates/player_attributes.html`
-2. Comparadores:
+1. Comparadores:
    - `scouting_app/templates/compare.html`
    - `scouting_app/templates/compare_multi.html`
-3. Administracion/configuracion:
+2. Administracion/configuracion:
    - `scouting_app/templates/settings.html`
    - `scouting_app/templates/register.html`
 
@@ -98,4 +114,4 @@ git status -sb
 git log --oneline --decorate -5
 ```
 
-Luego revisar visualmente `player_stats.html` y `player_attributes.html`. Si ese bloque pasa tests y smoke, seguir con comparadores.
+Luego revisar visualmente `compare.html` y `compare_multi.html`. En ese bloque se puede evaluar el grafico tipo ejes/scatter con imagenes de jugadores, manteniendo la misma linea visual.

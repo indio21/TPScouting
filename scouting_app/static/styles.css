@@ -64,6 +64,19 @@ body {
     background: #ffffff;
 }
 
+.profile-icon-tile {
+    width: 126px;
+    height: 126px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    color: #ecfdf5;
+    background: rgba(255, 255, 255, .12);
+    border: 2px solid rgba(255, 255, 255, .28);
+    font-size: 3rem;
+    flex: 0 0 auto;
+}
+
 .card-header {
     font-weight: 600;
 }
@@ -559,6 +572,35 @@ body {
   color: #111827;
 }
 
+.record-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 430px) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.record-form-card {
+  position: sticky;
+  top: 1rem;
+}
+
+.history-table {
+  font-size: .92rem;
+}
+
+.history-table th {
+  white-space: nowrap;
+}
+
+.history-table td {
+  vertical-align: middle;
+}
+
+.history-note-cell {
+  min-width: 180px;
+  max-width: 260px;
+}
+
 /* Alineación consistente en la navbar */
 .navbar .nav-link,
 .navbar .navbar-text,
@@ -663,7 +705,8 @@ body {
     }
 
     .profile-hero-body,
-    .projection-result {
+    .projection-result,
+    .record-layout {
         grid-template-columns: 1fr;
     }
 
@@ -732,6 +775,12 @@ body {
     .player-avatar-xl {
         width: 96px;
         height: 96px;
+    }
+
+    .profile-icon-tile {
+        width: 96px;
+        height: 96px;
+        font-size: 2.25rem;
     }
 
     .profile-identity {
