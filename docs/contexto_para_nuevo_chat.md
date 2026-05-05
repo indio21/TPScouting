@@ -437,7 +437,10 @@ Hay cuatro caminos razonables:
 Recomendacion de arranque para el proximo chat:
 
 - Si la prioridad es mostrar mejor el producto: continuar desde `ux-crud-polish` con el plan de `docs/ux_ui_crud_polish_next_step_2026-05-01.md`.
-- Siguiente bloque recomendado: analizar UX de CRUD de jugadores antes de implementar cambios. La idea pendiente es separar visualizacion de carga/edicion/eliminacion, posiblemente con modales o pantallas dedicadas.
+- Punto exacto donde quedamos: commit `a8ee6ea ux: move player history forms to offcanvas`, rama `ux-crud-polish` limpia y sincronizada.
+- Ya se separo visualizacion de carga en `player_stats.html` y `player_attributes.html`: nuevos registros se cargan en offcanvas usando los mismos endpoints existentes.
+- Ya se separo visualmente la carga masiva de jugadores en `manage_players.html`.
+- Siguiente bloque recomendado: segunda etapa CRUD de historiales de jugadores. Agregar editar/eliminar por fila para rendimiento y atributos con endpoints propios, CSRF, permisos y tests antes de tocar la UI de acciones por fila.
 - Luego: administracion/configuracion (`settings.html`, `register.html`).
 - Si la prioridad es cerrar evidencia academica: pasar al Word y corregirlo contra el repo real.
 

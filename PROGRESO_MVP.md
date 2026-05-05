@@ -403,11 +403,12 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 
 - La arquitectura por familias quedo cerrada en `reformas-complejas` con `a6d5a36`.
 - El pulido demo/entrega visual inicio en `ux-crud-polish`.
-- Siguiente UX recomendado para 2026-05-01: seguir el plan de `docs/ux_ui_crud_polish_next_step_2026-05-01.md`.
+- Siguiente UX recomendado: seguir el plan de `docs/ux_ui_crud_polish_next_step_2026-05-01.md`.
 - Primer bloque de etapa 2 ya aplicado: detalle y proyeccion de jugador (`player_detail.html` y `prediction.html`), sin tocar logica backend.
 - Segundo bloque de etapa 2 aplicado: historial/atributos (`player_stats.html` y `player_attributes.html`), sin tocar logica backend.
 - Tercer bloque de etapa 2 aplicado: comparadores (`compare.html` y `compare_multi.html`) con mapa de talento.
 - Cuarto bloque de etapa 2 aplicado: carga de rendimiento/atributos en offcanvas usando endpoints existentes y carga masiva de jugadores separada visualmente.
+- Punto de retome: commit `a8ee6ea ux: move player history forms to offcanvas`, rama `ux-crud-polish` limpia y sincronizada.
 - Siguiente bloque sugerido: segunda etapa CRUD de historiales de jugadores, agregando editar/eliminar por fila con endpoints y tests propios.
 - Despues: pantallas de administracion/configuracion.
 - Si la prioridad es academica: conviene pasar a alinear el Word con el MVP real.

@@ -93,6 +93,23 @@ Validacion del cuarto bloque:
 - Smoke especifico con test client sobre jugador real demo: `/players/manage`, `/player/30101/stats` y `/player/30101/attributes` respondieron `200` y renderizaron los nuevos elementos.
 - Smoke HTTP local: `/health`, `/` y `/login` respondieron `200` en `http://127.0.0.1:5000/`.
 
+## Punto De Retome 2026-05-06
+
+- Rama: `ux-crud-polish`.
+- Ultimo commit funcional publicado: `a8ee6ea ux: move player history forms to offcanvas`.
+- Estado al cerrar: rama limpia y sincronizada con `origin/ux-crud-polish`.
+- Quedamos justo antes de implementar la segunda etapa CRUD de historiales.
+- Lo que ya esta hecho: carga de rendimiento y atributos en offcanvas usando los endpoints existentes; carga masiva de jugadores separada visualmente.
+- Lo que no esta hecho todavia: editar/eliminar registros individuales de rendimiento o atributos.
+
+Arranque recomendado:
+
+1. Revisar `scouting_app/routes/players.py` para identificar modelos y permisos actuales de `PlayerStats` y `PlayerAttributeHistory`.
+2. Agregar endpoints chicos y explicitos para editar/eliminar registros de rendimiento.
+3. Agregar tests de permisos, CSRF, validacion de rangos y redireccion para esos endpoints.
+4. Repetir el mismo patron para historial de atributos.
+5. Recien despues actualizar las tablas para mostrar acciones por fila.
+
 Orden restante recomendado, de menor a mayor riesgo:
 
 1. Segunda etapa CRUD de historiales de jugadores:
