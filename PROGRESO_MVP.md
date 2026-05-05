@@ -55,6 +55,9 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - UX/UI etapa 2 tercer bloque: `compare.html` y `compare_multi.html` quedan alineadas al mismo formato visual; el comparador multiple suma mapa visual de talento con fotos de hasta 40 jugadores.
 - La ruta de comparadores solo agrega datos visuales existentes para renderizado (`photo_url`, edad, club y fit score), sin cambiar la logica de negocio.
 - Validacion UX/UI etapa 2 tercer bloque: `7 passed` en `tests/test_pages.py`; suite completa `52 passed` con cobertura total `77%`; smoke especifico de comparadores `GET/POST` respondio `200`.
+- UX/UI etapa 2 cuarto bloque: `player_stats.html` y `player_attributes.html` separan visualizacion de carga usando offcanvas lateral para nuevos registros, sin cambiar endpoints ni nombres de campos.
+- UX/UI etapa 2 cuarto bloque: `manage_players.html` separa la carga individual de la carga masiva, dejando la importacion por texto en un bloque propio con guia de formato.
+- Validacion UX/UI etapa 2 cuarto bloque: `7 passed` en `tests/test_pages.py`; suite completa `52 passed` con cobertura total `77%`; smoke especifico `/players/manage`, `/player/30101/stats` y `/player/30101/attributes` respondio `200`.
 
 ## Actualizacion 2026-04-23
 
@@ -384,6 +387,7 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - UX/UI etapa 2 primer bloque: ficha de jugador y proyeccion visualmente pulidas
 - UX/UI etapa 2 segundo bloque: historial de rendimiento y atributos visualmente pulidos
 - UX/UI etapa 2 tercer bloque: comparadores visualmente pulidos con mapa de talento
+- UX/UI etapa 2 cuarto bloque: carga de historiales en offcanvas y carga masiva de jugadores separada visualmente
 - Correccion de arranque local con `ADMIN_PASSWORD` configurado
 
 ## Puntos Que Siguen Parciales O Pendientes
@@ -403,7 +407,8 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Primer bloque de etapa 2 ya aplicado: detalle y proyeccion de jugador (`player_detail.html` y `prediction.html`), sin tocar logica backend.
 - Segundo bloque de etapa 2 aplicado: historial/atributos (`player_stats.html` y `player_attributes.html`), sin tocar logica backend.
 - Tercer bloque de etapa 2 aplicado: comparadores (`compare.html` y `compare_multi.html`) con mapa de talento.
-- Siguiente bloque sugerido: analizar UX de CRUD de jugadores antes de implementar cambios, especialmente carga/edicion/eliminacion en modales o pantallas separadas de la visualizacion.
+- Cuarto bloque de etapa 2 aplicado: carga de rendimiento/atributos en offcanvas usando endpoints existentes y carga masiva de jugadores separada visualmente.
+- Siguiente bloque sugerido: segunda etapa CRUD de historiales de jugadores, agregando editar/eliminar por fila con endpoints y tests propios.
 - Despues: pantallas de administracion/configuracion.
 - Si la prioridad es academica: conviene pasar a alinear el Word con el MVP real.
 - Si la prioridad vuelve a ser tecnica: el siguiente frente fuerte es rendimiento del dashboard a escala.

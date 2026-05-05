@@ -247,6 +247,10 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - UX/UI etapa 2 tercer bloque: `compare.html` y `compare_multi.html` fueron redisenadas con la misma linea visual. El comparador multiple ahora incluye mapa visual de talento con fotos de hasta 40 jugadores, usando top 10 por familia de puesto.
 - `routes/compare.py` solo agrega datos visuales ya existentes para el mapa (`photo_url`, edad, club y fit score); no cambia la logica de negocio de comparacion.
 - Validacion UX/UI etapa 2 tercer bloque: `7 passed` en `tests/test_pages.py`; suite completa `52 passed`, cobertura total `77%`, con `4 warnings` conocidos; smoke especifico `GET/POST /compare` y `GET/POST /compare/multi` respondio `200`; smoke HTTP local `/health`, `/` y `/login` respondio `200`.
+- UX/UI etapa 2 cuarto bloque: `player_stats.html` y `player_attributes.html` separan visualizacion de carga. Los formularios de nuevos registros pasan a offcanvas lateral usando los mismos endpoints, campos y CSRF.
+- En esta etapa no se agregaron editar/eliminar por fila para historiales; queda como segunda etapa con endpoints y tests propios.
+- `manage_players.html` separa la carga individual de la carga masiva. La carga masiva queda como bloque propio con guia de formato, ejemplo y textarea mas legible.
+- Validacion UX/UI etapa 2 cuarto bloque: `7 passed` en `tests/test_pages.py`; suite completa `52 passed`, cobertura total `77%`, con `4 warnings` conocidos; smoke especifico `/players/manage`, `/player/30101/stats` y `/player/30101/attributes` respondio `200`; smoke HTTP local `/health`, `/` y `/login` respondio `200`.
 
 ## Performance
 

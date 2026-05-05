@@ -44,13 +44,11 @@
                     <i class="bi bi-graph-up"></i> Proyeccion
                 </a>
                 {% if can_edit_player_data %}
-                <form method="post" class="m-0">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                    <input type="hidden" name="action" value="recalculate">
-                    <button class="btn btn-outline-light btn-sm d-flex align-items-center gap-2" type="submit">
-                        <i class="bi bi-arrow-repeat"></i> Recalcular
-                    </button>
-                </form>
+                <button class="btn btn-warning btn-sm d-flex align-items-center gap-2" type="button"
+                        data-bs-toggle="offcanvas" data-bs-target="#statsRecordOffcanvas"
+                        aria-controls="statsRecordOffcanvas">
+                    <i class="bi bi-plus-lg"></i> Nuevo registro
+                </button>
                 {% endif %}
             </div>
         </div>
@@ -80,107 +78,19 @@
     </div>
 </div>
 
-<div class="record-layout">
-    <section class="card record-form-card">
-        <div class="card-header d-flex align-items-center gap-2">
-            <i class="bi bi-plus-circle"></i>
-            {% if can_edit_player_data %}Nuevo registro{% else %}Carga bloqueada{% endif %}
+<section class="card records-panel">
+    <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
+        <div>
+            <span>Historial completo</span>
+            <small class="text-muted d-block">Registros ordenados del mas reciente al mas antiguo.</small>
         </div>
-        <div class="card-body">
+        <div class="page-actions">
             {% if can_edit_player_data %}
-            <form method="post">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <input type="hidden" name="action" value="add">
-
-                <div class="form-section">
-                    <div class="form-section-title">Datos del periodo</div>
-                    <div class="mb-3">
-                        <label class="form-label" for="record_date">Fecha</label>
-                        <input class="form-control" type="date" id="record_date" name="record_date" value="{{ request.form.record_date or '' }}" required>
-                        <div class="form-text">Usa la fecha del partido, semana o microciclo observado.</div>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <label class="form-label" for="matches_played">Partidos</label>
-                            <input id="matches_played" class="form-control" type="number" name="matches_played" min="0" value="{{ request.form.matches_played or 0 }}">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label" for="minutes_played">Minutos</label>
-                            <input id="minutes_played" class="form-control" type="number" name="minutes_played" min="0" value="{{ request.form.minutes_played or 0 }}">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-section">
-                    <div class="form-section-title">Produccion</div>
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <label class="form-label" for="goals">Goles</label>
-                            <input id="goals" class="form-control" type="number" name="goals" min="0" value="{{ request.form.goals or 0 }}">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label" for="assists">Asistencias</label>
-                            <input id="assists" class="form-control" type="number" name="assists" min="0" value="{{ request.form.assists or 0 }}">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label" for="yellow_cards">Amarillas</label>
-                            <input id="yellow_cards" class="form-control" type="number" name="yellow_cards" min="0" value="{{ request.form.yellow_cards or 0 }}">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label" for="red_cards">Rojas</label>
-                            <input id="red_cards" class="form-control" type="number" name="red_cards" min="0" value="{{ request.form.red_cards or 0 }}">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-section">
-                    <div class="form-section-title">Eficiencia y valoracion</div>
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label" for="pass_accuracy">% pases acertados</label>
-                            <input id="pass_accuracy" class="form-control" type="number" name="pass_accuracy" min="0" max="100" step="0.1" value="{{ request.form.pass_accuracy or '' }}" placeholder="Ej: 85.4">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label" for="shot_accuracy">% disparos a puerta</label>
-                            <input id="shot_accuracy" class="form-control" type="number" name="shot_accuracy" min="0" max="100" step="0.1" value="{{ request.form.shot_accuracy or '' }}">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label" for="duels_won_pct">% duelos ganados</label>
-                            <input id="duels_won_pct" class="form-control" type="number" name="duels_won_pct" min="0" max="100" step="0.1" value="{{ request.form.duels_won_pct or '' }}">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label" for="final_score">Valoracion final (1 a 10)</label>
-                            <input id="final_score" class="form-control" type="number" name="final_score" min="1" max="10" step="0.1" value="{{ request.form.final_score or '' }}" placeholder="Vacio para calcular automaticamente">
-                            <div class="form-text">Si lo dejas vacio, la app calcula un puntaje sugerido.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-section">
-                    <div class="form-section-title">Observaciones</div>
-                    <label class="form-label" for="notes">Notas</label>
-                    <textarea id="notes" class="form-control" name="notes" rows="3" placeholder="Lesion leve, buen liderazgo, se mostro ansioso...">{{ request.form.notes or '' }}</textarea>
-                </div>
-
-                <div class="d-grid mt-4">
-                    <button class="btn btn-success d-flex align-items-center justify-content-center gap-2" type="submit">
-                        <i class="bi bi-check2-circle"></i> Guardar registro
-                    </button>
-                </div>
-            </form>
-            {% else %}
-            <p class="text-muted mb-0">El rol director puede consultar el historial, pero no cargar ni recalcular registros.</p>
-            {% endif %}
-        </div>
-    </section>
-
-    <section class="card">
-        <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
-            <div>
-                <span>Historial completo</span>
-                <small class="text-muted d-block">Registros ordenados del mas reciente al mas antiguo.</small>
-            </div>
-            {% if can_edit_player_data %}
+            <button class="btn btn-success btn-sm d-flex align-items-center gap-2" type="button"
+                    data-bs-toggle="offcanvas" data-bs-target="#statsRecordOffcanvas"
+                    aria-controls="statsRecordOffcanvas">
+                <i class="bi bi-plus-lg"></i> Nuevo registro
+            </button>
             <form method="post" class="m-0">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="hidden" name="action" value="recalculate">
@@ -188,60 +98,162 @@
                     <i class="bi bi-arrow-repeat"></i> Recalcular potencial
                 </button>
             </form>
+            {% else %}
+            <span class="badge text-bg-light border">Solo lectura</span>
             {% endif %}
         </div>
-        <div class="card-body">
-            {% if stats %}
-            <div class="table-responsive">
-                <table class="table table-sm table-striped table-hover align-middle history-table">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Part.</th>
-                            <th>Min.</th>
-                            <th>Goles</th>
-                            <th>Asist.</th>
-                            <th>% pases</th>
-                            <th>% disparos</th>
-                            <th>% duelos</th>
-                            <th>Puntaje</th>
-                            <th class="history-note-cell">Notas</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for stat in stats %}
-                        <tr>
-                            <td>{{ stat.record_date.strftime('%Y-%m-%d') if stat.record_date else '-' }}</td>
-                            <td>{{ stat.matches_played }}</td>
-                            <td>{{ stat.minutes_played }}</td>
-                            <td>{{ stat.goals }}</td>
-                            <td>{{ stat.assists }}</td>
-                            <td>{{ stat.pass_accuracy if stat.pass_accuracy is not none else '--' }}</td>
-                            <td>{{ stat.shot_accuracy if stat.shot_accuracy is not none else '--' }}</td>
-                            <td>{{ stat.duels_won_pct if stat.duels_won_pct is not none else '--' }}</td>
-                            <td>{{ stat.final_score if stat.final_score is not none else '--' }}</td>
-                            <td class="history-note-cell">{{ stat.notes or '-' }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    </div>
+    <div class="card-body">
+        {% if stats %}
+        <div class="table-responsive">
+            <table class="table table-sm table-striped table-hover align-middle history-table">
+                <thead class="table-light">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Part.</th>
+                        <th>Min.</th>
+                        <th>Goles</th>
+                        <th>Asist.</th>
+                        <th>% pases</th>
+                        <th>% disparos</th>
+                        <th>% duelos</th>
+                        <th>Puntaje</th>
+                        <th class="history-note-cell">Notas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in stats %}
+                    <tr>
+                        <td>{{ stat.record_date.strftime('%Y-%m-%d') if stat.record_date else '-' }}</td>
+                        <td>{{ stat.matches_played }}</td>
+                        <td>{{ stat.minutes_played }}</td>
+                        <td>{{ stat.goals }}</td>
+                        <td>{{ stat.assists }}</td>
+                        <td>{{ stat.pass_accuracy if stat.pass_accuracy is not none else '--' }}</td>
+                        <td>{{ stat.shot_accuracy if stat.shot_accuracy is not none else '--' }}</td>
+                        <td>{{ stat.duels_won_pct if stat.duels_won_pct is not none else '--' }}</td>
+                        <td>{{ stat.final_score if stat.final_score is not none else '--' }}</td>
+                        <td class="history-note-cell">{{ stat.notes or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="alert alert-light border mt-3 mb-0">
+            <div class="fw-semibold mb-1">Resumen operativo</div>
+            <div class="d-flex flex-wrap gap-3 small">
+                <span>Partidos: {{ summary.total_matches }}</span>
+                <span>Goles: {{ summary.total_goals }}</span>
+                <span>Asistencias: {{ summary.total_assists }}</span>
+                <span>Minutos: {{ summary.total_minutes }}</span>
+                <span>Puntaje promedio: {{ summary.avg_final_score or '--' }}</span>
             </div>
-            <div class="alert alert-light border mt-3 mb-0">
-                <div class="fw-semibold mb-1">Resumen operativo</div>
-                <div class="d-flex flex-wrap gap-3 small">
-                    <span>Partidos: {{ summary.total_matches }}</span>
-                    <span>Goles: {{ summary.total_goals }}</span>
-                    <span>Asistencias: {{ summary.total_assists }}</span>
-                    <span>Minutos: {{ summary.total_minutes }}</span>
-                    <span>Puntaje promedio: {{ summary.avg_final_score or '--' }}</span>
+        </div>
+        {% else %}
+        <div class="empty-state-inline">
+            <i class="bi bi-clipboard2-pulse"></i>
+            <div>
+                <strong>Todavia no hay registros cargados.</strong>
+                <span>{% if can_edit_player_data %}Usa Nuevo registro para iniciar el historial.{% else %}El rol director puede consultar registros cuando existan.{% endif %}</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{% if can_edit_player_data %}
+<div class="offcanvas offcanvas-end record-offcanvas" tabindex="-1" id="statsRecordOffcanvas" aria-labelledby="statsRecordOffcanvasLabel">
+    <div class="offcanvas-header">
+        <div>
+            <span class="profile-eyebrow">Carga de rendimiento</span>
+            <h2 class="h5 mb-0" id="statsRecordOffcanvasLabel">Nuevo registro</h2>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="action" value="add">
+
+            <div class="form-section">
+                <div class="form-section-title">Datos del periodo</div>
+                <div class="mb-3">
+                    <label class="form-label" for="record_date">Fecha</label>
+                    <input class="form-control" type="date" id="record_date" name="record_date" value="{{ request.form.record_date or '' }}" required>
+                    <div class="form-text">Usa la fecha del partido, semana o microciclo observado.</div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label" for="matches_played">Partidos</label>
+                        <input id="matches_played" class="form-control" type="number" name="matches_played" min="0" value="{{ request.form.matches_played or 0 }}">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label" for="minutes_played">Minutos</label>
+                        <input id="minutes_played" class="form-control" type="number" name="minutes_played" min="0" value="{{ request.form.minutes_played or 0 }}">
+                    </div>
                 </div>
             </div>
-            {% else %}
-            <p class="text-muted mb-0">Todavia no hay registros cargados. Usa el formulario para comenzar.</p>
-            {% endif %}
-        </div>
-    </section>
+
+            <div class="form-section">
+                <div class="form-section-title">Produccion</div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label" for="goals">Goles</label>
+                        <input id="goals" class="form-control" type="number" name="goals" min="0" value="{{ request.form.goals or 0 }}">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label" for="assists">Asistencias</label>
+                        <input id="assists" class="form-control" type="number" name="assists" min="0" value="{{ request.form.assists or 0 }}">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label" for="yellow_cards">Amarillas</label>
+                        <input id="yellow_cards" class="form-control" type="number" name="yellow_cards" min="0" value="{{ request.form.yellow_cards or 0 }}">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label" for="red_cards">Rojas</label>
+                        <input id="red_cards" class="form-control" type="number" name="red_cards" min="0" value="{{ request.form.red_cards or 0 }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Eficiencia y valoracion</div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label" for="pass_accuracy">% pases acertados</label>
+                        <input id="pass_accuracy" class="form-control" type="number" name="pass_accuracy" min="0" max="100" step="0.1" value="{{ request.form.pass_accuracy or '' }}" placeholder="Ej: 85.4">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="shot_accuracy">% disparos a puerta</label>
+                        <input id="shot_accuracy" class="form-control" type="number" name="shot_accuracy" min="0" max="100" step="0.1" value="{{ request.form.shot_accuracy or '' }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="duels_won_pct">% duelos ganados</label>
+                        <input id="duels_won_pct" class="form-control" type="number" name="duels_won_pct" min="0" max="100" step="0.1" value="{{ request.form.duels_won_pct or '' }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="final_score">Valoracion final (1 a 10)</label>
+                        <input id="final_score" class="form-control" type="number" name="final_score" min="1" max="10" step="0.1" value="{{ request.form.final_score or '' }}" placeholder="Vacio para calcular automaticamente">
+                        <div class="form-text">Si lo dejas vacio, la app calcula un puntaje sugerido.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Observaciones</div>
+                <label class="form-label" for="notes">Notas</label>
+                <textarea id="notes" class="form-control" name="notes" rows="3" placeholder="Lesion leve, buen liderazgo, se mostro ansioso...">{{ request.form.notes or '' }}</textarea>
+            </div>
+
+            <div class="d-grid mt-4">
+                <button class="btn btn-success d-flex align-items-center justify-content-center gap-2" type="submit">
+                    <i class="bi bi-check2-circle"></i> Guardar registro
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
+{% endif %}
 
 <div class="mt-4 crud-actions">
     <a class="btn btn-secondary d-flex align-items-center gap-2" href="{{ url_for('player_detail', player_id=player.id) }}">
@@ -254,4 +266,18 @@
         <i class="bi bi-graph-up"></i> Ir a proyeccion
     </a>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% if can_edit_player_data and request.method == 'POST' and request.form.get('action') == 'add' %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const offcanvasEl = document.getElementById('statsRecordOffcanvas');
+    if (offcanvasEl && window.bootstrap) {
+        bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl).show();
+    }
+});
+</script>
+{% endif %}
 {% endblock %}

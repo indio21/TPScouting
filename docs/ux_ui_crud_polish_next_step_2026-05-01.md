@@ -5,8 +5,8 @@ Este documento deja preparado el siguiente bloque chico y verificable para conti
 ## Estado Actual
 
 - Rama activa: `ux-crud-polish`.
-- Commit base del contexto para retomar: `06fb998 docs: prepare next ux polish step`.
-- Commit UX principal ya publicado: `8414d06 ux: polish navigation and crud screens`.
+- Commit base original del contexto UX: `06fb998 docs: prepare next ux polish step`.
+- Ultimo commit publicado antes de este bloque: `f97c684 ux: polish player comparators`.
 - La rama esta sincronizada con `origin/ux-crud-polish`.
 - El servidor local quedo probado en `http://127.0.0.1:5000/`.
 
@@ -77,14 +77,36 @@ Validacion del tercer bloque:
 - Smoke especifico con test client: `GET /compare`, `GET /compare/multi`, `POST /compare` y `POST /compare/multi` respondieron `200`.
 - Smoke HTTP local: `/health`, `/` y `/login` respondieron `200` en `http://127.0.0.1:5000/`.
 
+Cuarto bloque de UX/UI etapa 2 aplicado:
+
+- `scouting_app/templates/player_stats.html` ahora separa la visualizacion del historial y la carga de nuevos registros: el formulario de rendimiento se abre en un offcanvas lateral.
+- `scouting_app/templates/player_attributes.html` aplica el mismo criterio: grafico/historial quedan como foco de lectura y la carga de atributos se abre en offcanvas.
+- Ambos formularios conservan los endpoints existentes (`POST` sobre la misma pantalla), los mismos nombres de campos y el mismo CSRF.
+- No se agregaron todavia acciones de editar/eliminar por fila en historial. Eso queda para una segunda etapa con endpoints y tests propios.
+- `scouting_app/templates/manage_players.html` separa visualmente la carga individual de la carga masiva. La importacion masiva queda como bloque propio, con guia de formato, ejemplo y textarea mas legible.
+- `scouting_app/static/styles.css` suma utilidades para offcanvas de registros, estados vacios y carga masiva.
+
+Validacion del cuarto bloque:
+
+- `tests/test_pages.py`: `7 passed`.
+- Suite completa: `52 passed`, cobertura total `77%`, con los `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
+- Smoke especifico con test client sobre jugador real demo: `/players/manage`, `/player/30101/stats` y `/player/30101/attributes` respondieron `200` y renderizaron los nuevos elementos.
+- Smoke HTTP local: `/health`, `/` y `/login` respondieron `200` en `http://127.0.0.1:5000/`.
+
 Orden restante recomendado, de menor a mayor riesgo:
 
-1. Analizar UX de CRUD de jugadores antes de implementar:
-   - carga/edicion de rendimiento
-   - carga/edicion de atributos
-   - historiales asociados a jugador
-   - posible uso de modales para separar carga de visualizacion
-2. Administracion/configuracion:
+1. Segunda etapa CRUD de historiales de jugadores:
+   - editar registros de rendimiento
+   - eliminar registros de rendimiento
+   - editar registros de atributos
+   - eliminar registros de atributos
+   - agregar endpoints y tests propios para cada accion mutante
+2. Revisar si existen otros historiales asociados a jugador que ameriten UI propia:
+   - partidos/participaciones
+   - evaluaciones fisicas
+   - disponibilidad
+   - reportes scout
+3. Administracion/configuracion:
    - `scouting_app/templates/settings.html`
    - `scouting_app/templates/register.html`
 

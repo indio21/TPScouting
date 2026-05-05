@@ -50,6 +50,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - UX/UI etapa 2 primer bloque: ficha de jugador y proyeccion con estructura visual mas clara
 - UX/UI etapa 2 segundo bloque: historial de rendimiento y atributos con la misma linea visual
 - UX/UI etapa 2 tercer bloque: comparadores con la misma linea visual y mapa de talento
+- UX/UI etapa 2 cuarto bloque: carga de historiales en offcanvas y carga masiva de jugadores separada visualmente
 - correccion de arranque local con `ADMIN_PASSWORD` configurado
 
 ### 1.1. Cierre De Observaciones De Codigo Fuente 2026-04-27
@@ -76,6 +77,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - Se avanzo el primer bloque de UX/UI etapa 2 sobre `player_detail.html` y `prediction.html`.
 - Se avanzo el segundo bloque de UX/UI etapa 2 sobre `player_stats.html` y `player_attributes.html`.
 - Se avanzo el tercer bloque de UX/UI etapa 2 sobre `compare.html` y `compare_multi.html`.
+- Se avanzo el cuarto bloque de UX/UI etapa 2: nuevos registros de rendimiento/atributos en offcanvas usando endpoints existentes y carga masiva de jugadores como bloque separado.
 - Se corrigio el orden de inicializacion del bootstrap de administrador para que el servidor local arranque correctamente con `ADMIN_PASSWORD`.
 
 ### 2. Smoke funcional sobre la app real del repo
@@ -154,4 +156,4 @@ Estos puntos siguen siendo reales y no se deben ocultar:
 
 Con la evidencia actual, el MVP queda funcional, coherente con su alcance acotado y bastante mas defendible que al inicio de la revision. La rama `training` queda como base estable inicial, `reformas-finales` cerro las reformas livianas y `reformas-complejas` concentro los cambios estructurales hasta cerrar la fase 2 de blueprints por familia en `9f02b3c`. La siguiente etapa ya no es seguir separando rutas, sino elegir entre tres frentes reales: pulido UX/UI y CRUDs para mejorar la demo, rendimiento del dashboard a escala, o correccion del Word para que refleje fielmente este estado real.
 
-Para continuar el pulido UX/UI en `ux-crud-polish`, el siguiente bloque chico quedo documentado en `docs/ux_ui_crud_polish_next_step_2026-05-01.md`.
+Para continuar el pulido UX/UI en `ux-crud-polish`, el siguiente bloque chico recomendado es la segunda etapa CRUD de historiales de jugadores: editar/eliminar registros por fila con endpoints y tests propios.

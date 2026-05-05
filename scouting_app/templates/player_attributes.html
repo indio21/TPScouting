@@ -44,13 +44,11 @@
                     <i class="bi bi-graph-up"></i> Proyeccion
                 </a>
                 {% if can_edit_player_data %}
-                <form method="post" class="m-0">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                    <input type="hidden" name="action" value="recalculate">
-                    <button class="btn btn-outline-light btn-sm d-flex align-items-center gap-2" type="submit">
-                        <i class="bi bi-arrow-repeat"></i> Recalcular
-                    </button>
-                </form>
+                <button class="btn btn-warning btn-sm d-flex align-items-center gap-2" type="button"
+                        data-bs-toggle="offcanvas" data-bs-target="#attributesRecordOffcanvas"
+                        aria-controls="attributesRecordOffcanvas">
+                    <i class="bi bi-plus-lg"></i> Nuevo registro
+                </button>
                 {% endif %}
             </div>
         </div>
@@ -80,64 +78,20 @@
     </div>
 </div>
 
-<div class="record-layout">
-    <section class="card record-form-card">
-        <div class="card-header d-flex align-items-center gap-2">
-            <i class="bi bi-plus-circle"></i>
-            {% if can_edit_player_data %}Nuevo registro{% else %}Carga bloqueada{% endif %}
-        </div>
-        <div class="card-body">
-            {% if can_edit_player_data %}
-            <form method="post">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <input type="hidden" name="action" value="add">
-
-                <div class="form-section">
-                    <div class="form-section-title">Datos de evaluacion</div>
-                    <label class="form-label" for="record_date">Fecha</label>
-                    <input type="date" class="form-control" id="record_date" name="record_date" value="{{ request.form.record_date or '' }}" required>
-                    <div class="form-text">Usa la fecha del partido, microciclo o evaluacion.</div>
-                </div>
-
-                <div class="form-section">
-                    <div class="form-section-title">Atributos 0-20</div>
-                    <div class="row g-3">
-                        {% for field, label in attribute_labels.items() %}
-                        <div class="col-6">
-                            <label class="form-label" for="{{ field }}">{{ label }}</label>
-                            <input id="{{ field }}" type="number" class="form-control" name="{{ field }}" min="0" max="20" value="{{ request.form.get(field, '') }}" placeholder="0-20">
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <div class="form-text mt-2">Carga solo los atributos observados. Los campos vacios no pisan la ficha actual.</div>
-                </div>
-
-                <div class="form-section">
-                    <div class="form-section-title">Observaciones</div>
-                    <label class="form-label" for="notes">Notas</label>
-                    <textarea id="notes" class="form-control" name="notes" rows="3" placeholder="Ej: mejoro velocidad, trabajar toma de decisiones bajo presion.">{{ request.form.notes or '' }}</textarea>
-                </div>
-
-                <div class="d-grid mt-4">
-                    <button class="btn btn-success d-flex align-items-center justify-content-center gap-2" type="submit">
-                        <i class="bi bi-check2-circle"></i> Guardar registro
-                    </button>
-                </div>
-            </form>
-            {% else %}
-            <p class="text-muted mb-0">El rol director puede consultar la evolucion de atributos, pero no cargar cambios ni recalcular potencial.</p>
-            {% endif %}
-        </div>
-    </section>
-
-    <div class="d-grid gap-4">
-        <section class="card">
-            <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
-                <div>
-                    <span>Resumen visual</span>
-                    <small class="text-muted d-block">Evolucion tecnica en escala 0-20.</small>
-                </div>
+<div class="d-grid gap-4">
+    <section class="card records-panel">
+        <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
+            <div>
+                <span>Resumen visual</span>
+                <small class="text-muted d-block">Evolucion tecnica en escala 0-20.</small>
+            </div>
+            <div class="page-actions">
                 {% if can_edit_player_data %}
+                <button class="btn btn-success btn-sm d-flex align-items-center gap-2" type="button"
+                        data-bs-toggle="offcanvas" data-bs-target="#attributesRecordOffcanvas"
+                        aria-controls="attributesRecordOffcanvas">
+                    <i class="bi bi-plus-lg"></i> Nuevo registro
+                </button>
                 <form method="post" class="m-0">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <input type="hidden" name="action" value="recalculate">
@@ -145,57 +99,115 @@
                         <i class="bi bi-arrow-repeat"></i> Recalcular potencial
                     </button>
                 </form>
-                {% endif %}
-            </div>
-            <div class="card-body">
-                {% if payload.labels %}
-                <div class="timeline-wrapper">
-                    <canvas id="attributeChart" height="260"></canvas>
-                </div>
                 {% else %}
-                <p class="text-muted mb-0">Carga al menos un registro para ver la evolucion en el grafico.</p>
+                <span class="badge text-bg-light border">Solo lectura</span>
                 {% endif %}
             </div>
-        </section>
+        </div>
+        <div class="card-body">
+            {% if payload.labels %}
+            <div class="timeline-wrapper">
+                <canvas id="attributeChart" height="260"></canvas>
+            </div>
+            {% else %}
+            <div class="empty-state-inline">
+                <i class="bi bi-bar-chart-line"></i>
+                <div>
+                    <strong>Sin evolucion cargada.</strong>
+                    <span>{% if can_edit_player_data %}Usa Nuevo registro para iniciar el grafico.{% else %}El rol director puede consultar registros cuando existan.{% endif %}</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </section>
 
-        <section class="card">
-            <div class="card-header">
-                <span>Historial de atributos</span>
-                <small class="text-muted d-block">Registros ordenados del mas reciente al mas antiguo.</small>
-            </div>
-            <div class="card-body">
-                {% if history %}
-                <div class="table-responsive">
-                    <table class="table table-sm table-striped table-hover align-middle history-table">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Fecha</th>
-                                {% for field, label in attribute_labels.items() %}
-                                <th>{{ label }}</th>
-                                {% endfor %}
-                                <th class="history-note-cell">Notas</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for entry in history %}
-                            <tr>
-                                <td>{{ entry.record_date.strftime('%Y-%m-%d') if entry.record_date else '-' }}</td>
-                                {% for field, label in attribute_labels.items() %}
-                                <td>{{ entry|attr(field) if entry|attr(field) is not none else '--' }}</td>
-                                {% endfor %}
-                                <td class="history-note-cell">{{ entry.notes or '-' }}</td>
-                            </tr>
+    <section class="card">
+        <div class="card-header">
+            <span>Historial de atributos</span>
+            <small class="text-muted d-block">Registros ordenados del mas reciente al mas antiguo.</small>
+        </div>
+        <div class="card-body">
+            {% if history %}
+            <div class="table-responsive">
+                <table class="table table-sm table-striped table-hover align-middle history-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            {% for field, label in attribute_labels.items() %}
+                            <th>{{ label }}</th>
                             {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <p class="text-muted mb-0">Aun no se registraron cambios de atributos para este jugador.</p>
-                {% endif %}
+                            <th class="history-note-cell">Notas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in history %}
+                        <tr>
+                            <td>{{ entry.record_date.strftime('%Y-%m-%d') if entry.record_date else '-' }}</td>
+                            {% for field, label in attribute_labels.items() %}
+                            <td>{{ entry|attr(field) if entry|attr(field) is not none else '--' }}</td>
+                            {% endfor %}
+                            <td class="history-note-cell">{{ entry.notes or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        </section>
+            {% else %}
+            <p class="text-muted mb-0">Aun no se registraron cambios de atributos para este jugador.</p>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+{% if can_edit_player_data %}
+<div class="offcanvas offcanvas-end record-offcanvas" tabindex="-1" id="attributesRecordOffcanvas" aria-labelledby="attributesRecordOffcanvasLabel">
+    <div class="offcanvas-header">
+        <div>
+            <span class="profile-eyebrow">Carga de atributos</span>
+            <h2 class="h5 mb-0" id="attributesRecordOffcanvasLabel">Nuevo registro</h2>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="action" value="add">
+
+            <div class="form-section">
+                <div class="form-section-title">Datos de evaluacion</div>
+                <label class="form-label" for="record_date">Fecha</label>
+                <input type="date" class="form-control" id="record_date" name="record_date" value="{{ request.form.record_date or '' }}" required>
+                <div class="form-text">Usa la fecha del partido, microciclo o evaluacion.</div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Atributos 0-20</div>
+                <div class="row g-3">
+                    {% for field, label in attribute_labels.items() %}
+                    <div class="col-6">
+                        <label class="form-label" for="{{ field }}">{{ label }}</label>
+                        <input id="{{ field }}" type="number" class="form-control" name="{{ field }}" min="0" max="20" value="{{ request.form.get(field, '') }}" placeholder="0-20">
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="form-text mt-2">Carga solo los atributos observados. Los campos vacios no pisan la ficha actual.</div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Observaciones</div>
+                <label class="form-label" for="notes">Notas</label>
+                <textarea id="notes" class="form-control" name="notes" rows="3" placeholder="Ej: mejoro velocidad, trabajar toma de decisiones bajo presion.">{{ request.form.notes or '' }}</textarea>
+            </div>
+
+            <div class="d-grid mt-4">
+                <button class="btn btn-success d-flex align-items-center justify-content-center gap-2" type="submit">
+                    <i class="bi bi-check2-circle"></i> Guardar registro
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+{% endif %}
 
 <div class="mt-4 crud-actions">
     <a class="btn btn-secondary d-flex align-items-center gap-2" href="{{ url_for('player_detail', player_id=player.id) }}">
@@ -263,6 +275,16 @@ if (attributeCtx && window.Chart) {
         }
     });
 }
+</script>
+{% endif %}
+{% if can_edit_player_data and request.method == 'POST' and request.form.get('action') == 'add' %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const offcanvasEl = document.getElementById('attributesRecordOffcanvas');
+    if (offcanvasEl && window.bootstrap) {
+        bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl).show();
+    }
+});
 </script>
 {% endif %}
 {% endblock %}
