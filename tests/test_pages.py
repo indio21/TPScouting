@@ -53,7 +53,17 @@ def test_players_blueprint_keeps_legacy_endpoint_names(app_module):
         assert url_for("manage_players") == "/players/manage"
         assert url_for("player_detail", player_id=9) == "/player/9"
         assert url_for("player_stats", player_id=9) == "/player/9/stats"
+        assert url_for("edit_player_stat", player_id=9, stat_id=3) == "/player/9/stats/3/edit"
+        assert url_for("delete_player_stat", player_id=9, stat_id=3) == "/player/9/stats/3/delete"
         assert url_for("player_attributes", player_id=9) == "/player/9/attributes"
+        assert (
+            url_for("edit_player_attribute_history", player_id=9, history_id=4)
+            == "/player/9/attributes/4/edit"
+        )
+        assert (
+            url_for("delete_player_attribute_history", player_id=9, history_id=4)
+            == "/player/9/attributes/4/delete"
+        )
         assert url_for("predict_player", player_id=9) == "/player/9/predict"
         assert url_for("edit_player", player_id=9) == "/edit_player/9"
         assert url_for("delete_player", player_id=9) == "/delete_player/9"

@@ -77,14 +77,13 @@ Validacion del tercer bloque:
 - Smoke especifico con test client: `GET /compare`, `GET /compare/multi`, `POST /compare` y `POST /compare/multi` respondieron `200`.
 - Smoke HTTP local: `/health`, `/` y `/login` respondieron `200` en `http://127.0.0.1:5000/`.
 
-Cuarto bloque de UX/UI etapa 2 aplicado:
+Cuarto bloque de UX/UI etapa 2 aplicado y ajustado:
 
-- `scouting_app/templates/player_stats.html` ahora separa la visualizacion del historial y la carga de nuevos registros: el formulario de rendimiento se abre en un offcanvas lateral.
-- `scouting_app/templates/player_attributes.html` aplica el mismo criterio: grafico/historial quedan como foco de lectura y la carga de atributos se abre en offcanvas.
+- `scouting_app/templates/player_stats.html` ahora separa la visualizacion del historial y la carga de nuevos registros: el formulario de rendimiento se abre en modal centrado.
+- `scouting_app/templates/player_attributes.html` aplica el mismo criterio: grafico/historial quedan como foco de lectura y la carga de atributos se abre en modal centrado.
 - Ambos formularios conservan los endpoints existentes (`POST` sobre la misma pantalla), los mismos nombres de campos y el mismo CSRF.
-- No se agregaron todavia acciones de editar/eliminar por fila en historial. Eso queda para una segunda etapa con endpoints y tests propios.
 - `scouting_app/templates/manage_players.html` separa visualmente la carga individual de la carga masiva. La importacion masiva queda como bloque propio, con guia de formato, ejemplo y textarea mas legible.
-- `scouting_app/static/styles.css` suma utilidades para offcanvas de registros, estados vacios y carga masiva.
+- `scouting_app/static/styles.css` suma utilidades para modales de registros, estados vacios y carga masiva.
 
 Validacion del cuarto bloque:
 
@@ -93,37 +92,47 @@ Validacion del cuarto bloque:
 - Smoke especifico con test client sobre jugador real demo: `/players/manage`, `/player/30101/stats` y `/player/30101/attributes` respondieron `200` y renderizaron los nuevos elementos.
 - Smoke HTTP local: `/health`, `/` y `/login` respondieron `200` en `http://127.0.0.1:5000/`.
 
+Quinto bloque de UX/UI etapa 2 aplicado:
+
+- Se completo la segunda etapa CRUD de historiales de jugadores.
+- `scouting_app/routes/players.py` agrega endpoints POST especificos para editar/eliminar registros de rendimiento y editar/eliminar registros de atributos.
+- `scouting_app/app.py` conserva aliases historicos/planos para los nuevos endpoints.
+- `scouting_app/templates/player_stats.html` muestra acciones por fila y abre editar/eliminar en modales centrados.
+- `scouting_app/templates/player_attributes.html` muestra acciones por fila y abre editar/eliminar en modales centrados.
+- Al editar/eliminar atributos, la ficha tecnica del jugador se resincroniza con el historial restante.
+- Se agregaron tests para aliases, CSRF, permisos de director, edicion/eliminacion de rendimiento y edicion/eliminacion de atributos.
+
+Validacion del quinto bloque:
+
+- Pruebas focales: `9 passed`.
+- `tests/test_pages.py`: `7 passed`.
+- Suite completa: `57 passed`, cobertura total `77%`, con los `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
+- Smoke especifico con test client sobre jugador real demo: `/player/30101/stats` y `/player/30101/attributes` respondieron `200` y renderizaron modales de nuevo/editar/eliminar.
+- Smoke HTTP local: `/health`, `/` y `/login` respondieron `200` en `http://127.0.0.1:5000/`.
+
 ## Punto De Retome 2026-05-06
 
 - Rama: `ux-crud-polish`.
 - Ultimo commit funcional publicado: `a8ee6ea ux: move player history forms to offcanvas`.
 - Estado al cerrar: rama limpia y sincronizada con `origin/ux-crud-polish`.
-- Quedamos justo antes de implementar la segunda etapa CRUD de historiales.
-- Lo que ya esta hecho: carga de rendimiento y atributos en offcanvas usando los endpoints existentes; carga masiva de jugadores separada visualmente.
-- Lo que no esta hecho todavia: editar/eliminar registros individuales de rendimiento o atributos.
+- Ese punto de retome fue completado el 2026-05-07.
+- Lo que ya esta hecho: carga, edicion y eliminacion de rendimiento y atributos en modales centrados; carga masiva de jugadores separada visualmente.
+- Lo que no esta hecho todavia: CRUD visual propio para otros historiales asociados a jugador, como partidos/participaciones, fisico, disponibilidad o reportes scout.
 
 Arranque recomendado:
 
-1. Revisar `scouting_app/routes/players.py` para identificar modelos y permisos actuales de `PlayerStats` y `PlayerAttributeHistory`.
-2. Agregar endpoints chicos y explicitos para editar/eliminar registros de rendimiento.
-3. Agregar tests de permisos, CSRF, validacion de rangos y redireccion para esos endpoints.
-4. Repetir el mismo patron para historial de atributos.
-5. Recien despues actualizar las tablas para mostrar acciones por fila.
+1. Revisar si conviene llevar el mismo patron de modales a otros historiales asociados a jugador.
+2. Priorizar solo los que ya tengan valor visible para demo o defensa.
+3. Despues pasar a administracion/configuracion (`settings.html`, `register.html`) o al documento Word.
 
 Orden restante recomendado, de menor a mayor riesgo:
 
-1. Segunda etapa CRUD de historiales de jugadores:
-   - editar registros de rendimiento
-   - eliminar registros de rendimiento
-   - editar registros de atributos
-   - eliminar registros de atributos
-   - agregar endpoints y tests propios para cada accion mutante
-2. Revisar si existen otros historiales asociados a jugador que ameriten UI propia:
+1. Revisar si existen otros historiales asociados a jugador que ameriten UI propia:
    - partidos/participaciones
    - evaluaciones fisicas
    - disponibilidad
    - reportes scout
-3. Administracion/configuracion:
+2. Administracion/configuracion:
    - `scouting_app/templates/settings.html`
    - `scouting_app/templates/register.html`
 

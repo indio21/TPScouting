@@ -588,23 +588,29 @@ body {
   overflow: hidden;
 }
 
-.record-offcanvas {
-  width: min(620px, 100vw);
+.record-modal .modal-content {
+  border: 0;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.record-offcanvas .offcanvas-header {
+.record-modal .modal-header {
   color: #f8fafc;
   background:
     linear-gradient(135deg, rgba(8, 47, 73, .98), rgba(6, 78, 59, .98)),
     #083344;
 }
 
-.record-offcanvas .offcanvas-body {
+.record-modal .modal-body {
   background: #f8fafc;
 }
 
-.record-offcanvas .form-section {
+.record-modal .form-section {
   box-shadow: 0 10px 28px -26px rgba(15, 23, 42, .55);
+}
+
+.record-modal .modal-footer {
+  background: #ffffff;
 }
 
 .empty-state-inline {

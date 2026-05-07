@@ -45,8 +45,7 @@
                 </a>
                 {% if can_edit_player_data %}
                 <button class="btn btn-warning btn-sm d-flex align-items-center gap-2" type="button"
-                        data-bs-toggle="offcanvas" data-bs-target="#attributesRecordOffcanvas"
-                        aria-controls="attributesRecordOffcanvas">
+                        data-bs-toggle="modal" data-bs-target="#attributesRecordModal">
                     <i class="bi bi-plus-lg"></i> Nuevo registro
                 </button>
                 {% endif %}
@@ -88,8 +87,7 @@
             <div class="page-actions">
                 {% if can_edit_player_data %}
                 <button class="btn btn-success btn-sm d-flex align-items-center gap-2" type="button"
-                        data-bs-toggle="offcanvas" data-bs-target="#attributesRecordOffcanvas"
-                        aria-controls="attributesRecordOffcanvas">
+                        data-bs-toggle="modal" data-bs-target="#attributesRecordModal">
                     <i class="bi bi-plus-lg"></i> Nuevo registro
                 </button>
                 <form method="post" class="m-0">
@@ -137,6 +135,9 @@
                             <th>{{ label }}</th>
                             {% endfor %}
                             <th class="history-note-cell">Notas</th>
+                            {% if can_edit_player_data %}
+                            <th class="table-action-cell text-end">Acciones</th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody>
@@ -147,6 +148,20 @@
                             <td>{{ entry|attr(field) if entry|attr(field) is not none else '--' }}</td>
                             {% endfor %}
                             <td class="history-note-cell">{{ entry.notes or '-' }}</td>
+                            {% if can_edit_player_data %}
+                            <td class="table-action-cell text-end">
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Acciones de atributo">
+                                    <button class="btn btn-outline-primary" type="button"
+                                            data-bs-toggle="modal" data-bs-target="#editAttributesModal{{ entry.id }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger" type="button"
+                                            data-bs-toggle="modal" data-bs-target="#deleteAttributesModal{{ entry.id }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            {% endif %}
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -160,53 +175,135 @@
 </div>
 
 {% if can_edit_player_data %}
-<div class="offcanvas offcanvas-end record-offcanvas" tabindex="-1" id="attributesRecordOffcanvas" aria-labelledby="attributesRecordOffcanvasLabel">
-    <div class="offcanvas-header">
-        <div>
-            <span class="profile-eyebrow">Carga de atributos</span>
-            <h2 class="h5 mb-0" id="attributesRecordOffcanvasLabel">Nuevo registro</h2>
-        </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
-    </div>
-    <div class="offcanvas-body">
-        <form method="post">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            <input type="hidden" name="action" value="add">
-
-            <div class="form-section">
-                <div class="form-section-title">Datos de evaluacion</div>
-                <label class="form-label" for="record_date">Fecha</label>
-                <input type="date" class="form-control" id="record_date" name="record_date" value="{{ request.form.record_date or '' }}" required>
-                <div class="form-text">Usa la fecha del partido, microciclo o evaluacion.</div>
-            </div>
-
-            <div class="form-section">
-                <div class="form-section-title">Atributos 0-20</div>
-                <div class="row g-3">
-                    {% for field, label in attribute_labels.items() %}
-                    <div class="col-6">
-                        <label class="form-label" for="{{ field }}">{{ label }}</label>
-                        <input id="{{ field }}" type="number" class="form-control" name="{{ field }}" min="0" max="20" value="{{ request.form.get(field, '') }}" placeholder="0-20">
+<div class="modal fade record-modal" id="attributesRecordModal" tabindex="-1" aria-labelledby="attributesRecordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <form method="post">
+                <div class="modal-header">
+                    <div>
+                        <span class="profile-eyebrow">Carga de atributos</span>
+                        <h2 class="h5 mb-0" id="attributesRecordModalLabel">Nuevo registro</h2>
                     </div>
-                    {% endfor %}
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <div class="form-text mt-2">Carga solo los atributos observados. Los campos vacios no pisan la ficha actual.</div>
-            </div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="action" value="add">
 
-            <div class="form-section">
-                <div class="form-section-title">Observaciones</div>
-                <label class="form-label" for="notes">Notas</label>
-                <textarea id="notes" class="form-control" name="notes" rows="3" placeholder="Ej: mejoro velocidad, trabajar toma de decisiones bajo presion.">{{ request.form.notes or '' }}</textarea>
-            </div>
+                    <div class="form-section">
+                        <div class="form-section-title">Datos de evaluacion</div>
+                        <label class="form-label" for="attributes_record_date">Fecha</label>
+                        <input type="date" class="form-control" id="attributes_record_date" name="record_date" value="{{ request.form.record_date or '' }}" required>
+                        <div class="form-text">Usa la fecha del partido, microciclo o evaluacion.</div>
+                    </div>
 
-            <div class="d-grid mt-4">
-                <button class="btn btn-success d-flex align-items-center justify-content-center gap-2" type="submit">
-                    <i class="bi bi-check2-circle"></i> Guardar registro
-                </button>
-            </div>
-        </form>
+                    <div class="form-section">
+                        <div class="form-section-title">Atributos 0-20</div>
+                        <div class="row g-3">
+                            {% for field, label in attribute_labels.items() %}
+                            <div class="col-6">
+                                <label class="form-label" for="attributes_{{ field }}">{{ label }}</label>
+                                <input id="attributes_{{ field }}" type="number" class="form-control" name="{{ field }}" min="0" max="20" value="{{ request.form.get(field, '') }}" placeholder="0-20">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-text mt-2">Carga solo los atributos observados. Los campos vacios no pisan la ficha actual.</div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">Observaciones</div>
+                        <label class="form-label" for="attributes_notes">Notas</label>
+                        <textarea id="attributes_notes" class="form-control" name="notes" rows="3" placeholder="Ej: mejoro velocidad, trabajar toma de decisiones bajo presion.">{{ request.form.notes or '' }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-success d-flex align-items-center gap-2" type="submit">
+                        <i class="bi bi-check2-circle"></i> Guardar registro
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+{% for entry in history %}
+<div class="modal fade record-modal" id="editAttributesModal{{ entry.id }}" tabindex="-1" aria-labelledby="editAttributesModalLabel{{ entry.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('edit_player_attribute_history', player_id=player.id, history_id=entry.id) }}">
+                <div class="modal-header">
+                    <div>
+                        <span class="profile-eyebrow">Editar atributos</span>
+                        <h2 class="h5 mb-0" id="editAttributesModalLabel{{ entry.id }}">Registro {{ entry.record_date.strftime('%Y-%m-%d') if entry.record_date else '-' }}</h2>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div class="form-section">
+                        <div class="form-section-title">Datos de evaluacion</div>
+                        <label class="form-label" for="edit_attributes_record_date_{{ entry.id }}">Fecha</label>
+                        <input type="date" class="form-control" id="edit_attributes_record_date_{{ entry.id }}" name="record_date" value="{{ entry.record_date.strftime('%Y-%m-%d') if entry.record_date else '' }}" required>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">Atributos 0-20</div>
+                        <div class="row g-3">
+                            {% for field, label in attribute_labels.items() %}
+                            <div class="col-6">
+                                <label class="form-label" for="edit_attributes_{{ field }}_{{ entry.id }}">{{ label }}</label>
+                                <input id="edit_attributes_{{ field }}_{{ entry.id }}" type="number" class="form-control" name="{{ field }}" min="0" max="20" value="{{ entry|attr(field) if entry|attr(field) is not none else '' }}" placeholder="0-20">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-text mt-2">Debe quedar al menos un atributo cargado para conservar el registro.</div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">Observaciones</div>
+                        <label class="form-label" for="edit_attributes_notes_{{ entry.id }}">Notas</label>
+                        <textarea id="edit_attributes_notes_{{ entry.id }}" class="form-control" name="notes" rows="3">{{ entry.notes or '' }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary d-flex align-items-center gap-2" type="submit">
+                        <i class="bi bi-check2-circle"></i> Guardar cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade record-modal" id="deleteAttributesModal{{ entry.id }}" tabindex="-1" aria-labelledby="deleteAttributesModalLabel{{ entry.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('delete_player_attribute_history', player_id=player.id, history_id=entry.id) }}">
+                <div class="modal-header">
+                    <div>
+                        <span class="profile-eyebrow">Eliminar atributos</span>
+                        <h2 class="h5 mb-0" id="deleteAttributesModalLabel{{ entry.id }}">Confirmar eliminacion</h2>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <p class="mb-2">Vas a eliminar el historial de atributos del <strong>{{ entry.record_date.strftime('%Y-%m-%d') if entry.record_date else '-' }}</strong>.</p>
+                    <p class="text-muted mb-0">La ficha tecnica del jugador se resincroniza con el historial restante.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-danger d-flex align-items-center gap-2" type="submit">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endif %}
 
 <div class="mt-4 crud-actions">
@@ -280,9 +377,9 @@ if (attributeCtx && window.Chart) {
 {% if can_edit_player_data and request.method == 'POST' and request.form.get('action') == 'add' %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const offcanvasEl = document.getElementById('attributesRecordOffcanvas');
-    if (offcanvasEl && window.bootstrap) {
-        bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl).show();
+    const modalEl = document.getElementById('attributesRecordModal');
+    if (modalEl && window.bootstrap) {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
     }
 });
 </script>

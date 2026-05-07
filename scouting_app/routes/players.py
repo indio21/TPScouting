@@ -18,6 +18,112 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
     PlayerStat = deps.PlayerStat
     PlayerAttributeHistory = deps.PlayerAttributeHistory
 
+    def _parse_stat_form(form) -> tuple[List[str], Dict[str, Any]]:
+        errors: List[str] = []
+        values: Dict[str, Any] = {
+            "record_date": deps.parse_date_field(form.get("record_date"), errors, "La fecha del registro"),
+            "matches_played": deps.validate_non_negative_int_field(
+                form.get("matches_played"),
+                "Partidos jugados",
+                errors,
+            ),
+            "goals": deps.validate_non_negative_int_field(form.get("goals"), "Goles", errors),
+            "assists": deps.validate_non_negative_int_field(form.get("assists"), "Asistencias", errors),
+            "minutes_played": deps.validate_non_negative_int_field(
+                form.get("minutes_played"),
+                "Minutos jugados",
+                errors,
+            ),
+            "yellow_cards": deps.validate_non_negative_int_field(
+                form.get("yellow_cards"),
+                "Tarjetas amarillas",
+                errors,
+            ),
+            "red_cards": deps.validate_non_negative_int_field(form.get("red_cards"), "Tarjetas rojas", errors),
+            "pass_accuracy": deps.validate_optional_float_range(
+                form.get("pass_accuracy"),
+                "Precision de pase",
+                errors,
+                0,
+                100,
+            ),
+            "shot_accuracy": deps.validate_optional_float_range(
+                form.get("shot_accuracy"),
+                "Precision de remate",
+                errors,
+                0,
+                100,
+            ),
+            "duels_won_pct": deps.validate_optional_float_range(
+                form.get("duels_won_pct"),
+                "Duelos ganados",
+                errors,
+                0,
+                100,
+            ),
+            "final_score": deps.validate_optional_float_range(
+                form.get("final_score"),
+                "Valoracion final",
+                errors,
+                1,
+                10,
+            ),
+            "notes": form.get("notes") or None,
+        }
+        return errors, values
+
+    def _apply_stat_values(stat, values: Dict[str, Any]) -> None:
+        for field, value in values.items():
+            setattr(stat, field, value)
+        if stat.final_score is None:
+            stat.final_score = deps.calculate_stats_rating(
+                {
+                    "matches": stat.matches_played,
+                    "goals": stat.goals,
+                    "assists": stat.assists,
+                    "minutes": stat.minutes_played,
+                    "pass_pct": stat.pass_accuracy,
+                    "shot_pct": stat.shot_accuracy,
+                    "duels_pct": stat.duels_won_pct,
+                }
+            )
+
+    def _parse_attribute_history_form(form) -> tuple[List[str], Dict[str, Any], bool]:
+        errors: List[str] = []
+        values: Dict[str, Any] = {
+            "record_date": deps.parse_date_field(form.get("record_date"), errors, "La fecha del historial"),
+            "notes": form.get("notes") or None,
+        }
+        has_any_value = False
+        for field in deps.ATTRIBUTE_FIELDS:
+            raw = form.get(field)
+            value = deps.parse_int_field(raw, default=-1) if raw not in (None, "") else None
+            if value is not None and not deps.is_valid_attribute(value):
+                errors.append(f"{deps.ATTRIBUTE_LABELS[field]} debe estar entre 0 y 20.")
+                value = None
+            values[field] = value
+            if value is not None:
+                has_any_value = True
+        if not has_any_value:
+            errors.append("Debes cargar al menos un atributo para guardar el historial.")
+        return errors, values, has_any_value
+
+    def _apply_attribute_history_to_player(player, db) -> None:
+        history = (
+            db.query(PlayerAttributeHistory)
+            .filter(PlayerAttributeHistory.player_id == player.id)
+            .order_by(PlayerAttributeHistory.record_date.asc(), PlayerAttributeHistory.id.asc())
+            .all()
+        )
+        values = {field: getattr(player, field) for field in deps.ATTRIBUTE_FIELDS}
+        for entry in history:
+            for field in deps.ATTRIBUTE_FIELDS:
+                value = getattr(entry, field)
+                if value is not None:
+                    values[field] = value
+        for field, value in values.items():
+            setattr(player, field, value)
+
     @bp.route("/players")
     @deps.login_required
     def index():
@@ -300,54 +406,7 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                 db.close()
                 flash("Listo: se actualizo la proyeccion con los ultimos datos.", "success")
                 return redirect(url_for("predict_player", player_id=player_id))
-            errors: List[str] = []
-            record_date = deps.parse_date_field(request.form.get("record_date"), errors, "La fecha del registro")
-            matches_played = deps.validate_non_negative_int_field(
-                request.form.get("matches_played"),
-                "Partidos jugados",
-                errors,
-            )
-            goals = deps.validate_non_negative_int_field(request.form.get("goals"), "Goles", errors)
-            assists = deps.validate_non_negative_int_field(request.form.get("assists"), "Asistencias", errors)
-            minutes_played = deps.validate_non_negative_int_field(
-                request.form.get("minutes_played"),
-                "Minutos jugados",
-                errors,
-            )
-            yellow_cards = deps.validate_non_negative_int_field(
-                request.form.get("yellow_cards"),
-                "Tarjetas amarillas",
-                errors,
-            )
-            red_cards = deps.validate_non_negative_int_field(request.form.get("red_cards"), "Tarjetas rojas", errors)
-            pass_accuracy = deps.validate_optional_float_range(
-                request.form.get("pass_accuracy"),
-                "Precision de pase",
-                errors,
-                0,
-                100,
-            )
-            shot_accuracy = deps.validate_optional_float_range(
-                request.form.get("shot_accuracy"),
-                "Precision de remate",
-                errors,
-                0,
-                100,
-            )
-            duels_won_pct = deps.validate_optional_float_range(
-                request.form.get("duels_won_pct"),
-                "Duelos ganados",
-                errors,
-                0,
-                100,
-            )
-            final_score = deps.validate_optional_float_range(
-                request.form.get("final_score"),
-                "Valoracion final",
-                errors,
-                1,
-                10,
-            )
+            errors, values = _parse_stat_form(request.form)
             if errors:
                 for message in errors:
                     flash(message, "danger")
@@ -366,33 +425,8 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                     summary=summary,
                 )
 
-            stat = PlayerStat(
-                player_id=player_id,
-                record_date=record_date,
-                matches_played=matches_played,
-                goals=goals,
-                assists=assists,
-                minutes_played=minutes_played,
-                yellow_cards=yellow_cards,
-                red_cards=red_cards,
-                pass_accuracy=pass_accuracy,
-                shot_accuracy=shot_accuracy,
-                duels_won_pct=duels_won_pct,
-                final_score=final_score,
-                notes=request.form.get("notes") or None,
-            )
-            if stat.final_score is None:
-                stat.final_score = deps.calculate_stats_rating(
-                    {
-                        "matches": stat.matches_played,
-                        "goals": stat.goals,
-                        "assists": stat.assists,
-                        "minutes": stat.minutes_played,
-                        "pass_pct": stat.pass_accuracy,
-                        "shot_pct": stat.shot_accuracy,
-                        "duels_pct": stat.duels_won_pct,
-                    }
-                )
+            stat = PlayerStat(player_id=player_id)
+            _apply_stat_values(stat, values)
             db.add(stat)
             db.commit()
             deps.refresh_player_potential(player, db)
@@ -417,6 +451,54 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             summary=summary,
         )
 
+    @bp.route("/player/<int:player_id>/stats/<int:stat_id>/edit", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def edit_player_stat(player_id: int, stat_id: int):
+        deps.require_csrf()
+
+        db = Session()
+        player = db.get(Player, player_id)
+        stat = db.get(PlayerStat, stat_id)
+        if not player or not stat or stat.player_id != player.id:
+            db.close()
+            abort(404)
+
+        errors, values = _parse_stat_form(request.form)
+        if errors:
+            for message in errors:
+                flash(message, "danger")
+            db.close()
+            return redirect(url_for("player_stats", player_id=player_id))
+
+        _apply_stat_values(stat, values)
+        deps.refresh_player_potential(player, db)
+        db.commit()
+        deps.invalidate_dashboard_cache()
+        db.close()
+        flash("Listo: se actualizo el registro de rendimiento.", "success")
+        return redirect(url_for("player_stats", player_id=player_id))
+
+    @bp.route("/player/<int:player_id>/stats/<int:stat_id>/delete", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def delete_player_stat(player_id: int, stat_id: int):
+        deps.require_csrf()
+
+        db = Session()
+        player = db.get(Player, player_id)
+        stat = db.get(PlayerStat, stat_id)
+        if not player or not stat or stat.player_id != player.id:
+            db.close()
+            abort(404)
+
+        db.delete(stat)
+        db.flush()
+        deps.refresh_player_potential(player, db)
+        db.commit()
+        deps.invalidate_dashboard_cache()
+        db.close()
+        flash("Listo: se elimino el registro de rendimiento.", "success")
+        return redirect(url_for("player_stats", player_id=player_id))
+
     @bp.route("/player/<int:player_id>/attributes", methods=["GET", "POST"])
     @deps.login_required
     def player_attributes(player_id: int):
@@ -440,27 +522,7 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                 db.close()
                 flash("Listo: se actualizo la proyeccion con los nuevos atributos.", "success")
                 return redirect(url_for("predict_player", player_id=player_id))
-            errors: List[str] = []
-            record_date = deps.parse_date_field(request.form.get("record_date"), errors, "La fecha del historial")
-
-            entry = PlayerAttributeHistory(
-                player_id=player_id,
-                record_date=record_date,
-                notes=request.form.get("notes") or None,
-            )
-            has_any_value = False
-            for field in deps.ATTRIBUTE_FIELDS:
-                raw = request.form.get(field)
-                value = deps.parse_int_field(raw, default=-1) if raw not in (None, "") else None
-                if value is not None and not deps.is_valid_attribute(value):
-                    errors.append(f"{deps.ATTRIBUTE_LABELS[field]} debe estar entre 0 y 20.")
-                    value = None
-                setattr(entry, field, value)
-                if value is not None:
-                    has_any_value = True
-                    setattr(player, field, value)
-            if not has_any_value:
-                errors.append("Debes cargar al menos un atributo para guardar el historial.")
+            errors, values, _ = _parse_attribute_history_form(request.form)
             if errors:
                 for message in errors:
                     flash(message, "danger")
@@ -482,6 +544,13 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                     attribute_labels=deps.ATTRIBUTE_LABELS,
                     payload=payload,
                 )
+            entry = PlayerAttributeHistory(player_id=player_id)
+            for field, value in values.items():
+                setattr(entry, field, value)
+            for field in deps.ATTRIBUTE_FIELDS:
+                value = values[field]
+                if value is not None:
+                    setattr(player, field, value)
             db.add(entry)
             deps.refresh_player_potential(player, db)
             db.commit()
@@ -508,6 +577,57 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             attribute_labels=deps.ATTRIBUTE_LABELS,
             payload=payload,
         )
+
+    @bp.route("/player/<int:player_id>/attributes/<int:history_id>/edit", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def edit_player_attribute_history(player_id: int, history_id: int):
+        deps.require_csrf()
+
+        db = Session()
+        player = db.get(Player, player_id)
+        entry = db.get(PlayerAttributeHistory, history_id)
+        if not player or not entry or entry.player_id != player.id:
+            db.close()
+            abort(404)
+
+        errors, values, _ = _parse_attribute_history_form(request.form)
+        if errors:
+            for message in errors:
+                flash(message, "danger")
+            db.close()
+            return redirect(url_for("player_attributes", player_id=player_id))
+
+        for field, value in values.items():
+            setattr(entry, field, value)
+        _apply_attribute_history_to_player(player, db)
+        deps.refresh_player_potential(player, db)
+        db.commit()
+        deps.invalidate_dashboard_cache()
+        db.close()
+        flash("Listo: se actualizo el historial de atributos.", "success")
+        return redirect(url_for("player_attributes", player_id=player_id))
+
+    @bp.route("/player/<int:player_id>/attributes/<int:history_id>/delete", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def delete_player_attribute_history(player_id: int, history_id: int):
+        deps.require_csrf()
+
+        db = Session()
+        player = db.get(Player, player_id)
+        entry = db.get(PlayerAttributeHistory, history_id)
+        if not player or not entry or entry.player_id != player.id:
+            db.close()
+            abort(404)
+
+        db.delete(entry)
+        db.flush()
+        _apply_attribute_history_to_player(player, db)
+        deps.refresh_player_potential(player, db)
+        db.commit()
+        deps.invalidate_dashboard_cache()
+        db.close()
+        flash("Listo: se elimino el historial de atributos.", "success")
+        return redirect(url_for("player_attributes", player_id=player_id))
 
     @bp.route("/edit_player/<int:player_id>", methods=["GET", "POST"])
     @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)

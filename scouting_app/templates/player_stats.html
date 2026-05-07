@@ -45,8 +45,7 @@
                 </a>
                 {% if can_edit_player_data %}
                 <button class="btn btn-warning btn-sm d-flex align-items-center gap-2" type="button"
-                        data-bs-toggle="offcanvas" data-bs-target="#statsRecordOffcanvas"
-                        aria-controls="statsRecordOffcanvas">
+                        data-bs-toggle="modal" data-bs-target="#statsRecordModal">
                     <i class="bi bi-plus-lg"></i> Nuevo registro
                 </button>
                 {% endif %}
@@ -87,8 +86,7 @@
         <div class="page-actions">
             {% if can_edit_player_data %}
             <button class="btn btn-success btn-sm d-flex align-items-center gap-2" type="button"
-                    data-bs-toggle="offcanvas" data-bs-target="#statsRecordOffcanvas"
-                    aria-controls="statsRecordOffcanvas">
+                    data-bs-toggle="modal" data-bs-target="#statsRecordModal">
                 <i class="bi bi-plus-lg"></i> Nuevo registro
             </button>
             <form method="post" class="m-0">
@@ -119,6 +117,9 @@
                         <th>% duelos</th>
                         <th>Puntaje</th>
                         <th class="history-note-cell">Notas</th>
+                        {% if can_edit_player_data %}
+                        <th class="table-action-cell text-end">Acciones</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -134,6 +135,20 @@
                         <td>{{ stat.duels_won_pct if stat.duels_won_pct is not none else '--' }}</td>
                         <td>{{ stat.final_score if stat.final_score is not none else '--' }}</td>
                         <td class="history-note-cell">{{ stat.notes or '-' }}</td>
+                        {% if can_edit_player_data %}
+                        <td class="table-action-cell text-end">
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Acciones de registro">
+                                <button class="btn btn-outline-primary" type="button"
+                                        data-bs-toggle="modal" data-bs-target="#editStatsModal{{ stat.id }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" type="button"
+                                        data-bs-toggle="modal" data-bs-target="#deleteStatsModal{{ stat.id }}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -162,97 +177,215 @@
 </section>
 
 {% if can_edit_player_data %}
-<div class="offcanvas offcanvas-end record-offcanvas" tabindex="-1" id="statsRecordOffcanvas" aria-labelledby="statsRecordOffcanvasLabel">
-    <div class="offcanvas-header">
-        <div>
-            <span class="profile-eyebrow">Carga de rendimiento</span>
-            <h2 class="h5 mb-0" id="statsRecordOffcanvasLabel">Nuevo registro</h2>
+<div class="modal fade record-modal" id="statsRecordModal" tabindex="-1" aria-labelledby="statsRecordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <form method="post">
+                <div class="modal-header">
+                    <div>
+                        <span class="profile-eyebrow">Carga de rendimiento</span>
+                        <h2 class="h5 mb-0" id="statsRecordModalLabel">Nuevo registro</h2>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="action" value="add">
+                    <div class="form-section">
+                        <div class="form-section-title">Datos del periodo</div>
+                        <div class="mb-3">
+                            <label class="form-label" for="stats_record_date">Fecha</label>
+                            <input class="form-control" type="date" id="stats_record_date" name="record_date" value="{{ request.form.record_date or '' }}" required>
+                            <div class="form-text">Usa la fecha del partido, semana o microciclo observado.</div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label" for="stats_matches_played">Partidos</label>
+                                <input id="stats_matches_played" class="form-control" type="number" name="matches_played" min="0" value="{{ request.form.matches_played or 0 }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label" for="stats_minutes_played">Minutos</label>
+                                <input id="stats_minutes_played" class="form-control" type="number" name="minutes_played" min="0" value="{{ request.form.minutes_played or 0 }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title">Produccion</div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label" for="stats_goals">Goles</label>
+                                <input id="stats_goals" class="form-control" type="number" name="goals" min="0" value="{{ request.form.goals or 0 }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label" for="stats_assists">Asistencias</label>
+                                <input id="stats_assists" class="form-control" type="number" name="assists" min="0" value="{{ request.form.assists or 0 }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label" for="stats_yellow_cards">Amarillas</label>
+                                <input id="stats_yellow_cards" class="form-control" type="number" name="yellow_cards" min="0" value="{{ request.form.yellow_cards or 0 }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label" for="stats_red_cards">Rojas</label>
+                                <input id="stats_red_cards" class="form-control" type="number" name="red_cards" min="0" value="{{ request.form.red_cards or 0 }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title">Eficiencia y valoracion</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="stats_pass_accuracy">% pases acertados</label>
+                                <input id="stats_pass_accuracy" class="form-control" type="number" name="pass_accuracy" min="0" max="100" step="0.1" value="{{ request.form.pass_accuracy or '' }}" placeholder="Ej: 85.4">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="stats_shot_accuracy">% disparos a puerta</label>
+                                <input id="stats_shot_accuracy" class="form-control" type="number" name="shot_accuracy" min="0" max="100" step="0.1" value="{{ request.form.shot_accuracy or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="stats_duels_won_pct">% duelos ganados</label>
+                                <input id="stats_duels_won_pct" class="form-control" type="number" name="duels_won_pct" min="0" max="100" step="0.1" value="{{ request.form.duels_won_pct or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="stats_final_score">Valoracion final (1 a 10)</label>
+                                <input id="stats_final_score" class="form-control" type="number" name="final_score" min="1" max="10" step="0.1" value="{{ request.form.final_score or '' }}" placeholder="Vacio para calcular automaticamente">
+                            </div>
+                        </div>
+                        <div class="form-text mt-2">Si la valoracion queda vacia, la app calcula un puntaje sugerido.</div>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title">Observaciones</div>
+                        <label class="form-label" for="stats_notes">Notas</label>
+                        <textarea id="stats_notes" class="form-control" name="notes" rows="3" placeholder="Lesion leve, buen liderazgo, se mostro ansioso...">{{ request.form.notes or '' }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-success d-flex align-items-center gap-2" type="submit">
+                        <i class="bi bi-check2-circle"></i> Guardar registro
+                    </button>
+                </div>
+            </form>
         </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
-    </div>
-    <div class="offcanvas-body">
-        <form method="post">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            <input type="hidden" name="action" value="add">
-
-            <div class="form-section">
-                <div class="form-section-title">Datos del periodo</div>
-                <div class="mb-3">
-                    <label class="form-label" for="record_date">Fecha</label>
-                    <input class="form-control" type="date" id="record_date" name="record_date" value="{{ request.form.record_date or '' }}" required>
-                    <div class="form-text">Usa la fecha del partido, semana o microciclo observado.</div>
-                </div>
-                <div class="row g-3">
-                    <div class="col-6">
-                        <label class="form-label" for="matches_played">Partidos</label>
-                        <input id="matches_played" class="form-control" type="number" name="matches_played" min="0" value="{{ request.form.matches_played or 0 }}">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label" for="minutes_played">Minutos</label>
-                        <input id="minutes_played" class="form-control" type="number" name="minutes_played" min="0" value="{{ request.form.minutes_played or 0 }}">
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-section">
-                <div class="form-section-title">Produccion</div>
-                <div class="row g-3">
-                    <div class="col-6">
-                        <label class="form-label" for="goals">Goles</label>
-                        <input id="goals" class="form-control" type="number" name="goals" min="0" value="{{ request.form.goals or 0 }}">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label" for="assists">Asistencias</label>
-                        <input id="assists" class="form-control" type="number" name="assists" min="0" value="{{ request.form.assists or 0 }}">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label" for="yellow_cards">Amarillas</label>
-                        <input id="yellow_cards" class="form-control" type="number" name="yellow_cards" min="0" value="{{ request.form.yellow_cards or 0 }}">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label" for="red_cards">Rojas</label>
-                        <input id="red_cards" class="form-control" type="number" name="red_cards" min="0" value="{{ request.form.red_cards or 0 }}">
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-section">
-                <div class="form-section-title">Eficiencia y valoracion</div>
-                <div class="row g-3">
-                    <div class="col-12">
-                        <label class="form-label" for="pass_accuracy">% pases acertados</label>
-                        <input id="pass_accuracy" class="form-control" type="number" name="pass_accuracy" min="0" max="100" step="0.1" value="{{ request.form.pass_accuracy or '' }}" placeholder="Ej: 85.4">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label" for="shot_accuracy">% disparos a puerta</label>
-                        <input id="shot_accuracy" class="form-control" type="number" name="shot_accuracy" min="0" max="100" step="0.1" value="{{ request.form.shot_accuracy or '' }}">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label" for="duels_won_pct">% duelos ganados</label>
-                        <input id="duels_won_pct" class="form-control" type="number" name="duels_won_pct" min="0" max="100" step="0.1" value="{{ request.form.duels_won_pct or '' }}">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label" for="final_score">Valoracion final (1 a 10)</label>
-                        <input id="final_score" class="form-control" type="number" name="final_score" min="1" max="10" step="0.1" value="{{ request.form.final_score or '' }}" placeholder="Vacio para calcular automaticamente">
-                        <div class="form-text">Si lo dejas vacio, la app calcula un puntaje sugerido.</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-section">
-                <div class="form-section-title">Observaciones</div>
-                <label class="form-label" for="notes">Notas</label>
-                <textarea id="notes" class="form-control" name="notes" rows="3" placeholder="Lesion leve, buen liderazgo, se mostro ansioso...">{{ request.form.notes or '' }}</textarea>
-            </div>
-
-            <div class="d-grid mt-4">
-                <button class="btn btn-success d-flex align-items-center justify-content-center gap-2" type="submit">
-                    <i class="bi bi-check2-circle"></i> Guardar registro
-                </button>
-            </div>
-        </form>
     </div>
 </div>
+
+{% for stat in stats %}
+<div class="modal fade record-modal" id="editStatsModal{{ stat.id }}" tabindex="-1" aria-labelledby="editStatsModalLabel{{ stat.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('edit_player_stat', player_id=player.id, stat_id=stat.id) }}">
+                <div class="modal-header">
+                    <div>
+                        <span class="profile-eyebrow">Editar rendimiento</span>
+                        <h2 class="h5 mb-0" id="editStatsModalLabel{{ stat.id }}">Registro {{ stat.record_date.strftime('%Y-%m-%d') if stat.record_date else '-' }}</h2>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div class="form-section">
+                        <div class="form-section-title">Datos del periodo</div>
+                        <div class="mb-3">
+                            <label class="form-label" for="edit_stats_record_date_{{ stat.id }}">Fecha</label>
+                            <input class="form-control" type="date" id="edit_stats_record_date_{{ stat.id }}" name="record_date" value="{{ stat.record_date.strftime('%Y-%m-%d') if stat.record_date else '' }}" required>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label" for="edit_stats_matches_played_{{ stat.id }}">Partidos</label>
+                                <input id="edit_stats_matches_played_{{ stat.id }}" class="form-control" type="number" name="matches_played" min="0" value="{{ stat.matches_played }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label" for="edit_stats_minutes_played_{{ stat.id }}">Minutos</label>
+                                <input id="edit_stats_minutes_played_{{ stat.id }}" class="form-control" type="number" name="minutes_played" min="0" value="{{ stat.minutes_played }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title">Produccion</div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label" for="edit_stats_goals_{{ stat.id }}">Goles</label>
+                                <input id="edit_stats_goals_{{ stat.id }}" class="form-control" type="number" name="goals" min="0" value="{{ stat.goals }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label" for="edit_stats_assists_{{ stat.id }}">Asistencias</label>
+                                <input id="edit_stats_assists_{{ stat.id }}" class="form-control" type="number" name="assists" min="0" value="{{ stat.assists }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label" for="edit_stats_yellow_cards_{{ stat.id }}">Amarillas</label>
+                                <input id="edit_stats_yellow_cards_{{ stat.id }}" class="form-control" type="number" name="yellow_cards" min="0" value="{{ stat.yellow_cards }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label" for="edit_stats_red_cards_{{ stat.id }}">Rojas</label>
+                                <input id="edit_stats_red_cards_{{ stat.id }}" class="form-control" type="number" name="red_cards" min="0" value="{{ stat.red_cards }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title">Eficiencia y valoracion</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="edit_stats_pass_accuracy_{{ stat.id }}">% pases acertados</label>
+                                <input id="edit_stats_pass_accuracy_{{ stat.id }}" class="form-control" type="number" name="pass_accuracy" min="0" max="100" step="0.1" value="{{ stat.pass_accuracy if stat.pass_accuracy is not none else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="edit_stats_shot_accuracy_{{ stat.id }}">% disparos a puerta</label>
+                                <input id="edit_stats_shot_accuracy_{{ stat.id }}" class="form-control" type="number" name="shot_accuracy" min="0" max="100" step="0.1" value="{{ stat.shot_accuracy if stat.shot_accuracy is not none else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="edit_stats_duels_won_pct_{{ stat.id }}">% duelos ganados</label>
+                                <input id="edit_stats_duels_won_pct_{{ stat.id }}" class="form-control" type="number" name="duels_won_pct" min="0" max="100" step="0.1" value="{{ stat.duels_won_pct if stat.duels_won_pct is not none else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="edit_stats_final_score_{{ stat.id }}">Valoracion final (1 a 10)</label>
+                                <input id="edit_stats_final_score_{{ stat.id }}" class="form-control" type="number" name="final_score" min="1" max="10" step="0.1" value="{{ stat.final_score if stat.final_score is not none else '' }}" placeholder="Vacio para calcular automaticamente">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title">Observaciones</div>
+                        <label class="form-label" for="edit_stats_notes_{{ stat.id }}">Notas</label>
+                        <textarea id="edit_stats_notes_{{ stat.id }}" class="form-control" name="notes" rows="3">{{ stat.notes or '' }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary d-flex align-items-center gap-2" type="submit">
+                        <i class="bi bi-check2-circle"></i> Guardar cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade record-modal" id="deleteStatsModal{{ stat.id }}" tabindex="-1" aria-labelledby="deleteStatsModalLabel{{ stat.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('delete_player_stat', player_id=player.id, stat_id=stat.id) }}">
+                <div class="modal-header">
+                    <div>
+                        <span class="profile-eyebrow">Eliminar rendimiento</span>
+                        <h2 class="h5 mb-0" id="deleteStatsModalLabel{{ stat.id }}">Confirmar eliminacion</h2>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <p class="mb-2">Vas a eliminar el registro de rendimiento del <strong>{{ stat.record_date.strftime('%Y-%m-%d') if stat.record_date else '-' }}</strong>.</p>
+                    <p class="text-muted mb-0">Esta accion actualiza la proyeccion del jugador despues de guardar el cambio.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-danger d-flex align-items-center gap-2" type="submit">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endif %}
 
 <div class="mt-4 crud-actions">
@@ -273,9 +406,9 @@
 {% if can_edit_player_data and request.method == 'POST' and request.form.get('action') == 'add' %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const offcanvasEl = document.getElementById('statsRecordOffcanvas');
-    if (offcanvasEl && window.bootstrap) {
-        bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl).show();
+    const modalEl = document.getElementById('statsRecordModal');
+    if (modalEl && window.bootstrap) {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
     }
 });
 </script>

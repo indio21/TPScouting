@@ -451,6 +451,18 @@ def test_mutating_post_routes_reject_missing_csrf(client, app_module, db):
         country="Argentina",
     )
     db.add_all([coach, director])
+    stat = app_module.PlayerStat(
+        player_id=player.id,
+        record_date=date(2026, 4, 1),
+        matches_played=1,
+        minutes_played=90,
+    )
+    attribute_entry = app_module.PlayerAttributeHistory(
+        player_id=player.id,
+        record_date=date(2026, 4, 1),
+        pace=12,
+    )
+    db.add_all([stat, attribute_entry])
     db.commit()
     _login(client, "admin_no_csrf", "admin1234")
 
@@ -480,6 +492,16 @@ def test_mutating_post_routes_reject_missing_csrf(client, app_module, db):
             },
         ),
         (f"/player/{player.id}/attributes", {"action": "add", "record_date": "2026-04-15", "pace": "12"}),
+        (
+            f"/player/{player.id}/stats/{stat.id}/edit",
+            {"record_date": "2026-04-16", "matches_played": "2", "minutes_played": "80"},
+        ),
+        (f"/player/{player.id}/stats/{stat.id}/delete", {}),
+        (
+            f"/player/{player.id}/attributes/{attribute_entry.id}/edit",
+            {"record_date": "2026-04-16", "pace": "14"},
+        ),
+        (f"/player/{player.id}/attributes/{attribute_entry.id}/delete", {}),
         (f"/edit_player/{player.id}", edit_payload),
         (f"/delete_player/{player.id}", {}),
         ("/coaches/new", {"name": "Coach Nuevo", "role": "Ayudante", "age": "35"}),
@@ -499,8 +521,8 @@ def test_mutating_post_routes_reject_missing_csrf(client, app_module, db):
     assert db.query(app_module.User).filter_by(username="sin_token").count() == 0
     assert db.query(app_module.Player).filter_by(national_id="46660112").count() == 0
     assert db.query(app_module.Player).filter_by(id=player.id).count() == 1
-    assert db.query(app_module.PlayerStat).filter_by(player_id=player.id).count() == 0
-    assert db.query(app_module.PlayerAttributeHistory).filter_by(player_id=player.id).count() == 0
+    assert db.query(app_module.PlayerStat).filter_by(player_id=player.id).count() == 1
+    assert db.query(app_module.PlayerAttributeHistory).filter_by(player_id=player.id).count() == 1
     db.refresh(player)
     db.refresh(coach)
     db.refresh(director)
@@ -705,6 +727,199 @@ def test_player_attributes_reject_values_out_of_range(client, app_module, db):
     assert response.status_code == 200
     assert "Ritmo debe estar entre 0 y 20" in response.get_data(as_text=True)
     assert db.query(app_module.PlayerAttributeHistory).filter_by(player_id=player.id).count() == 0
+
+
+def test_edit_player_stat_updates_record(client, app_module, db):
+    _create_user(db, app_module.User, "scout_stat_edit", "scout1234", role="scout")
+    player = _create_player(app_module, db, name="Stats Edit", national_id="45566779")
+    stat = app_module.PlayerStat(
+        player_id=player.id,
+        record_date=date(2026, 4, 1),
+        matches_played=1,
+        goals=0,
+        assists=0,
+        minutes_played=70,
+        yellow_cards=0,
+        red_cards=0,
+        pass_accuracy=70,
+        shot_accuracy=30,
+        duels_won_pct=50,
+        final_score=6.0,
+        notes="Inicial",
+    )
+    db.add(stat)
+    db.commit()
+    _login(client, "scout_stat_edit", "scout1234")
+    csrf_token = _get_csrf_token(client, f"/player/{player.id}/stats")
+
+    response = client.post(
+        f"/player/{player.id}/stats/{stat.id}/edit",
+        data={
+            "csrf_token": csrf_token,
+            "record_date": "2026-04-20",
+            "matches_played": "2",
+            "goals": "1",
+            "assists": "1",
+            "minutes_played": "160",
+            "yellow_cards": "1",
+            "red_cards": "0",
+            "pass_accuracy": "82.5",
+            "shot_accuracy": "45",
+            "duels_won_pct": "61",
+            "final_score": "8.1",
+            "notes": "Editado",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    db.refresh(stat)
+    assert stat.record_date == date(2026, 4, 20)
+    assert stat.matches_played == 2
+    assert stat.goals == 1
+    assert stat.final_score == 8.1
+    assert stat.notes == "Editado"
+
+
+def test_delete_player_stat_removes_record(client, app_module, db):
+    _create_user(db, app_module.User, "scout_stat_delete", "scout1234", role="scout")
+    player = _create_player(app_module, db, name="Stats Delete", national_id="45566780")
+    stat = app_module.PlayerStat(
+        player_id=player.id,
+        record_date=date(2026, 4, 1),
+        matches_played=1,
+        goals=0,
+        assists=0,
+        minutes_played=70,
+        yellow_cards=0,
+        red_cards=0,
+    )
+    db.add(stat)
+    db.commit()
+    _login(client, "scout_stat_delete", "scout1234")
+    csrf_token = _get_csrf_token(client, f"/player/{player.id}/stats")
+
+    response = client.post(
+        f"/player/{player.id}/stats/{stat.id}/delete",
+        data={"csrf_token": csrf_token},
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    assert db.query(app_module.PlayerStat).filter_by(id=stat.id).count() == 0
+
+
+def test_edit_player_attribute_history_updates_record_and_player(client, app_module, db):
+    _create_user(db, app_module.User, "scout_attr_edit", "scout1234", role="scout")
+    player = _create_player(app_module, db, name="Attr Edit", national_id="45566781", pace=10)
+    entry = app_module.PlayerAttributeHistory(
+        player_id=player.id,
+        record_date=date(2026, 4, 1),
+        pace=10,
+        notes="Inicial",
+    )
+    db.add(entry)
+    db.commit()
+    _login(client, "scout_attr_edit", "scout1234")
+    csrf_token = _get_csrf_token(client, f"/player/{player.id}/attributes")
+
+    response = client.post(
+        f"/player/{player.id}/attributes/{entry.id}/edit",
+        data={
+            "csrf_token": csrf_token,
+            "record_date": "2026-04-21",
+            "pace": "16",
+            "shooting": "",
+            "passing": "",
+            "dribbling": "",
+            "defending": "",
+            "physical": "",
+            "vision": "",
+            "tackling": "",
+            "determination": "",
+            "technique": "",
+            "notes": "Mejoro ritmo",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    db.refresh(entry)
+    db.refresh(player)
+    assert entry.record_date == date(2026, 4, 21)
+    assert entry.pace == 16
+    assert entry.notes == "Mejoro ritmo"
+    assert player.pace == 16
+
+
+def test_delete_player_attribute_history_resyncs_player(client, app_module, db):
+    _create_user(db, app_module.User, "scout_attr_delete", "scout1234", role="scout")
+    player = _create_player(app_module, db, name="Attr Delete", national_id="45566782", pace=18)
+    older = app_module.PlayerAttributeHistory(
+        player_id=player.id,
+        record_date=date(2026, 3, 1),
+        pace=11,
+    )
+    latest = app_module.PlayerAttributeHistory(
+        player_id=player.id,
+        record_date=date(2026, 4, 1),
+        pace=18,
+    )
+    db.add_all([older, latest])
+    db.commit()
+    _login(client, "scout_attr_delete", "scout1234")
+    csrf_token = _get_csrf_token(client, f"/player/{player.id}/attributes")
+
+    response = client.post(
+        f"/player/{player.id}/attributes/{latest.id}/delete",
+        data={"csrf_token": csrf_token},
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    assert db.query(app_module.PlayerAttributeHistory).filter_by(id=latest.id).count() == 0
+    db.refresh(player)
+    assert player.pace == 11
+
+
+def test_director_cannot_modify_history_records(client, app_module, db):
+    director = _create_user(db, app_module.User, "director_history", "director123", role="director")
+    player = _create_player(app_module, db, name="Director History", national_id="45566783")
+    stat = app_module.PlayerStat(
+        player_id=player.id,
+        record_date=date(2026, 4, 1),
+        matches_played=1,
+        goals=0,
+        assists=0,
+        minutes_played=70,
+        yellow_cards=0,
+        red_cards=0,
+    )
+    entry = app_module.PlayerAttributeHistory(
+        player_id=player.id,
+        record_date=date(2026, 4, 1),
+        pace=12,
+    )
+    db.add_all([stat, entry])
+    db.commit()
+    _login(client, director.username, "director123")
+    csrf_token = _get_csrf_token(client, f"/player/{player.id}/stats")
+
+    response = client.post(
+        f"/player/{player.id}/stats/{stat.id}/delete",
+        data={"csrf_token": csrf_token},
+        follow_redirects=False,
+    )
+    attr_response = client.post(
+        f"/player/{player.id}/attributes/{entry.id}/delete",
+        data={"csrf_token": csrf_token},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 403
+    assert attr_response.status_code == 403
+    assert db.query(app_module.PlayerStat).filter_by(id=stat.id).count() == 1
+    assert db.query(app_module.PlayerAttributeHistory).filter_by(id=entry.id).count() == 1
 
 
 def test_admin_can_create_and_delete_coach(client, app_module, db):

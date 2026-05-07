@@ -247,10 +247,14 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - UX/UI etapa 2 tercer bloque: `compare.html` y `compare_multi.html` fueron redisenadas con la misma linea visual. El comparador multiple ahora incluye mapa visual de talento con fotos de hasta 40 jugadores, usando top 10 por familia de puesto.
 - `routes/compare.py` solo agrega datos visuales ya existentes para el mapa (`photo_url`, edad, club y fit score); no cambia la logica de negocio de comparacion.
 - Validacion UX/UI etapa 2 tercer bloque: `7 passed` en `tests/test_pages.py`; suite completa `52 passed`, cobertura total `77%`, con `4 warnings` conocidos; smoke especifico `GET/POST /compare` y `GET/POST /compare/multi` respondio `200`; smoke HTTP local `/health`, `/` y `/login` respondio `200`.
-- UX/UI etapa 2 cuarto bloque: `player_stats.html` y `player_attributes.html` separan visualizacion de carga. Los formularios de nuevos registros pasan a offcanvas lateral usando los mismos endpoints, campos y CSRF.
-- En esta etapa no se agregaron editar/eliminar por fila para historiales; queda como segunda etapa con endpoints y tests propios.
+- UX/UI etapa 2 cuarto bloque: `player_stats.html` y `player_attributes.html` separan visualizacion de carga. Los formularios de nuevos registros pasan a modales centrados usando los mismos endpoints, campos y CSRF.
 - `manage_players.html` separa la carga individual de la carga masiva. La carga masiva queda como bloque propio con guia de formato, ejemplo y textarea mas legible.
 - Validacion UX/UI etapa 2 cuarto bloque: `7 passed` en `tests/test_pages.py`; suite completa `52 passed`, cobertura total `77%`, con `4 warnings` conocidos; smoke especifico `/players/manage`, `/player/30101/stats` y `/player/30101/attributes` respondio `200`; smoke HTTP local `/health`, `/` y `/login` respondio `200`.
+- UX/UI etapa 2 quinto bloque: se completo la segunda etapa CRUD de historiales de jugadores.
+- Se agregaron endpoints POST para editar/eliminar rendimiento (`PlayerStat`) y editar/eliminar atributos (`PlayerAttributeHistory`), con CSRF, permisos y aliases planos.
+- `player_stats.html` y `player_attributes.html` muestran acciones por fila y abren nuevo/editar/eliminar en modales centrados, no en lateral derecho.
+- Al editar/eliminar atributos, la ficha tecnica del jugador se resincroniza con el historial restante.
+- Validacion UX/UI etapa 2 quinto bloque: pruebas focales `9 passed`; `tests/test_pages.py` `7 passed`; suite completa `57 passed`, cobertura total `77%`, con `4 warnings` conocidos; smoke especifico `/player/30101/stats` y `/player/30101/attributes` respondio `200` y renderizo modales.
 
 ## Performance
 
@@ -437,10 +441,10 @@ Hay cuatro caminos razonables:
 Recomendacion de arranque para el proximo chat:
 
 - Si la prioridad es mostrar mejor el producto: continuar desde `ux-crud-polish` con el plan de `docs/ux_ui_crud_polish_next_step_2026-05-01.md`.
-- Punto exacto donde quedamos: commit `a8ee6ea ux: move player history forms to offcanvas`, rama `ux-crud-polish` limpia y sincronizada.
-- Ya se separo visualizacion de carga en `player_stats.html` y `player_attributes.html`: nuevos registros se cargan en offcanvas usando los mismos endpoints existentes.
+- Punto exacto anterior: commit `a8ee6ea ux: move player history forms to offcanvas`, rama `ux-crud-polish` limpia y sincronizada.
+- Ese punto ya fue completado: nuevos registros, edicion y eliminacion de rendimiento/atributos se abren en modales centrados.
 - Ya se separo visualmente la carga masiva de jugadores en `manage_players.html`.
-- Siguiente bloque recomendado: segunda etapa CRUD de historiales de jugadores. Agregar editar/eliminar por fila para rendimiento y atributos con endpoints propios, CSRF, permisos y tests antes de tocar la UI de acciones por fila.
+- Siguiente bloque recomendado: evaluar si conviene llevar el mismo patron CRUD con modales a otros historiales asociados a jugador, o pasar a administracion/configuracion (`settings.html`, `register.html`).
 - Luego: administracion/configuracion (`settings.html`, `register.html`).
 - Si la prioridad es cerrar evidencia academica: pasar al Word y corregirlo contra el repo real.
 
