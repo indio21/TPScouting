@@ -110,6 +110,27 @@ Validacion del quinto bloque:
 - Smoke especifico con test client sobre jugador real demo: `/player/30101/stats` y `/player/30101/attributes` respondieron `200` y renderizaron modales de nuevo/editar/eliminar.
 - Smoke HTTP local: `/health`, `/` y `/login` respondieron `200` en `http://127.0.0.1:5000/`.
 
+Sexto bloque de UX/UI etapa 2 aplicado:
+
+- Se llevo el mismo patron de CRUD modal a los historiales complementarios visibles desde la ficha del jugador:
+  - partidos/participaciones (`Match` + `PlayerMatchParticipation`)
+  - evaluaciones fisicas (`PhysicalAssessment`)
+  - disponibilidad (`PlayerAvailability`)
+  - reportes scout (`ScoutReport`)
+- `scouting_app/routes/players.py` agrega endpoints POST de alta, edicion y eliminacion para esos cuatro historiales, con CSRF, permisos de administrador/scout y refresco de proyeccion/cache.
+- `scouting_app/app.py` conserva aliases historicos/planos para los endpoints nuevos.
+- `scouting_app/templates/player_detail.html` muestra una seccion de historiales complementarios con pestanas y acciones por fila; las altas, ediciones y eliminaciones se abren en modales centrados.
+- `scouting_app/templates/settings.html` adopta la misma linea visual: cabecera, metricas de calidad de base, acciones operativas y logs.
+- `scouting_app/templates/register.html` adopta la misma linea visual: cabecera, formulario por secciones y resumen de roles.
+- Se agregaron tests para aliases, CSRF, permisos, CRUD de los cuatro historiales y renderizado de los modales en ficha.
+
+Validacion del sexto bloque:
+
+- Pruebas focales de modales complementarios: `5 passed`.
+- `tests/test_pages.py`: `7 passed`.
+- Suite completa: `62 passed`, cobertura total `77%`, con los `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
+- Smoke HTTP local con login admin: `/health`, `/`, `/players`, `/dashboard`, `/compare`, `/compare/multi`, `/settings`, `/register`, `/player/30101`, `/player/30101/stats`, `/player/30101/attributes` y `/player/30101/predict` respondieron `200` en `http://127.0.0.1:5000/`.
+
 ## Punto De Retome 2026-05-06
 
 - Rama: `ux-crud-polish`.
@@ -117,24 +138,19 @@ Validacion del quinto bloque:
 - Estado al cerrar: rama limpia y sincronizada con `origin/ux-crud-polish`.
 - Ese punto de retome fue completado el 2026-05-07.
 - Lo que ya esta hecho: carga, edicion y eliminacion de rendimiento y atributos en modales centrados; carga masiva de jugadores separada visualmente.
-- Lo que no esta hecho todavia: CRUD visual propio para otros historiales asociados a jugador, como partidos/participaciones, fisico, disponibilidad o reportes scout.
+- Tambien quedo hecho el CRUD modal de partidos/participaciones, fisico, disponibilidad y reportes scout, mas el pulido visual de `settings.html` y `register.html`.
 
 Arranque recomendado:
 
-1. Revisar si conviene llevar el mismo patron de modales a otros historiales asociados a jugador.
-2. Priorizar solo los que ya tengan valor visible para demo o defensa.
-3. Despues pasar a administracion/configuracion (`settings.html`, `register.html`) o al documento Word.
+1. Hacer una pasada visual manual en navegador sobre ficha de jugador, settings y registro.
+2. Si el usuario aprueba, cerrar este bloque con commit/push.
+3. Despues elegir entre pulir `login.html`, revisar responsive fino o pasar al documento Word.
 
 Orden restante recomendado, de menor a mayor riesgo:
 
-1. Revisar si existen otros historiales asociados a jugador que ameriten UI propia:
-   - partidos/participaciones
-   - evaluaciones fisicas
-   - disponibilidad
-   - reportes scout
-2. Administracion/configuracion:
-   - `scouting_app/templates/settings.html`
-   - `scouting_app/templates/register.html`
+1. Pasada visual en navegador y ajuste responsive si aparece algo concreto.
+2. Pulido menor de `login.html` para alinearlo con `register.html`.
+3. Documento Word de tesis: alinear narrativa, capturas y afirmaciones con el MVP real ya corregido.
 
 ## Criterio De Cambio
 

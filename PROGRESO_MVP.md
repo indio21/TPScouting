@@ -1,6 +1,6 @@
 # Progreso Del MVP
 
-Fecha de actualizacion: 2026-04-30
+Fecha de actualizacion: 2026-05-07
 
 Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP real del proyecto `TPScouting`.
 
@@ -62,6 +62,12 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Se agregaron endpoints POST propios para editar/eliminar `PlayerStat` y `PlayerAttributeHistory`, con CSRF, permisos y aliases planos.
 - Al editar/eliminar historial de atributos, la ficha tecnica se resincroniza con el historial restante.
 - Validacion UX/UI etapa 2 quinto bloque: pruebas focales `9 passed`; `tests/test_pages.py` `7 passed`; suite completa `57 passed` con cobertura total `77%`; smoke especifico de modales de rendimiento/atributos respondio `200`.
+- UX/UI etapa 2 sexto bloque: `player_detail.html` suma una seccion de historiales complementarios con pestanas para partidos/participaciones, fisico, disponibilidad y reportes scout.
+- Se agregaron endpoints POST de alta, edicion y eliminacion para `Match` + `PlayerMatchParticipation`, `PhysicalAssessment`, `PlayerAvailability` y `ScoutReport`, manteniendo CSRF, permisos administrador/scout, aliases planos y refresco de proyeccion/cache.
+- Las altas, ediciones y eliminaciones de esos historiales se abren en modales centrados, siguiendo el mismo patron aprobado para rendimiento y atributos.
+- `settings.html` y `register.html` quedaron alineados visualmente con la misma linea de UX/UI: cabecera de administracion/usuarios, metricas, tarjetas blancas, acciones compactas y formularios por secciones.
+- Validacion UX/UI etapa 2 sexto bloque: pruebas focales de modales complementarios `5 passed`; `tests/test_pages.py` `7 passed`; suite completa `62 passed` con cobertura total `77%`, con los `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
+- Smoke HTTP local con login admin: rutas principales, `settings`, `register`, ficha, historial, atributos y proyeccion de jugador real demo respondieron `200` en `http://127.0.0.1:5000/`.
 
 ## Actualizacion 2026-04-23
 

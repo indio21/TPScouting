@@ -52,6 +52,42 @@ def test_players_blueprint_keeps_legacy_endpoint_names(app_module):
         assert url_for("index") == "/players"
         assert url_for("manage_players") == "/players/manage"
         assert url_for("player_detail", player_id=9) == "/player/9"
+        assert url_for("add_player_match_history", player_id=9) == "/player/9/matches/add"
+        assert (
+            url_for("edit_player_match_history", player_id=9, participation_id=2)
+            == "/player/9/matches/2/edit"
+        )
+        assert (
+            url_for("delete_player_match_history", player_id=9, participation_id=2)
+            == "/player/9/matches/2/delete"
+        )
+        assert url_for("add_player_physical_assessment", player_id=9) == "/player/9/physical/add"
+        assert (
+            url_for("edit_player_physical_assessment", player_id=9, assessment_id=5)
+            == "/player/9/physical/5/edit"
+        )
+        assert (
+            url_for("delete_player_physical_assessment", player_id=9, assessment_id=5)
+            == "/player/9/physical/5/delete"
+        )
+        assert url_for("add_player_availability", player_id=9) == "/player/9/availability/add"
+        assert (
+            url_for("edit_player_availability", player_id=9, availability_id=6)
+            == "/player/9/availability/6/edit"
+        )
+        assert (
+            url_for("delete_player_availability", player_id=9, availability_id=6)
+            == "/player/9/availability/6/delete"
+        )
+        assert url_for("add_player_scout_report", player_id=9) == "/player/9/reports/add"
+        assert (
+            url_for("edit_player_scout_report", player_id=9, report_id=7)
+            == "/player/9/reports/7/edit"
+        )
+        assert (
+            url_for("delete_player_scout_report", player_id=9, report_id=7)
+            == "/player/9/reports/7/delete"
+        )
         assert url_for("player_stats", player_id=9) == "/player/9/stats"
         assert url_for("edit_player_stat", player_id=9, stat_id=3) == "/player/9/stats/3/edit"
         assert url_for("delete_player_stat", player_id=9, stat_id=3) == "/player/9/stats/3/delete"

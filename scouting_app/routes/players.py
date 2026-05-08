@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from sqlalchemy import desc, func
-from sqlalchemy.orm import load_only
+from sqlalchemy.orm import joinedload, load_only
 
 
 def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
@@ -17,6 +17,35 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
     Player = deps.Player
     PlayerStat = deps.PlayerStat
     PlayerAttributeHistory = deps.PlayerAttributeHistory
+    Match = deps.Match
+    PlayerMatchParticipation = deps.PlayerMatchParticipation
+    ScoutReport = deps.ScoutReport
+    PhysicalAssessment = deps.PhysicalAssessment
+    PlayerAvailability = deps.PlayerAvailability
+
+    def _optional_strip(value: Optional[str]) -> Optional[str]:
+        stripped = (value or "").strip()
+        return stripped or None
+
+    def _parse_required_text_field(value: Optional[str], label: str, errors: List[str]) -> str:
+        stripped = (value or "").strip()
+        if not stripped:
+            errors.append(f"{label} es obligatorio.")
+        return stripped
+
+    def _parse_int_range_field(
+        value: Optional[str],
+        label: str,
+        errors: List[str],
+        minimum: int,
+        maximum: int,
+        default: Optional[int] = None,
+    ) -> Optional[int]:
+        parsed = deps.parse_int_field(value, default)
+        if parsed is None or parsed < minimum or parsed > maximum:
+            errors.append(f"{label} debe estar entre {minimum} y {maximum}.")
+            return parsed
+        return parsed
 
     def _parse_stat_form(form) -> tuple[List[str], Dict[str, Any]]:
         errors: List[str] = []
@@ -123,6 +152,159 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                     values[field] = value
         for field, value in values.items():
             setattr(player, field, value)
+
+    def _parse_match_history_form(form) -> tuple[List[str], Dict[str, Any], Dict[str, Any]]:
+        errors: List[str] = []
+        match_values: Dict[str, Any] = {
+            "match_date": deps.parse_date_field(form.get("match_date"), errors, "La fecha del partido"),
+            "opponent_name": _parse_required_text_field(form.get("opponent_name"), "El rival", errors),
+            "opponent_level": _parse_int_range_field(form.get("opponent_level"), "Nivel del rival", errors, 1, 5, 3),
+            "tournament": _optional_strip(form.get("tournament")),
+            "competition_category": _optional_strip(form.get("competition_category")),
+            "venue": (form.get("venue") or "Local").strip() or "Local",
+            "notes": _optional_strip(form.get("match_notes")),
+        }
+        participation_values: Dict[str, Any] = {
+            "started": deps.parse_bool(form.get("started")),
+            "position_played": deps.normalize_position_choice(form.get("position_played")),
+            "minutes_played": deps.validate_non_negative_int_field(
+                form.get("minutes_played"),
+                "Minutos jugados",
+                errors,
+            ),
+            "final_score": deps.validate_optional_float_range(
+                form.get("final_score"),
+                "Valoracion final",
+                errors,
+                1,
+                10,
+            ),
+            "goals": deps.validate_non_negative_int_field(form.get("goals"), "Goles", errors),
+            "assists": deps.validate_non_negative_int_field(form.get("assists"), "Asistencias", errors),
+            "pass_accuracy": deps.validate_optional_float_range(
+                form.get("pass_accuracy"),
+                "Precision de pase",
+                errors,
+                0,
+                100,
+            ),
+            "shot_accuracy": deps.validate_optional_float_range(
+                form.get("shot_accuracy"),
+                "Precision de remate",
+                errors,
+                0,
+                100,
+            ),
+            "duels_won_pct": deps.validate_optional_float_range(
+                form.get("duels_won_pct"),
+                "Duelos ganados",
+                errors,
+                0,
+                100,
+            ),
+            "yellow_cards": deps.validate_non_negative_int_field(
+                form.get("yellow_cards"),
+                "Tarjetas amarillas",
+                errors,
+            ),
+            "red_cards": deps.validate_non_negative_int_field(form.get("red_cards"), "Tarjetas rojas", errors),
+            "role_notes": _optional_strip(form.get("role_notes")),
+        }
+        return errors, match_values, participation_values
+
+    def _parse_physical_assessment_form(form) -> tuple[List[str], Dict[str, Any]]:
+        errors: List[str] = []
+        values: Dict[str, Any] = {
+            "assessment_date": deps.parse_date_field(form.get("assessment_date"), errors, "La fecha fisica"),
+            "height_cm": deps.validate_optional_float_range(form.get("height_cm"), "Altura", errors, 100, 230),
+            "weight_kg": deps.validate_optional_float_range(form.get("weight_kg"), "Peso", errors, 30, 130),
+            "dominant_foot": _optional_strip(form.get("dominant_foot")),
+            "estimated_speed": deps.validate_optional_float_range(
+                form.get("estimated_speed"),
+                "Velocidad estimada",
+                errors,
+                0,
+                20,
+            ),
+            "endurance": deps.validate_optional_float_range(form.get("endurance"), "Resistencia", errors, 0, 20),
+            "in_growth_spurt": deps.parse_bool(form.get("in_growth_spurt")),
+            "notes": _optional_strip(form.get("notes")),
+        }
+        return errors, values
+
+    def _parse_availability_form(form) -> tuple[List[str], Dict[str, Any]]:
+        errors: List[str] = []
+        values: Dict[str, Any] = {
+            "record_date": deps.parse_date_field(form.get("record_date"), errors, "La fecha de disponibilidad"),
+            "availability_pct": deps.validate_optional_float_range(
+                form.get("availability_pct"),
+                "Disponibilidad",
+                errors,
+                0,
+                100,
+            ),
+            "fatigue_pct": deps.validate_optional_float_range(form.get("fatigue_pct"), "Fatiga", errors, 0, 100),
+            "training_load_pct": deps.validate_optional_float_range(
+                form.get("training_load_pct"),
+                "Carga de entrenamiento",
+                errors,
+                0,
+                100,
+            ),
+            "missed_days": deps.validate_non_negative_int_field(form.get("missed_days"), "Dias perdidos", errors),
+            "injury_flag": deps.parse_bool(form.get("injury_flag")),
+            "notes": _optional_strip(form.get("notes")),
+        }
+        return errors, values
+
+    def _parse_scout_report_form(form) -> tuple[List[str], Dict[str, Any]]:
+        errors: List[str] = []
+        values: Dict[str, Any] = {
+            "report_date": deps.parse_date_field(form.get("report_date"), errors, "La fecha del reporte"),
+            "decision_making": _parse_int_range_field(
+                form.get("decision_making"),
+                "Toma de decisiones",
+                errors,
+                0,
+                20,
+            ) if form.get("decision_making") not in (None, "") else None,
+            "tactical_reading": _parse_int_range_field(
+                form.get("tactical_reading"),
+                "Lectura tactica",
+                errors,
+                0,
+                20,
+            ) if form.get("tactical_reading") not in (None, "") else None,
+            "mental_profile": _parse_int_range_field(
+                form.get("mental_profile"),
+                "Perfil mental",
+                errors,
+                0,
+                20,
+            ) if form.get("mental_profile") not in (None, "") else None,
+            "adaptability": _parse_int_range_field(
+                form.get("adaptability"),
+                "Adaptabilidad",
+                errors,
+                0,
+                20,
+            ) if form.get("adaptability") not in (None, "") else None,
+            "observed_projection_score": deps.validate_optional_float_range(
+                form.get("observed_projection_score"),
+                "Proyeccion observada",
+                errors,
+                1,
+                10,
+            ),
+            "notes": _optional_strip(form.get("notes")),
+        }
+        return errors, values
+
+    def _commit_history_change(db, player) -> None:
+        db.commit()
+        deps.refresh_player_potential(player, db)
+        db.commit()
+        deps.invalidate_dashboard_cache()
 
     @bp.route("/players")
     @deps.login_required
@@ -285,6 +467,36 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
         recent_attributes = list(reversed(attr_history[-3:])) if attr_history else []
         attribute_summary = deps.summarize_attribute_history(attr_history)
         stats_summary = deps.summarize_stats(stats)
+        match_history = (
+            db.query(PlayerMatchParticipation)
+            .options(joinedload(PlayerMatchParticipation.match))
+            .join(Match, PlayerMatchParticipation.match_id == Match.id)
+            .filter(PlayerMatchParticipation.player_id == player_id)
+            .order_by(Match.match_date.desc(), PlayerMatchParticipation.id.desc())
+            .limit(5)
+            .all()
+        )
+        physical_history = (
+            db.query(PhysicalAssessment)
+            .filter(PhysicalAssessment.player_id == player_id)
+            .order_by(PhysicalAssessment.assessment_date.desc(), PhysicalAssessment.id.desc())
+            .limit(5)
+            .all()
+        )
+        availability_history = (
+            db.query(PlayerAvailability)
+            .filter(PlayerAvailability.player_id == player_id)
+            .order_by(PlayerAvailability.record_date.desc(), PlayerAvailability.id.desc())
+            .limit(5)
+            .all()
+        )
+        scout_reports = (
+            db.query(ScoutReport)
+            .filter(ScoutReport.player_id == player_id)
+            .order_by(ScoutReport.report_date.desc(), ScoutReport.id.desc())
+            .limit(5)
+            .all()
+        )
         db.close()
         player_photo_url = player.photo_url or deps.default_player_photo_url(
             name=player.name,
@@ -295,11 +507,12 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
         attr_map = deps.player_attribute_map(player)
         best_position, best_position_score = deps.recommend_position_from_attrs(attr_map)
         current_fit = deps.weighted_score_from_attrs(attr_map, player.position)
+        current_position = deps.normalized_position(player.position)
         position_ranking = [
             {
                 "position": pos,
                 "score": deps.weighted_score_from_attrs(attr_map, pos),
-                "is_current": deps.normalized_position(player.position) == pos,
+                "is_current": current_position == pos,
             }
             for pos in deps.POSITION_OPTIONS
         ]
@@ -376,12 +589,269 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             attribute_summary=attribute_summary,
             attribute_payload=deps.attribute_chart_payload(attr_history),
             attribute_labels=deps.ATTRIBUTE_LABELS,
+            match_history=match_history,
+            physical_history=physical_history,
+            availability_history=availability_history,
+            scout_reports=scout_reports,
             projection=projection,
             best_position=best_position,
             best_position_score=best_position_score,
             current_fit=current_fit,
+            current_position=current_position,
             position_ranking=position_ranking[:3],
+            position_options=deps.POSITION_OPTIONS,
         )
+
+    @bp.route("/player/<int:player_id>/matches/add", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def add_player_match_history(player_id: int):
+        deps.require_csrf()
+        db = Session()
+        player = db.get(Player, player_id)
+        if not player:
+            db.close()
+            abort(404)
+        errors, match_values, participation_values = _parse_match_history_form(request.form)
+        if errors:
+            for message in errors:
+                flash(message, "danger")
+            db.close()
+            return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+        match = Match(**match_values)
+        participation = PlayerMatchParticipation(player_id=player_id, match=match, **participation_values)
+        db.add(participation)
+        _commit_history_change(db, player)
+        db.close()
+        flash("Listo: se agrego el partido al historial del jugador.", "success")
+        return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+
+    @bp.route("/player/<int:player_id>/matches/<int:participation_id>/edit", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def edit_player_match_history(player_id: int, participation_id: int):
+        deps.require_csrf()
+        db = Session()
+        player = db.get(Player, player_id)
+        participation = db.get(PlayerMatchParticipation, participation_id)
+        if not player or not participation or participation.player_id != player.id:
+            db.close()
+            abort(404)
+        errors, match_values, participation_values = _parse_match_history_form(request.form)
+        if errors:
+            for message in errors:
+                flash(message, "danger")
+            db.close()
+            return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+        for field, value in match_values.items():
+            setattr(participation.match, field, value)
+        for field, value in participation_values.items():
+            setattr(participation, field, value)
+        _commit_history_change(db, player)
+        db.close()
+        flash("Listo: se actualizo el partido del jugador.", "success")
+        return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+
+    @bp.route("/player/<int:player_id>/matches/<int:participation_id>/delete", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def delete_player_match_history(player_id: int, participation_id: int):
+        deps.require_csrf()
+        db = Session()
+        player = db.get(Player, player_id)
+        participation = db.get(PlayerMatchParticipation, participation_id)
+        if not player or not participation or participation.player_id != player.id:
+            db.close()
+            abort(404)
+        match_id = participation.match_id
+        db.delete(participation)
+        db.flush()
+        remaining = db.query(PlayerMatchParticipation.id).filter_by(match_id=match_id).first()
+        if not remaining:
+            match = db.get(Match, match_id)
+            if match:
+                db.delete(match)
+        _commit_history_change(db, player)
+        db.close()
+        flash("Listo: se elimino el partido del historial del jugador.", "success")
+        return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+
+    @bp.route("/player/<int:player_id>/physical/add", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def add_player_physical_assessment(player_id: int):
+        deps.require_csrf()
+        db = Session()
+        player = db.get(Player, player_id)
+        if not player:
+            db.close()
+            abort(404)
+        errors, values = _parse_physical_assessment_form(request.form)
+        if errors:
+            for message in errors:
+                flash(message, "danger")
+            db.close()
+            return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+        db.add(PhysicalAssessment(player_id=player_id, **values))
+        _commit_history_change(db, player)
+        db.close()
+        flash("Listo: se agrego la evaluacion fisica.", "success")
+        return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+
+    @bp.route("/player/<int:player_id>/physical/<int:assessment_id>/edit", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def edit_player_physical_assessment(player_id: int, assessment_id: int):
+        deps.require_csrf()
+        db = Session()
+        player = db.get(Player, player_id)
+        assessment = db.get(PhysicalAssessment, assessment_id)
+        if not player or not assessment or assessment.player_id != player.id:
+            db.close()
+            abort(404)
+        errors, values = _parse_physical_assessment_form(request.form)
+        if errors:
+            for message in errors:
+                flash(message, "danger")
+            db.close()
+            return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+        for field, value in values.items():
+            setattr(assessment, field, value)
+        _commit_history_change(db, player)
+        db.close()
+        flash("Listo: se actualizo la evaluacion fisica.", "success")
+        return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+
+    @bp.route("/player/<int:player_id>/physical/<int:assessment_id>/delete", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def delete_player_physical_assessment(player_id: int, assessment_id: int):
+        deps.require_csrf()
+        db = Session()
+        player = db.get(Player, player_id)
+        assessment = db.get(PhysicalAssessment, assessment_id)
+        if not player or not assessment or assessment.player_id != player.id:
+            db.close()
+            abort(404)
+        db.delete(assessment)
+        _commit_history_change(db, player)
+        db.close()
+        flash("Listo: se elimino la evaluacion fisica.", "success")
+        return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+
+    @bp.route("/player/<int:player_id>/availability/add", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def add_player_availability(player_id: int):
+        deps.require_csrf()
+        db = Session()
+        player = db.get(Player, player_id)
+        if not player:
+            db.close()
+            abort(404)
+        errors, values = _parse_availability_form(request.form)
+        if errors:
+            for message in errors:
+                flash(message, "danger")
+            db.close()
+            return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+        db.add(PlayerAvailability(player_id=player_id, **values))
+        _commit_history_change(db, player)
+        db.close()
+        flash("Listo: se agrego la disponibilidad.", "success")
+        return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+
+    @bp.route("/player/<int:player_id>/availability/<int:availability_id>/edit", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def edit_player_availability(player_id: int, availability_id: int):
+        deps.require_csrf()
+        db = Session()
+        player = db.get(Player, player_id)
+        availability = db.get(PlayerAvailability, availability_id)
+        if not player or not availability or availability.player_id != player.id:
+            db.close()
+            abort(404)
+        errors, values = _parse_availability_form(request.form)
+        if errors:
+            for message in errors:
+                flash(message, "danger")
+            db.close()
+            return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+        for field, value in values.items():
+            setattr(availability, field, value)
+        _commit_history_change(db, player)
+        db.close()
+        flash("Listo: se actualizo la disponibilidad.", "success")
+        return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+
+    @bp.route("/player/<int:player_id>/availability/<int:availability_id>/delete", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def delete_player_availability(player_id: int, availability_id: int):
+        deps.require_csrf()
+        db = Session()
+        player = db.get(Player, player_id)
+        availability = db.get(PlayerAvailability, availability_id)
+        if not player or not availability or availability.player_id != player.id:
+            db.close()
+            abort(404)
+        db.delete(availability)
+        _commit_history_change(db, player)
+        db.close()
+        flash("Listo: se elimino la disponibilidad.", "success")
+        return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+
+    @bp.route("/player/<int:player_id>/reports/add", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def add_player_scout_report(player_id: int):
+        deps.require_csrf()
+        db = Session()
+        player = db.get(Player, player_id)
+        if not player:
+            db.close()
+            abort(404)
+        errors, values = _parse_scout_report_form(request.form)
+        if errors:
+            for message in errors:
+                flash(message, "danger")
+            db.close()
+            return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+        db.add(ScoutReport(player_id=player_id, **values))
+        _commit_history_change(db, player)
+        db.close()
+        flash("Listo: se agrego el reporte scout.", "success")
+        return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+
+    @bp.route("/player/<int:player_id>/reports/<int:report_id>/edit", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def edit_player_scout_report(player_id: int, report_id: int):
+        deps.require_csrf()
+        db = Session()
+        player = db.get(Player, player_id)
+        report = db.get(ScoutReport, report_id)
+        if not player or not report or report.player_id != player.id:
+            db.close()
+            abort(404)
+        errors, values = _parse_scout_report_form(request.form)
+        if errors:
+            for message in errors:
+                flash(message, "danger")
+            db.close()
+            return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+        for field, value in values.items():
+            setattr(report, field, value)
+        _commit_history_change(db, player)
+        db.close()
+        flash("Listo: se actualizo el reporte scout.", "success")
+        return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
+
+    @bp.route("/player/<int:player_id>/reports/<int:report_id>/delete", methods=["POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def delete_player_scout_report(player_id: int, report_id: int):
+        deps.require_csrf()
+        db = Session()
+        player = db.get(Player, player_id)
+        report = db.get(ScoutReport, report_id)
+        if not player or not report or report.player_id != player.id:
+            db.close()
+            abort(404)
+        db.delete(report)
+        _commit_history_change(db, player)
+        db.close()
+        flash("Listo: se elimino el reporte scout.", "success")
+        return redirect(url_for("player_detail", player_id=player_id) + "#historiales-jugador")
 
     @bp.route("/player/<int:player_id>/stats", methods=["GET", "POST"])
     @deps.login_required

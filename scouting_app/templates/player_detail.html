@@ -373,6 +373,523 @@
     </div>
 </section>
 
+<section id="historiales-jugador" class="card mt-4">
+    <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
+        <div>
+            <span>Historiales complementarios</span>
+            <small class="text-muted d-block">Partidos, fisico, disponibilidad y reportes scout.</small>
+        </div>
+        {% if can_edit_player_data %}
+        <div class="page-actions">
+            <button class="btn btn-success btn-sm d-flex align-items-center gap-2" type="button" data-bs-toggle="modal" data-bs-target="#matchHistoryModal">
+                <i class="bi bi-plus-lg"></i> Partido
+            </button>
+            <button class="btn btn-outline-success btn-sm d-flex align-items-center gap-2" type="button" data-bs-toggle="modal" data-bs-target="#physicalHistoryModal">
+                <i class="bi bi-heart-pulse"></i> Fisico
+            </button>
+            <button class="btn btn-outline-success btn-sm d-flex align-items-center gap-2" type="button" data-bs-toggle="modal" data-bs-target="#availabilityHistoryModal">
+                <i class="bi bi-activity"></i> Disponibilidad
+            </button>
+            <button class="btn btn-outline-success btn-sm d-flex align-items-center gap-2" type="button" data-bs-toggle="modal" data-bs-target="#scoutReportModal">
+                <i class="bi bi-journal-text"></i> Reporte
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <ul class="nav nav-tabs" id="playerHistoryTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="matches-tab" data-bs-toggle="tab" data-bs-target="#matches-pane" type="button" role="tab" aria-controls="matches-pane" aria-selected="true">Partidos</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="physical-tab" data-bs-toggle="tab" data-bs-target="#physical-pane" type="button" role="tab" aria-controls="physical-pane" aria-selected="false">Fisico</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="availability-tab" data-bs-toggle="tab" data-bs-target="#availability-pane" type="button" role="tab" aria-controls="availability-pane" aria-selected="false">Disponibilidad</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports-pane" type="button" role="tab" aria-controls="reports-pane" aria-selected="false">Reportes</button>
+            </li>
+        </ul>
+        <div class="tab-content pt-3">
+            <div class="tab-pane fade show active" id="matches-pane" role="tabpanel" aria-labelledby="matches-tab" tabindex="0">
+                {% if match_history %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped align-middle history-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Rival</th>
+                                <th>Posicion</th>
+                                <th>Min.</th>
+                                <th>G/A</th>
+                                <th>Puntaje</th>
+                                <th>Notas</th>
+                                {% if can_edit_player_data %}<th class="table-action-cell text-end">Acciones</th>{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in match_history %}
+                            <tr>
+                                <td>{{ entry.match.match_date.strftime('%Y-%m-%d') if entry.match and entry.match.match_date else '-' }}</td>
+                                <td>{{ entry.match.opponent_name if entry.match else '-' }}</td>
+                                <td>{{ display_position(entry.position_played) }}</td>
+                                <td>{{ entry.minutes_played }}</td>
+                                <td>{{ entry.goals }} / {{ entry.assists }}</td>
+                                <td>{{ entry.final_score if entry.final_score is not none else '--' }}</td>
+                                <td>{{ entry.role_notes or '-' }}</td>
+                                {% if can_edit_player_data %}
+                                <td class="table-action-cell text-end">
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Acciones de partido">
+                                        <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#editMatchModal{{ entry.id }}"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteMatchModal{{ entry.id }}"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state-inline">
+                    <i class="bi bi-calendar-event"></i>
+                    <div><strong>Sin partidos cargados.</strong><span>Cuando existan registros se mostraran aca.</span></div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="tab-pane fade" id="physical-pane" role="tabpanel" aria-labelledby="physical-tab" tabindex="0">
+                {% if physical_history %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped align-middle history-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Altura</th>
+                                <th>Peso</th>
+                                <th>Pie</th>
+                                <th>Vel.</th>
+                                <th>Resist.</th>
+                                <th>Crec.</th>
+                                <th>Notas</th>
+                                {% if can_edit_player_data %}<th class="table-action-cell text-end">Acciones</th>{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in physical_history %}
+                            <tr>
+                                <td>{{ entry.assessment_date.strftime('%Y-%m-%d') if entry.assessment_date else '-' }}</td>
+                                <td>{{ entry.height_cm if entry.height_cm is not none else '--' }}</td>
+                                <td>{{ entry.weight_kg if entry.weight_kg is not none else '--' }}</td>
+                                <td>{{ entry.dominant_foot or '-' }}</td>
+                                <td>{{ entry.estimated_speed if entry.estimated_speed is not none else '--' }}</td>
+                                <td>{{ entry.endurance if entry.endurance is not none else '--' }}</td>
+                                <td>{% if entry.in_growth_spurt %}Si{% else %}No{% endif %}</td>
+                                <td>{{ entry.notes or '-' }}</td>
+                                {% if can_edit_player_data %}
+                                <td class="table-action-cell text-end">
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Acciones fisicas">
+                                        <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#editPhysicalModal{{ entry.id }}"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#deletePhysicalModal{{ entry.id }}"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state-inline">
+                    <i class="bi bi-heart-pulse"></i>
+                    <div><strong>Sin evaluaciones fisicas.</strong><span>Cuando existan registros se mostraran aca.</span></div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="tab-pane fade" id="availability-pane" role="tabpanel" aria-labelledby="availability-tab" tabindex="0">
+                {% if availability_history %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped align-middle history-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Disp.</th>
+                                <th>Fatiga</th>
+                                <th>Carga</th>
+                                <th>Dias perdidos</th>
+                                <th>Lesion</th>
+                                <th>Notas</th>
+                                {% if can_edit_player_data %}<th class="table-action-cell text-end">Acciones</th>{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in availability_history %}
+                            <tr>
+                                <td>{{ entry.record_date.strftime('%Y-%m-%d') if entry.record_date else '-' }}</td>
+                                <td>{{ entry.availability_pct if entry.availability_pct is not none else '--' }}</td>
+                                <td>{{ entry.fatigue_pct if entry.fatigue_pct is not none else '--' }}</td>
+                                <td>{{ entry.training_load_pct if entry.training_load_pct is not none else '--' }}</td>
+                                <td>{{ entry.missed_days }}</td>
+                                <td>{% if entry.injury_flag %}Si{% else %}No{% endif %}</td>
+                                <td>{{ entry.notes or '-' }}</td>
+                                {% if can_edit_player_data %}
+                                <td class="table-action-cell text-end">
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Acciones disponibilidad">
+                                        <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#editAvailabilityModal{{ entry.id }}"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteAvailabilityModal{{ entry.id }}"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state-inline">
+                    <i class="bi bi-activity"></i>
+                    <div><strong>Sin disponibilidad cargada.</strong><span>Cuando existan registros se mostraran aca.</span></div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="tab-pane fade" id="reports-pane" role="tabpanel" aria-labelledby="reports-tab" tabindex="0">
+                {% if scout_reports %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped align-middle history-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Decision</th>
+                                <th>Tactica</th>
+                                <th>Mental</th>
+                                <th>Adapt.</th>
+                                <th>Proy.</th>
+                                <th>Notas</th>
+                                {% if can_edit_player_data %}<th class="table-action-cell text-end">Acciones</th>{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in scout_reports %}
+                            <tr>
+                                <td>{{ entry.report_date.strftime('%Y-%m-%d') if entry.report_date else '-' }}</td>
+                                <td>{{ entry.decision_making if entry.decision_making is not none else '--' }}</td>
+                                <td>{{ entry.tactical_reading if entry.tactical_reading is not none else '--' }}</td>
+                                <td>{{ entry.mental_profile if entry.mental_profile is not none else '--' }}</td>
+                                <td>{{ entry.adaptability if entry.adaptability is not none else '--' }}</td>
+                                <td>{{ entry.observed_projection_score if entry.observed_projection_score is not none else '--' }}</td>
+                                <td>{{ entry.notes or '-' }}</td>
+                                {% if can_edit_player_data %}
+                                <td class="table-action-cell text-end">
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Acciones reportes">
+                                        <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#editScoutReportModal{{ entry.id }}"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteScoutReportModal{{ entry.id }}"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state-inline">
+                    <i class="bi bi-journal-text"></i>
+                    <div><strong>Sin reportes scout.</strong><span>Cuando existan registros se mostraran aca.</span></div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if can_edit_player_data %}
+<div class="modal fade record-modal" id="matchHistoryModal" tabindex="-1" aria-labelledby="matchHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('add_player_match_history', player_id=player.id) }}">
+                <div class="modal-header">
+                    <div><span class="profile-eyebrow">Partido</span><h2 class="h5 mb-0" id="matchHistoryModalLabel">Nuevo partido</h2></div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div class="form-section">
+                        <div class="form-section-title">Contexto</div>
+                        <div class="row g-3">
+                            <div class="col-md-4"><label class="form-label" for="match_date">Fecha</label><input id="match_date" class="form-control" type="date" name="match_date" required></div>
+                            <div class="col-md-4"><label class="form-label" for="opponent_name">Rival</label><input id="opponent_name" class="form-control" type="text" name="opponent_name" required></div>
+                            <div class="col-md-4"><label class="form-label" for="opponent_level">Nivel rival</label><input id="opponent_level" class="form-control" type="number" name="opponent_level" min="1" max="5" value="3"></div>
+                            <div class="col-md-4"><label class="form-label" for="tournament">Torneo</label><input id="tournament" class="form-control" type="text" name="tournament"></div>
+                            <div class="col-md-4"><label class="form-label" for="competition_category">Categoria</label><input id="competition_category" class="form-control" type="text" name="competition_category"></div>
+                            <div class="col-md-4"><label class="form-label" for="venue">Sede</label><select id="venue" class="form-select" name="venue"><option value="Local">Local</option><option value="Visitante">Visitante</option><option value="Neutral">Neutral</option></select></div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title">Participacion</div>
+                        <div class="row g-3">
+                            <div class="col-md-4"><label class="form-label" for="position_played">Posicion</label><select id="position_played" class="form-select" name="position_played">{% for pos in position_options %}<option value="{{ pos }}" {% if current_position == pos %}selected{% endif %}>{{ display_position(pos) }}</option>{% endfor %}</select></div>
+                            <div class="col-md-4"><label class="form-label" for="match_minutes_played">Minutos</label><input id="match_minutes_played" class="form-control" type="number" name="minutes_played" min="0" value="0"></div>
+                            <div class="col-md-4"><label class="form-label" for="match_final_score">Puntaje</label><input id="match_final_score" class="form-control" type="number" name="final_score" min="1" max="10" step="0.1"></div>
+                            <div class="col-md-3"><label class="form-label" for="match_goals">Goles</label><input id="match_goals" class="form-control" type="number" name="goals" min="0" value="0"></div>
+                            <div class="col-md-3"><label class="form-label" for="match_assists">Asist.</label><input id="match_assists" class="form-control" type="number" name="assists" min="0" value="0"></div>
+                            <div class="col-md-3"><label class="form-label" for="match_yellow_cards">Amarillas</label><input id="match_yellow_cards" class="form-control" type="number" name="yellow_cards" min="0" value="0"></div>
+                            <div class="col-md-3"><label class="form-label" for="match_red_cards">Rojas</label><input id="match_red_cards" class="form-control" type="number" name="red_cards" min="0" value="0"></div>
+                            <div class="col-md-4"><label class="form-label" for="match_pass_accuracy">% pases</label><input id="match_pass_accuracy" class="form-control" type="number" name="pass_accuracy" min="0" max="100" step="0.1"></div>
+                            <div class="col-md-4"><label class="form-label" for="match_shot_accuracy">% disparos</label><input id="match_shot_accuracy" class="form-control" type="number" name="shot_accuracy" min="0" max="100" step="0.1"></div>
+                            <div class="col-md-4"><label class="form-label" for="match_duels_won_pct">% duelos</label><input id="match_duels_won_pct" class="form-control" type="number" name="duels_won_pct" min="0" max="100" step="0.1"></div>
+                            <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="started" name="started" value="1"><label class="form-check-label" for="started">Titular</label></div></div>
+                        </div>
+                    </div>
+                    <div class="form-section"><div class="form-section-title">Notas</div><textarea class="form-control" name="role_notes" rows="2" placeholder="Rol del jugador"></textarea><textarea class="form-control mt-2" name="match_notes" rows="2" placeholder="Notas del partido"></textarea></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-success" type="submit">Guardar partido</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade record-modal" id="physicalHistoryModal" tabindex="-1" aria-labelledby="physicalHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('add_player_physical_assessment', player_id=player.id) }}">
+                <div class="modal-header"><div><span class="profile-eyebrow">Fisico</span><h2 class="h5 mb-0" id="physicalHistoryModalLabel">Nueva evaluacion fisica</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div class="form-section">
+                        <div class="form-section-title">Mediciones</div>
+                        <div class="row g-3">
+                            <div class="col-md-4"><label class="form-label" for="assessment_date">Fecha</label><input id="assessment_date" class="form-control" type="date" name="assessment_date" required></div>
+                            <div class="col-md-4"><label class="form-label" for="height_cm">Altura cm</label><input id="height_cm" class="form-control" type="number" name="height_cm" min="100" max="230" step="0.1"></div>
+                            <div class="col-md-4"><label class="form-label" for="weight_kg">Peso kg</label><input id="weight_kg" class="form-control" type="number" name="weight_kg" min="30" max="130" step="0.1"></div>
+                            <div class="col-md-4"><label class="form-label" for="dominant_foot">Pie dominante</label><select id="dominant_foot" class="form-select" name="dominant_foot"><option value="">Sin dato</option><option value="Derecho">Derecho</option><option value="Izquierdo">Izquierdo</option><option value="Ambos">Ambos</option></select></div>
+                            <div class="col-md-4"><label class="form-label" for="estimated_speed">Velocidad 0-20</label><input id="estimated_speed" class="form-control" type="number" name="estimated_speed" min="0" max="20" step="0.1"></div>
+                            <div class="col-md-4"><label class="form-label" for="endurance">Resistencia 0-20</label><input id="endurance" class="form-control" type="number" name="endurance" min="0" max="20" step="0.1"></div>
+                            <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="in_growth_spurt" name="in_growth_spurt" value="1"><label class="form-check-label" for="in_growth_spurt">En pico de crecimiento</label></div></div>
+                        </div>
+                    </div>
+                    <div class="form-section"><div class="form-section-title">Notas</div><textarea class="form-control" name="notes" rows="3"></textarea></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-success" type="submit">Guardar fisico</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade record-modal" id="availabilityHistoryModal" tabindex="-1" aria-labelledby="availabilityHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('add_player_availability', player_id=player.id) }}">
+                <div class="modal-header"><div><span class="profile-eyebrow">Disponibilidad</span><h2 class="h5 mb-0" id="availabilityHistoryModalLabel">Nueva disponibilidad</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div class="form-section">
+                        <div class="form-section-title">Carga semanal</div>
+                        <div class="row g-3">
+                            <div class="col-md-4"><label class="form-label" for="availability_record_date">Fecha</label><input id="availability_record_date" class="form-control" type="date" name="record_date" required></div>
+                            <div class="col-md-4"><label class="form-label" for="availability_pct">Disponibilidad %</label><input id="availability_pct" class="form-control" type="number" name="availability_pct" min="0" max="100" step="0.1"></div>
+                            <div class="col-md-4"><label class="form-label" for="fatigue_pct">Fatiga %</label><input id="fatigue_pct" class="form-control" type="number" name="fatigue_pct" min="0" max="100" step="0.1"></div>
+                            <div class="col-md-4"><label class="form-label" for="training_load_pct">Carga %</label><input id="training_load_pct" class="form-control" type="number" name="training_load_pct" min="0" max="100" step="0.1"></div>
+                            <div class="col-md-4"><label class="form-label" for="missed_days">Dias perdidos</label><input id="missed_days" class="form-control" type="number" name="missed_days" min="0" value="0"></div>
+                            <div class="col-md-4 d-flex align-items-end"><div class="form-check"><input class="form-check-input" type="checkbox" id="injury_flag" name="injury_flag" value="1"><label class="form-check-label" for="injury_flag">Lesion</label></div></div>
+                        </div>
+                    </div>
+                    <div class="form-section"><div class="form-section-title">Notas</div><textarea class="form-control" name="notes" rows="3"></textarea></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-success" type="submit">Guardar disponibilidad</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade record-modal" id="scoutReportModal" tabindex="-1" aria-labelledby="scoutReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('add_player_scout_report', player_id=player.id) }}">
+                <div class="modal-header"><div><span class="profile-eyebrow">Reporte scout</span><h2 class="h5 mb-0" id="scoutReportModalLabel">Nuevo reporte</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div class="form-section">
+                        <div class="form-section-title">Evaluacion cualitativa</div>
+                        <div class="row g-3">
+                            <div class="col-md-4"><label class="form-label" for="report_date">Fecha</label><input id="report_date" class="form-control" type="date" name="report_date" required></div>
+                            <div class="col-md-4"><label class="form-label" for="decision_making">Decision 0-20</label><input id="decision_making" class="form-control" type="number" name="decision_making" min="0" max="20"></div>
+                            <div class="col-md-4"><label class="form-label" for="tactical_reading">Tactica 0-20</label><input id="tactical_reading" class="form-control" type="number" name="tactical_reading" min="0" max="20"></div>
+                            <div class="col-md-4"><label class="form-label" for="mental_profile">Mental 0-20</label><input id="mental_profile" class="form-control" type="number" name="mental_profile" min="0" max="20"></div>
+                            <div class="col-md-4"><label class="form-label" for="adaptability">Adaptabilidad 0-20</label><input id="adaptability" class="form-control" type="number" name="adaptability" min="0" max="20"></div>
+                            <div class="col-md-4"><label class="form-label" for="observed_projection_score">Proyeccion 1-10</label><input id="observed_projection_score" class="form-control" type="number" name="observed_projection_score" min="1" max="10" step="0.1"></div>
+                        </div>
+                    </div>
+                    <div class="form-section"><div class="form-section-title">Notas</div><textarea class="form-control" name="notes" rows="3"></textarea></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-success" type="submit">Guardar reporte</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% for entry in match_history %}
+<div class="modal fade record-modal" id="editMatchModal{{ entry.id }}" tabindex="-1" aria-labelledby="editMatchModalLabel{{ entry.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable"><div class="modal-content">
+        <form method="post" action="{{ url_for('edit_player_match_history', player_id=player.id, participation_id=entry.id) }}">
+            <div class="modal-header"><div><span class="profile-eyebrow">Editar partido</span><h2 class="h5 mb-0" id="editMatchModalLabel{{ entry.id }}">{{ entry.match.opponent_name if entry.match else 'Partido' }}</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+            <div class="modal-body">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="form-section"><div class="form-section-title">Contexto</div><div class="row g-3">
+                    <div class="col-md-4"><label class="form-label" for="edit_match_date_{{ entry.id }}">Fecha</label><input id="edit_match_date_{{ entry.id }}" class="form-control" type="date" name="match_date" value="{{ entry.match.match_date.strftime('%Y-%m-%d') if entry.match and entry.match.match_date else '' }}" required></div>
+                    <div class="col-md-4"><label class="form-label" for="edit_opponent_name_{{ entry.id }}">Rival</label><input id="edit_opponent_name_{{ entry.id }}" class="form-control" type="text" name="opponent_name" value="{{ entry.match.opponent_name if entry.match else '' }}" required></div>
+                    <div class="col-md-4"><label class="form-label" for="edit_opponent_level_{{ entry.id }}">Nivel rival</label><input id="edit_opponent_level_{{ entry.id }}" class="form-control" type="number" name="opponent_level" min="1" max="5" value="{{ entry.match.opponent_level if entry.match else 3 }}"></div>
+                    <div class="col-md-4"><label class="form-label" for="edit_tournament_{{ entry.id }}">Torneo</label><input id="edit_tournament_{{ entry.id }}" class="form-control" type="text" name="tournament" value="{{ entry.match.tournament if entry.match and entry.match.tournament else '' }}"></div>
+                    <div class="col-md-4"><label class="form-label" for="edit_competition_category_{{ entry.id }}">Categoria</label><input id="edit_competition_category_{{ entry.id }}" class="form-control" type="text" name="competition_category" value="{{ entry.match.competition_category if entry.match and entry.match.competition_category else '' }}"></div>
+                    <div class="col-md-4"><label class="form-label" for="edit_venue_{{ entry.id }}">Sede</label><select id="edit_venue_{{ entry.id }}" class="form-select" name="venue">{% for venue in ['Local','Visitante','Neutral'] %}<option value="{{ venue }}" {% if entry.match and entry.match.venue == venue %}selected{% endif %}>{{ venue }}</option>{% endfor %}</select></div>
+                </div></div>
+                <div class="form-section"><div class="form-section-title">Participacion</div><div class="row g-3">
+                    <div class="col-md-4"><label class="form-label" for="edit_position_played_{{ entry.id }}">Posicion</label><select id="edit_position_played_{{ entry.id }}" class="form-select" name="position_played">{% for pos in position_options %}<option value="{{ pos }}" {% if pos == entry.position_played %}selected{% endif %}>{{ display_position(pos) }}</option>{% endfor %}</select></div>
+                    <div class="col-md-4"><label class="form-label" for="edit_match_minutes_{{ entry.id }}">Minutos</label><input id="edit_match_minutes_{{ entry.id }}" class="form-control" type="number" name="minutes_played" min="0" value="{{ entry.minutes_played }}"></div>
+                    <div class="col-md-4"><label class="form-label" for="edit_match_score_{{ entry.id }}">Puntaje</label><input id="edit_match_score_{{ entry.id }}" class="form-control" type="number" name="final_score" min="1" max="10" step="0.1" value="{{ entry.final_score if entry.final_score is not none else '' }}"></div>
+                    <div class="col-md-3"><label class="form-label" for="edit_match_goals_{{ entry.id }}">Goles</label><input id="edit_match_goals_{{ entry.id }}" class="form-control" type="number" name="goals" min="0" value="{{ entry.goals }}"></div>
+                    <div class="col-md-3"><label class="form-label" for="edit_match_assists_{{ entry.id }}">Asist.</label><input id="edit_match_assists_{{ entry.id }}" class="form-control" type="number" name="assists" min="0" value="{{ entry.assists }}"></div>
+                    <div class="col-md-3"><label class="form-label" for="edit_match_yellow_{{ entry.id }}">Amarillas</label><input id="edit_match_yellow_{{ entry.id }}" class="form-control" type="number" name="yellow_cards" min="0" value="{{ entry.yellow_cards }}"></div>
+                    <div class="col-md-3"><label class="form-label" for="edit_match_red_{{ entry.id }}">Rojas</label><input id="edit_match_red_{{ entry.id }}" class="form-control" type="number" name="red_cards" min="0" value="{{ entry.red_cards }}"></div>
+                    <div class="col-md-4"><label class="form-label" for="edit_match_pass_{{ entry.id }}">% pases</label><input id="edit_match_pass_{{ entry.id }}" class="form-control" type="number" name="pass_accuracy" min="0" max="100" step="0.1" value="{{ entry.pass_accuracy if entry.pass_accuracy is not none else '' }}"></div>
+                    <div class="col-md-4"><label class="form-label" for="edit_match_shot_{{ entry.id }}">% disparos</label><input id="edit_match_shot_{{ entry.id }}" class="form-control" type="number" name="shot_accuracy" min="0" max="100" step="0.1" value="{{ entry.shot_accuracy if entry.shot_accuracy is not none else '' }}"></div>
+                    <div class="col-md-4"><label class="form-label" for="edit_match_duels_{{ entry.id }}">% duelos</label><input id="edit_match_duels_{{ entry.id }}" class="form-control" type="number" name="duels_won_pct" min="0" max="100" step="0.1" value="{{ entry.duels_won_pct if entry.duels_won_pct is not none else '' }}"></div>
+                    <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="edit_started_{{ entry.id }}" name="started" value="1" {% if entry.started %}checked{% endif %}><label class="form-check-label" for="edit_started_{{ entry.id }}">Titular</label></div></div>
+                </div></div>
+                <div class="form-section"><div class="form-section-title">Notas</div><textarea class="form-control" name="role_notes" rows="2">{{ entry.role_notes or '' }}</textarea><textarea class="form-control mt-2" name="match_notes" rows="2">{{ entry.match.notes if entry.match and entry.match.notes else '' }}</textarea></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Guardar cambios</button></div>
+        </form>
+    </div></div>
+</div>
+<div class="modal fade record-modal" id="deleteMatchModal{{ entry.id }}" tabindex="-1" aria-labelledby="deleteMatchModalLabel{{ entry.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post" action="{{ url_for('delete_player_match_history', player_id=player.id, participation_id=entry.id) }}"><div class="modal-header"><div><span class="profile-eyebrow">Eliminar partido</span><h2 class="h5 mb-0" id="deleteMatchModalLabel{{ entry.id }}">Confirmar eliminacion</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button></div><div class="modal-body"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><p class="mb-0">Se eliminara el partido contra <strong>{{ entry.match.opponent_name if entry.match else 'rival' }}</strong>.</p></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger" type="submit">Eliminar</button></div></form></div></div>
+</div>
+{% endfor %}
+
+{% for entry in physical_history %}
+<div class="modal fade record-modal" id="editPhysicalModal{{ entry.id }}" tabindex="-1" aria-labelledby="editPhysicalModalLabel{{ entry.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><form method="post" action="{{ url_for('edit_player_physical_assessment', player_id=player.id, assessment_id=entry.id) }}"><div class="modal-header"><div><span class="profile-eyebrow">Editar fisico</span><h2 class="h5 mb-0" id="editPhysicalModalLabel{{ entry.id }}">{{ entry.assessment_date.strftime('%Y-%m-%d') if entry.assessment_date else 'Evaluacion' }}</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button></div><div class="modal-body"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><div class="form-section"><div class="form-section-title">Mediciones</div><div class="row g-3">
+        <div class="col-md-4"><label class="form-label" for="edit_assessment_date_{{ entry.id }}">Fecha</label><input id="edit_assessment_date_{{ entry.id }}" class="form-control" type="date" name="assessment_date" value="{{ entry.assessment_date.strftime('%Y-%m-%d') if entry.assessment_date else '' }}" required></div>
+        <div class="col-md-4"><label class="form-label" for="edit_height_{{ entry.id }}">Altura cm</label><input id="edit_height_{{ entry.id }}" class="form-control" type="number" name="height_cm" min="100" max="230" step="0.1" value="{{ entry.height_cm if entry.height_cm is not none else '' }}"></div>
+        <div class="col-md-4"><label class="form-label" for="edit_weight_{{ entry.id }}">Peso kg</label><input id="edit_weight_{{ entry.id }}" class="form-control" type="number" name="weight_kg" min="30" max="130" step="0.1" value="{{ entry.weight_kg if entry.weight_kg is not none else '' }}"></div>
+        <div class="col-md-4"><label class="form-label" for="edit_foot_{{ entry.id }}">Pie dominante</label><select id="edit_foot_{{ entry.id }}" class="form-select" name="dominant_foot"><option value="">Sin dato</option>{% for foot in ['Derecho','Izquierdo','Ambos'] %}<option value="{{ foot }}" {% if entry.dominant_foot == foot %}selected{% endif %}>{{ foot }}</option>{% endfor %}</select></div>
+        <div class="col-md-4"><label class="form-label" for="edit_speed_{{ entry.id }}">Velocidad 0-20</label><input id="edit_speed_{{ entry.id }}" class="form-control" type="number" name="estimated_speed" min="0" max="20" step="0.1" value="{{ entry.estimated_speed if entry.estimated_speed is not none else '' }}"></div>
+        <div class="col-md-4"><label class="form-label" for="edit_endurance_{{ entry.id }}">Resistencia 0-20</label><input id="edit_endurance_{{ entry.id }}" class="form-control" type="number" name="endurance" min="0" max="20" step="0.1" value="{{ entry.endurance if entry.endurance is not none else '' }}"></div>
+        <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="edit_growth_{{ entry.id }}" name="in_growth_spurt" value="1" {% if entry.in_growth_spurt %}checked{% endif %}><label class="form-check-label" for="edit_growth_{{ entry.id }}">En pico de crecimiento</label></div></div>
+    </div></div><div class="form-section"><div class="form-section-title">Notas</div><textarea class="form-control" name="notes" rows="3">{{ entry.notes or '' }}</textarea></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Guardar cambios</button></div></form></div></div>
+</div>
+<div class="modal fade record-modal" id="deletePhysicalModal{{ entry.id }}" tabindex="-1" aria-labelledby="deletePhysicalModalLabel{{ entry.id }}" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post" action="{{ url_for('delete_player_physical_assessment', player_id=player.id, assessment_id=entry.id) }}"><div class="modal-header"><div><span class="profile-eyebrow">Eliminar fisico</span><h2 class="h5 mb-0" id="deletePhysicalModalLabel{{ entry.id }}">Confirmar eliminacion</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button></div><div class="modal-body"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><p class="mb-0">Se eliminara la evaluacion fisica seleccionada.</p></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger" type="submit">Eliminar</button></div></form></div></div></div>
+{% endfor %}
+
+{% for entry in availability_history %}
+<div class="modal fade record-modal" id="editAvailabilityModal{{ entry.id }}" tabindex="-1" aria-labelledby="editAvailabilityModalLabel{{ entry.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('edit_player_availability', player_id=player.id, availability_id=entry.id) }}">
+                <div class="modal-header">
+                    <div><span class="profile-eyebrow">Editar disponibilidad</span><h2 class="h5 mb-0" id="editAvailabilityModalLabel{{ entry.id }}">{{ entry.record_date.strftime('%Y-%m-%d') if entry.record_date else 'Disponibilidad' }}</h2></div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div class="form-section">
+                        <div class="form-section-title">Carga semanal</div>
+                        <div class="row g-3">
+                            <div class="col-md-4"><label class="form-label" for="edit_availability_date_{{ entry.id }}">Fecha</label><input id="edit_availability_date_{{ entry.id }}" class="form-control" type="date" name="record_date" value="{{ entry.record_date.strftime('%Y-%m-%d') if entry.record_date else '' }}" required></div>
+                            <div class="col-md-4"><label class="form-label" for="edit_availability_pct_{{ entry.id }}">Disponibilidad %</label><input id="edit_availability_pct_{{ entry.id }}" class="form-control" type="number" name="availability_pct" min="0" max="100" step="0.1" value="{{ entry.availability_pct if entry.availability_pct is not none else '' }}"></div>
+                            <div class="col-md-4"><label class="form-label" for="edit_fatigue_{{ entry.id }}">Fatiga %</label><input id="edit_fatigue_{{ entry.id }}" class="form-control" type="number" name="fatigue_pct" min="0" max="100" step="0.1" value="{{ entry.fatigue_pct if entry.fatigue_pct is not none else '' }}"></div>
+                            <div class="col-md-4"><label class="form-label" for="edit_training_load_{{ entry.id }}">Carga %</label><input id="edit_training_load_{{ entry.id }}" class="form-control" type="number" name="training_load_pct" min="0" max="100" step="0.1" value="{{ entry.training_load_pct if entry.training_load_pct is not none else '' }}"></div>
+                            <div class="col-md-4"><label class="form-label" for="edit_missed_days_{{ entry.id }}">Dias perdidos</label><input id="edit_missed_days_{{ entry.id }}" class="form-control" type="number" name="missed_days" min="0" value="{{ entry.missed_days }}"></div>
+                            <div class="col-md-4 d-flex align-items-end"><div class="form-check"><input class="form-check-input" type="checkbox" id="edit_injury_{{ entry.id }}" name="injury_flag" value="1" {% if entry.injury_flag %}checked{% endif %}><label class="form-check-label" for="edit_injury_{{ entry.id }}">Lesion</label></div></div>
+                        </div>
+                    </div>
+                    <div class="form-section"><div class="form-section-title">Notas</div><textarea class="form-control" name="notes" rows="3">{{ entry.notes or '' }}</textarea></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" type="submit">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade record-modal" id="deleteAvailabilityModal{{ entry.id }}" tabindex="-1" aria-labelledby="deleteAvailabilityModalLabel{{ entry.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('delete_player_availability', player_id=player.id, availability_id=entry.id) }}">
+                <div class="modal-header">
+                    <div><span class="profile-eyebrow">Eliminar disponibilidad</span><h2 class="h5 mb-0" id="deleteAvailabilityModalLabel{{ entry.id }}">Confirmar eliminacion</h2></div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <p class="mb-0">Se eliminara el registro de disponibilidad seleccionado.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-danger" type="submit">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% for entry in scout_reports %}
+<div class="modal fade record-modal" id="editScoutReportModal{{ entry.id }}" tabindex="-1" aria-labelledby="editScoutReportModalLabel{{ entry.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('edit_player_scout_report', player_id=player.id, report_id=entry.id) }}">
+                <div class="modal-header">
+                    <div><span class="profile-eyebrow">Editar reporte</span><h2 class="h5 mb-0" id="editScoutReportModalLabel{{ entry.id }}">{{ entry.report_date.strftime('%Y-%m-%d') if entry.report_date else 'Reporte scout' }}</h2></div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div class="form-section">
+                        <div class="form-section-title">Evaluacion cualitativa</div>
+                        <div class="row g-3">
+                            <div class="col-md-4"><label class="form-label" for="edit_report_date_{{ entry.id }}">Fecha</label><input id="edit_report_date_{{ entry.id }}" class="form-control" type="date" name="report_date" value="{{ entry.report_date.strftime('%Y-%m-%d') if entry.report_date else '' }}" required></div>
+                            <div class="col-md-4"><label class="form-label" for="edit_decision_{{ entry.id }}">Decision 0-20</label><input id="edit_decision_{{ entry.id }}" class="form-control" type="number" name="decision_making" min="0" max="20" value="{{ entry.decision_making if entry.decision_making is not none else '' }}"></div>
+                            <div class="col-md-4"><label class="form-label" for="edit_tactical_{{ entry.id }}">Tactica 0-20</label><input id="edit_tactical_{{ entry.id }}" class="form-control" type="number" name="tactical_reading" min="0" max="20" value="{{ entry.tactical_reading if entry.tactical_reading is not none else '' }}"></div>
+                            <div class="col-md-4"><label class="form-label" for="edit_mental_{{ entry.id }}">Mental 0-20</label><input id="edit_mental_{{ entry.id }}" class="form-control" type="number" name="mental_profile" min="0" max="20" value="{{ entry.mental_profile if entry.mental_profile is not none else '' }}"></div>
+                            <div class="col-md-4"><label class="form-label" for="edit_adaptability_{{ entry.id }}">Adaptabilidad 0-20</label><input id="edit_adaptability_{{ entry.id }}" class="form-control" type="number" name="adaptability" min="0" max="20" value="{{ entry.adaptability if entry.adaptability is not none else '' }}"></div>
+                            <div class="col-md-4"><label class="form-label" for="edit_projection_{{ entry.id }}">Proyeccion 1-10</label><input id="edit_projection_{{ entry.id }}" class="form-control" type="number" name="observed_projection_score" min="1" max="10" step="0.1" value="{{ entry.observed_projection_score if entry.observed_projection_score is not none else '' }}"></div>
+                        </div>
+                    </div>
+                    <div class="form-section"><div class="form-section-title">Notas</div><textarea class="form-control" name="notes" rows="3">{{ entry.notes or '' }}</textarea></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" type="submit">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade record-modal" id="deleteScoutReportModal{{ entry.id }}" tabindex="-1" aria-labelledby="deleteScoutReportModalLabel{{ entry.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('delete_player_scout_report', player_id=player.id, report_id=entry.id) }}">
+                <div class="modal-header">
+                    <div><span class="profile-eyebrow">Eliminar reporte</span><h2 class="h5 mb-0" id="deleteScoutReportModalLabel{{ entry.id }}">Confirmar eliminacion</h2></div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <p class="mb-0">Se eliminara el reporte scout seleccionado.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-danger" type="submit">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
 <section id="perfil-psicologico" class="card mt-4">
     <div class="card-header">Perfil psicologico y socioemocional</div>
     <div class="card-body">

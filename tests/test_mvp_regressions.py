@@ -81,6 +81,75 @@ def _valid_manage_player_payload(**overrides):
     return payload
 
 
+def _match_history_payload(**overrides):
+    payload = {
+        "match_date": "2026-04-10",
+        "opponent_name": "Rival Base",
+        "opponent_level": "3",
+        "tournament": "Liga Test",
+        "competition_category": "Sub 17",
+        "venue": "Local",
+        "started": "1",
+        "position_played": "Defensa",
+        "minutes_played": "80",
+        "final_score": "7.5",
+        "goals": "0",
+        "assists": "1",
+        "pass_accuracy": "82",
+        "shot_accuracy": "40",
+        "duels_won_pct": "65",
+        "yellow_cards": "1",
+        "red_cards": "0",
+        "role_notes": "Ordenado",
+        "match_notes": "Partido controlado",
+    }
+    payload.update(overrides)
+    return payload
+
+
+def _physical_assessment_payload(**overrides):
+    payload = {
+        "assessment_date": "2026-04-11",
+        "height_cm": "178",
+        "weight_kg": "68",
+        "dominant_foot": "Derecho",
+        "estimated_speed": "14.5",
+        "endurance": "15",
+        "in_growth_spurt": "1",
+        "notes": "Buena respuesta fisica",
+    }
+    payload.update(overrides)
+    return payload
+
+
+def _availability_payload(**overrides):
+    payload = {
+        "record_date": "2026-04-12",
+        "availability_pct": "92",
+        "fatigue_pct": "18",
+        "training_load_pct": "70",
+        "missed_days": "0",
+        "injury_flag": "",
+        "notes": "Disponible",
+    }
+    payload.update(overrides)
+    return payload
+
+
+def _scout_report_payload(**overrides):
+    payload = {
+        "report_date": "2026-04-13",
+        "decision_making": "15",
+        "tactical_reading": "14",
+        "mental_profile": "16",
+        "adaptability": "13",
+        "observed_projection_score": "8.2",
+        "notes": "Buen perfil competitivo",
+    }
+    payload.update(overrides)
+    return payload
+
+
 def _fit_test_preprocessor(app_module, players):
     preprocessing_module = importlib.import_module("preprocessing")
     app_module.preprocessor = preprocessing_module.build_preprocessor()
@@ -462,7 +531,37 @@ def test_mutating_post_routes_reject_missing_csrf(client, app_module, db):
         record_date=date(2026, 4, 1),
         pace=12,
     )
-    db.add_all([stat, attribute_entry])
+    match = app_module.Match(
+        match_date=date(2026, 4, 2),
+        opponent_name="Rival CSRF",
+        opponent_level=3,
+        tournament="Liga CSRF",
+        competition_category="Sub 17",
+        venue="Local",
+    )
+    participation = app_module.PlayerMatchParticipation(
+        player_id=player.id,
+        match=match,
+        position_played="Defensa",
+        minutes_played=60,
+    )
+    physical = app_module.PhysicalAssessment(
+        player_id=player.id,
+        assessment_date=date(2026, 4, 3),
+        height_cm=178,
+    )
+    availability = app_module.PlayerAvailability(
+        player_id=player.id,
+        record_date=date(2026, 4, 4),
+        availability_pct=90,
+        missed_days=0,
+    )
+    report = app_module.ScoutReport(
+        player_id=player.id,
+        report_date=date(2026, 4, 5),
+        decision_making=14,
+    )
+    db.add_all([stat, attribute_entry, participation, physical, availability, report])
     db.commit()
     _login(client, "admin_no_csrf", "admin1234")
 
@@ -492,6 +591,10 @@ def test_mutating_post_routes_reject_missing_csrf(client, app_module, db):
             },
         ),
         (f"/player/{player.id}/attributes", {"action": "add", "record_date": "2026-04-15", "pace": "12"}),
+        (f"/player/{player.id}/matches/add", _match_history_payload()),
+        (f"/player/{player.id}/physical/add", _physical_assessment_payload()),
+        (f"/player/{player.id}/availability/add", _availability_payload()),
+        (f"/player/{player.id}/reports/add", _scout_report_payload()),
         (
             f"/player/{player.id}/stats/{stat.id}/edit",
             {"record_date": "2026-04-16", "matches_played": "2", "minutes_played": "80"},
@@ -502,6 +605,14 @@ def test_mutating_post_routes_reject_missing_csrf(client, app_module, db):
             {"record_date": "2026-04-16", "pace": "14"},
         ),
         (f"/player/{player.id}/attributes/{attribute_entry.id}/delete", {}),
+        (f"/player/{player.id}/matches/{participation.id}/edit", _match_history_payload(opponent_name="Edit CSRF")),
+        (f"/player/{player.id}/matches/{participation.id}/delete", {}),
+        (f"/player/{player.id}/physical/{physical.id}/edit", _physical_assessment_payload(height_cm="180")),
+        (f"/player/{player.id}/physical/{physical.id}/delete", {}),
+        (f"/player/{player.id}/availability/{availability.id}/edit", _availability_payload(availability_pct="80")),
+        (f"/player/{player.id}/availability/{availability.id}/delete", {}),
+        (f"/player/{player.id}/reports/{report.id}/edit", _scout_report_payload(decision_making="16")),
+        (f"/player/{player.id}/reports/{report.id}/delete", {}),
         (f"/edit_player/{player.id}", edit_payload),
         (f"/delete_player/{player.id}", {}),
         ("/coaches/new", {"name": "Coach Nuevo", "role": "Ayudante", "age": "35"}),
@@ -523,6 +634,10 @@ def test_mutating_post_routes_reject_missing_csrf(client, app_module, db):
     assert db.query(app_module.Player).filter_by(id=player.id).count() == 1
     assert db.query(app_module.PlayerStat).filter_by(player_id=player.id).count() == 1
     assert db.query(app_module.PlayerAttributeHistory).filter_by(player_id=player.id).count() == 1
+    assert db.query(app_module.PlayerMatchParticipation).filter_by(player_id=player.id).count() == 1
+    assert db.query(app_module.PhysicalAssessment).filter_by(player_id=player.id).count() == 1
+    assert db.query(app_module.PlayerAvailability).filter_by(player_id=player.id).count() == 1
+    assert db.query(app_module.ScoutReport).filter_by(player_id=player.id).count() == 1
     db.refresh(player)
     db.refresh(coach)
     db.refresh(director)
@@ -882,6 +997,245 @@ def test_delete_player_attribute_history_resyncs_player(client, app_module, db):
     assert player.pace == 11
 
 
+def test_match_history_modal_routes_add_edit_delete(client, app_module, db):
+    _create_user(db, app_module.User, "scout_match_history", "scout1234", role="scout")
+    player = _create_player(app_module, db, name="Match History", national_id="45566784")
+    _login(client, "scout_match_history", "scout1234")
+    csrf_token = _get_csrf_token(client, f"/player/{player.id}")
+
+    response = client.post(
+        f"/player/{player.id}/matches/add",
+        data=_match_history_payload(csrf_token=csrf_token),
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    db.expire_all()
+    participation = db.query(app_module.PlayerMatchParticipation).filter_by(player_id=player.id).one()
+    match_id = participation.match_id
+    assert participation.minutes_played == 80
+    assert participation.match.opponent_name == "Rival Base"
+
+    response = client.post(
+        f"/player/{player.id}/matches/{participation.id}/edit",
+        data=_match_history_payload(
+            csrf_token=csrf_token,
+            opponent_name="Rival Editado",
+            minutes_played="90",
+            final_score="8.0",
+        ),
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    db.expire_all()
+    participation = db.get(app_module.PlayerMatchParticipation, participation.id)
+    assert participation.minutes_played == 90
+    assert participation.final_score == 8.0
+    assert participation.match.opponent_name == "Rival Editado"
+
+    participation_id = participation.id
+    response = client.post(
+        f"/player/{player.id}/matches/{participation_id}/delete",
+        data={"csrf_token": csrf_token},
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    db.expire_all()
+    assert db.query(app_module.PlayerMatchParticipation).filter_by(id=participation_id).count() == 0
+    assert db.query(app_module.Match).filter_by(id=match_id).count() == 0
+
+
+def test_physical_history_modal_routes_add_edit_delete(client, app_module, db):
+    _create_user(db, app_module.User, "scout_physical_history", "scout1234", role="scout")
+    player = _create_player(app_module, db, name="Physical History", national_id="45566785")
+    _login(client, "scout_physical_history", "scout1234")
+    csrf_token = _get_csrf_token(client, f"/player/{player.id}")
+
+    response = client.post(
+        f"/player/{player.id}/physical/add",
+        data=_physical_assessment_payload(csrf_token=csrf_token),
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    db.expire_all()
+    assessment = db.query(app_module.PhysicalAssessment).filter_by(player_id=player.id).one()
+    assert assessment.height_cm == 178
+    assert assessment.in_growth_spurt is True
+
+    response = client.post(
+        f"/player/{player.id}/physical/{assessment.id}/edit",
+        data=_physical_assessment_payload(
+            csrf_token=csrf_token,
+            height_cm="180",
+            in_growth_spurt="",
+            notes="Ajuste fisico",
+        ),
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    db.expire_all()
+    assessment = db.get(app_module.PhysicalAssessment, assessment.id)
+    assert assessment.height_cm == 180
+    assert assessment.in_growth_spurt is False
+    assert assessment.notes == "Ajuste fisico"
+
+    assessment_id = assessment.id
+    response = client.post(
+        f"/player/{player.id}/physical/{assessment_id}/delete",
+        data={"csrf_token": csrf_token},
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    db.expire_all()
+    assert db.query(app_module.PhysicalAssessment).filter_by(id=assessment_id).count() == 0
+
+
+def test_availability_history_modal_routes_add_edit_delete(client, app_module, db):
+    _create_user(db, app_module.User, "scout_availability_history", "scout1234", role="scout")
+    player = _create_player(app_module, db, name="Availability History", national_id="45566786")
+    _login(client, "scout_availability_history", "scout1234")
+    csrf_token = _get_csrf_token(client, f"/player/{player.id}")
+
+    response = client.post(
+        f"/player/{player.id}/availability/add",
+        data=_availability_payload(csrf_token=csrf_token),
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    db.expire_all()
+    availability = db.query(app_module.PlayerAvailability).filter_by(player_id=player.id).one()
+    assert availability.availability_pct == 92
+    assert availability.injury_flag is False
+
+    response = client.post(
+        f"/player/{player.id}/availability/{availability.id}/edit",
+        data=_availability_payload(
+            csrf_token=csrf_token,
+            availability_pct="75",
+            injury_flag="1",
+            missed_days="2",
+        ),
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    db.expire_all()
+    availability = db.get(app_module.PlayerAvailability, availability.id)
+    assert availability.availability_pct == 75
+    assert availability.injury_flag is True
+    assert availability.missed_days == 2
+
+    availability_id = availability.id
+    response = client.post(
+        f"/player/{player.id}/availability/{availability_id}/delete",
+        data={"csrf_token": csrf_token},
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    db.expire_all()
+    assert db.query(app_module.PlayerAvailability).filter_by(id=availability_id).count() == 0
+
+
+def test_scout_report_modal_routes_add_edit_delete(client, app_module, db):
+    _create_user(db, app_module.User, "scout_report_history", "scout1234", role="scout")
+    player = _create_player(app_module, db, name="Scout Report History", national_id="45566787")
+    _login(client, "scout_report_history", "scout1234")
+    csrf_token = _get_csrf_token(client, f"/player/{player.id}")
+
+    response = client.post(
+        f"/player/{player.id}/reports/add",
+        data=_scout_report_payload(csrf_token=csrf_token),
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    db.expire_all()
+    report = db.query(app_module.ScoutReport).filter_by(player_id=player.id).one()
+    assert report.decision_making == 15
+    assert report.observed_projection_score == 8.2
+
+    response = client.post(
+        f"/player/{player.id}/reports/{report.id}/edit",
+        data=_scout_report_payload(
+            csrf_token=csrf_token,
+            decision_making="17",
+            observed_projection_score="8.8",
+            notes="Mejor lectura",
+        ),
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    db.expire_all()
+    report = db.get(app_module.ScoutReport, report.id)
+    assert report.decision_making == 17
+    assert report.observed_projection_score == 8.8
+    assert report.notes == "Mejor lectura"
+
+    report_id = report.id
+    response = client.post(
+        f"/player/{player.id}/reports/{report_id}/delete",
+        data={"csrf_token": csrf_token},
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    db.expire_all()
+    assert db.query(app_module.ScoutReport).filter_by(id=report_id).count() == 0
+
+
+def test_player_detail_renders_complementary_history_modals(client, app_module, db):
+    _create_user(db, app_module.User, "scout_detail_modals", "scout1234", role="scout")
+    player = _create_player(app_module, db, name="Detail Modals", national_id="45566788")
+    match = app_module.Match(
+        match_date=date(2026, 4, 20),
+        opponent_name="Rival Modales",
+        opponent_level=3,
+        venue="Local",
+    )
+    participation = app_module.PlayerMatchParticipation(
+        player_id=player.id,
+        match=match,
+        position_played="Defensa",
+        minutes_played=75,
+    )
+    physical = app_module.PhysicalAssessment(
+        player_id=player.id,
+        assessment_date=date(2026, 4, 21),
+        height_cm=179,
+    )
+    availability = app_module.PlayerAvailability(
+        player_id=player.id,
+        record_date=date(2026, 4, 22),
+        availability_pct=91,
+        missed_days=0,
+    )
+    report = app_module.ScoutReport(
+        player_id=player.id,
+        report_date=date(2026, 4, 23),
+        decision_making=15,
+    )
+    db.add_all([participation, physical, availability, report])
+    db.commit()
+
+    _login(client, "scout_detail_modals", "scout1234")
+    response = client.get(f"/player/{player.id}")
+    body = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert f"editMatchModal{participation.id}" in body
+    assert f"editPhysicalModal{physical.id}" in body
+    assert f"editAvailabilityModal{availability.id}" in body
+    assert f"editScoutReportModal{report.id}" in body
+
+
 def test_director_cannot_modify_history_records(client, app_module, db):
     director = _create_user(db, app_module.User, "director_history", "director123", role="director")
     player = _create_player(app_module, db, name="Director History", national_id="45566783")
@@ -900,7 +1254,12 @@ def test_director_cannot_modify_history_records(client, app_module, db):
         record_date=date(2026, 4, 1),
         pace=12,
     )
-    db.add_all([stat, entry])
+    physical = app_module.PhysicalAssessment(
+        player_id=player.id,
+        assessment_date=date(2026, 4, 1),
+        height_cm=177,
+    )
+    db.add_all([stat, entry, physical])
     db.commit()
     _login(client, director.username, "director123")
     csrf_token = _get_csrf_token(client, f"/player/{player.id}/stats")
@@ -915,11 +1274,18 @@ def test_director_cannot_modify_history_records(client, app_module, db):
         data={"csrf_token": csrf_token},
         follow_redirects=False,
     )
+    physical_response = client.post(
+        f"/player/{player.id}/physical/{physical.id}/delete",
+        data={"csrf_token": csrf_token},
+        follow_redirects=False,
+    )
 
     assert response.status_code == 403
     assert attr_response.status_code == 403
+    assert physical_response.status_code == 403
     assert db.query(app_module.PlayerStat).filter_by(id=stat.id).count() == 1
     assert db.query(app_module.PlayerAttributeHistory).filter_by(id=entry.id).count() == 1
+    assert db.query(app_module.PhysicalAssessment).filter_by(id=physical.id).count() == 1
 
 
 def test_admin_can_create_and_delete_coach(client, app_module, db):

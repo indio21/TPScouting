@@ -1,6 +1,6 @@
 # Contexto Para Nuevo Chat
 
-Fecha: 2026-04-30
+Fecha: 2026-05-07
 
 Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting` en un chat nuevo sin arrastrar toda la conversacion anterior.
 
@@ -255,6 +255,20 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - `player_stats.html` y `player_attributes.html` muestran acciones por fila y abren nuevo/editar/eliminar en modales centrados, no en lateral derecho.
 - Al editar/eliminar atributos, la ficha tecnica del jugador se resincroniza con el historial restante.
 - Validacion UX/UI etapa 2 quinto bloque: pruebas focales `9 passed`; `tests/test_pages.py` `7 passed`; suite completa `57 passed`, cobertura total `77%`, con `4 warnings` conocidos; smoke especifico `/player/30101/stats` y `/player/30101/attributes` respondio `200` y renderizo modales.
+- UX/UI etapa 2 sexto bloque: la ficha del jugador suma CRUD modal para historiales complementarios de partidos/participaciones, evaluaciones fisicas, disponibilidad y reportes scout.
+- `routes/players.py` agrega endpoints POST de alta/edicion/eliminacion para `Match` + `PlayerMatchParticipation`, `PhysicalAssessment`, `PlayerAvailability` y `ScoutReport`, con CSRF, permisos administrador/scout, refresco de proyeccion e invalidacion de cache.
+- `player_detail.html` muestra esos historiales en pestanas dentro de la ficha y abre nuevo/editar/eliminar en modales centrados.
+- `settings.html` y `register.html` fueron alineados visualmente con la misma linea: cabecera verde/azul oscuro, metricas/tarjetas blancas, acciones compactas con iconos y formularios por secciones.
+- Se agregaron tests para aliases, CSRF, permisos, CRUD de los cuatro historiales complementarios y renderizado de modales en la ficha.
+- Validacion UX/UI etapa 2 sexto bloque: pruebas focales de modales complementarios `5 passed`; `tests/test_pages.py` `7 passed`; suite completa `62 passed`, cobertura total `77%`, con `4 warnings` conocidos de scikit-learn.
+- Smoke HTTP local con login admin: `/health`, `/`, `/players`, `/dashboard`, `/compare`, `/compare/multi`, `/settings`, `/register`, `/player/30101`, `/player/30101/stats`, `/player/30101/attributes` y `/player/30101/predict` respondieron `200` en `http://127.0.0.1:5000/`.
+
+## Punto Actual De Retome
+
+- Rama actual: `ux-crud-polish`.
+- Usar siempre `.venv`: `.\.venv\Scripts\python.exe`.
+- Antes de seguir: revisar `git status -sb` y `git log --oneline --decorate -5`.
+- Siguiente paso recomendado: hacer pasada visual manual en navegador sobre ficha de jugador, `settings.html` y `register.html`; si se aprueba, cerrar bloque con commit/push. Luego elegir entre pulir `login.html`, ajustes responsive finos o actualizar el documento Word de tesis.
 
 ## Performance
 
