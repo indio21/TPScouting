@@ -87,6 +87,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - `settings.html` y `register.html` fueron redisenados con la misma linea visual aprobada para administracion y usuarios.
 - Se avanzo el septimo bloque de UX/UI etapa 2: `login.html` fue redisenado con el mismo patron visual y se agregaron ajustes responsive para celular/tablet.
 - Validacion del septimo bloque: `tests/test_pages.py` `8 passed`; suite completa `63 passed`; smoke HTTP local de `/login`, rutas principales, `settings`, `register` y ficha de jugador real demo respondio `200`.
+- Ajuste posterior de login: se redujo el impacto visual del hero, dejando `TPScouting` como titulo principal y corroborando que `admin/admin` autentica rapido en local (`POST /login` aprox. `136 ms`).
 - Se corrigio el orden de inicializacion del bootstrap de administrador para que el servidor local arranque correctamente con `ADMIN_PASSWORD`.
 
 ### 2. Smoke funcional sobre la app real del repo

@@ -72,6 +72,7 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Se agregaron ajustes responsive para celular/tablet en `styles.css`: shell mas compacto, cabeceras apiladas, chips en columna, botones a ancho completo, formularios comodos y modales con margen movil.
 - Se agrego test de render de `/login`.
 - Validacion UX/UI etapa 2 septimo bloque: `tests/test_pages.py` `8 passed`; suite completa `63 passed` con cobertura total `77%`; smoke HTTP local de `/login`, rutas principales, `settings`, `register` y ficha de jugador real demo respondio `200`.
+- Ajuste posterior: el hero de login se hizo mas sobrio y compacto, con `TPScouting` como titulo principal. La medicion local con `admin/admin` dio `POST /login` aprox. `136 ms` y `/players` posterior aprox. `352 ms`.
 
 ## Actualizacion 2026-04-23
 

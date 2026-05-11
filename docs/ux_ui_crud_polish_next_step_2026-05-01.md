@@ -136,6 +136,8 @@ Septimo bloque de UX/UI etapa 2 aplicado:
 - `scouting_app/templates/login.html` fue alineado con la linea visual aprobada: cabecera verde/azul oscuro, icono de acceso, formulario en tarjeta, roles de acceso y acciones compactas.
 - `scouting_app/static/styles.css` suma ajustes responsive para celular/tablet: shell mas compacto, cabecera apilada, chips en columna, botones a ancho completo, formularios mas comodos y modales con margen reducido.
 - Se agrego una prueba de render de `/login` para verificar que el layout nuevo conserve formulario y CSRF.
+- Ajuste posterior: el hero de login se hizo mas sobrio y compacto; el titulo principal paso a `TPScouting` y se removio el impacto visual excesivo de `Iniciar sesion`.
+- Corroboracion local con `admin/admin`: `POST /login` respondio `302` a `/players` en aproximadamente `136 ms`, y la carga posterior de `/players` respondio `200` en aproximadamente `352 ms`.
 
 Validacion del septimo bloque:
 

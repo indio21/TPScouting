@@ -266,6 +266,8 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - `styles.css` suma ajustes responsive para celular/tablet: shell compacto, cabecera apilada, chips en columna, botones/formularios a ancho completo y modales con margen movil.
 - Se agrego test de render para `/login`.
 - Validacion UX/UI etapa 2 septimo bloque: `tests/test_pages.py` `8 passed`; suite completa `63 passed`, cobertura total `77%`, con `4 warnings` conocidos; smoke HTTP local `/login`, rutas principales, `settings`, `register` y ficha de jugador real demo respondieron `200`.
+- Ajuste posterior de login: el hero se hizo mas delicado y compacto; titulo principal `TPScouting`, eyebrow `Acceso privado`, sin chips grandes en la cabecera.
+- Corroboracion local de velocidad con `admin/admin`: `POST /login` aprox. `136 ms`; redireccion/carga posterior de `/players` aprox. `352 ms`.
 - Nota: Playwright no esta instalado en la `.venv`, por lo que no hay capturas responsive automatizadas.
 
 ## Punto Actual De Retome

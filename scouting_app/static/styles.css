@@ -83,12 +83,24 @@ body {
 
 .auth-hero .profile-hero-body {
     grid-template-columns: 1fr;
+    padding: 1.15rem 1.25rem;
 }
 
 .auth-icon-tile {
-    width: 112px;
-    height: 112px;
-    font-size: 2.65rem;
+    width: 76px;
+    height: 76px;
+    font-size: 2rem;
+}
+
+.auth-hero h1 {
+    font-size: clamp(1.9rem, 3vw, 2.65rem);
+    letter-spacing: 0;
+}
+
+.auth-hero-copy {
+    color: rgba(248, 250, 252, .78);
+    font-size: .98rem;
+    margin-top: .45rem;
 }
 
 .auth-card .form-control-lg {
@@ -1153,6 +1165,16 @@ body {
         width: 82px;
         height: 82px;
         font-size: 2rem;
+    }
+
+    .auth-icon-tile {
+        width: 64px;
+        height: 64px;
+        font-size: 1.65rem;
+    }
+
+    .auth-hero h1 {
+        font-size: 1.85rem;
     }
 
     .profile-nav {
