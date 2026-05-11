@@ -1,6 +1,6 @@
 # Contexto Para Nuevo Chat
 
-Fecha: 2026-05-07
+Fecha: 2026-05-11
 
 Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting` en un chat nuevo sin arrastrar toda la conversacion anterior.
 
@@ -262,13 +262,18 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - Se agregaron tests para aliases, CSRF, permisos, CRUD de los cuatro historiales complementarios y renderizado de modales en la ficha.
 - Validacion UX/UI etapa 2 sexto bloque: pruebas focales de modales complementarios `5 passed`; `tests/test_pages.py` `7 passed`; suite completa `62 passed`, cobertura total `77%`, con `4 warnings` conocidos de scikit-learn.
 - Smoke HTTP local con login admin: `/health`, `/`, `/players`, `/dashboard`, `/compare`, `/compare/multi`, `/settings`, `/register`, `/player/30101`, `/player/30101/stats`, `/player/30101/attributes` y `/player/30101/predict` respondieron `200` en `http://127.0.0.1:5000/`.
+- UX/UI etapa 2 septimo bloque: `login.html` fue alineado visualmente con `register.html` y `settings.html`, manteniendo el mismo endpoint, campos y CSRF.
+- `styles.css` suma ajustes responsive para celular/tablet: shell compacto, cabecera apilada, chips en columna, botones/formularios a ancho completo y modales con margen movil.
+- Se agrego test de render para `/login`.
+- Validacion UX/UI etapa 2 septimo bloque: `tests/test_pages.py` `8 passed`; suite completa `63 passed`, cobertura total `77%`, con `4 warnings` conocidos; smoke HTTP local `/login`, rutas principales, `settings`, `register` y ficha de jugador real demo respondieron `200`.
+- Nota: Playwright no esta instalado en la `.venv`, por lo que no hay capturas responsive automatizadas.
 
 ## Punto Actual De Retome
 
 - Rama actual: `ux-crud-polish`.
 - Usar siempre `.venv`: `.\.venv\Scripts\python.exe`.
 - Antes de seguir: revisar `git status -sb` y `git log --oneline --decorate -5`.
-- Siguiente paso recomendado: hacer pasada visual manual en navegador sobre ficha de jugador, `settings.html` y `register.html`; si se aprueba, cerrar bloque con commit/push. Luego elegir entre pulir `login.html`, ajustes responsive finos o actualizar el documento Word de tesis.
+- Siguiente paso recomendado: hacer pasada visual manual en navegador sobre login, ficha de jugador, `settings.html` y `register.html` en desktop/celular/tablet; si se aprueba, seguir con documento Word de tesis o ajustes responsive puntuales que aparezcan.
 
 ## Performance
 

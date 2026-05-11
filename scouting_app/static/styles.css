@@ -77,6 +77,24 @@ body {
     flex: 0 0 auto;
 }
 
+.auth-page .app-shell {
+    max-width: 1180px;
+}
+
+.auth-hero .profile-hero-body {
+    grid-template-columns: 1fr;
+}
+
+.auth-icon-tile {
+    width: 112px;
+    height: 112px;
+    font-size: 2.65rem;
+}
+
+.auth-card .form-control-lg {
+    min-height: 52px;
+}
+
 .card-header {
     font-weight: 600;
 }
@@ -1084,6 +1102,104 @@ body {
     .talent-map-point img {
         width: 34px;
         height: 34px;
+    }
+}
+
+@media (max-width: 576px) {
+    body {
+        background: #ffffff;
+    }
+
+    .container.app-shell {
+        max-width: 100%;
+        padding: 1rem .75rem;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .profile-hero {
+        border-radius: 8px;
+    }
+
+    .profile-hero-body {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .profile-identity {
+        flex-direction: column;
+        gap: .85rem;
+    }
+
+    .profile-hero h1 {
+        font-size: 2rem;
+        line-height: 1.05;
+    }
+
+    .profile-meta {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .profile-chip {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .profile-icon-tile,
+    .auth-icon-tile,
+    .player-avatar-xl {
+        width: 82px;
+        height: 82px;
+        font-size: 2rem;
+    }
+
+    .profile-nav {
+        padding: 0 1rem 1rem;
+    }
+
+    .profile-nav a,
+    .page-actions .btn,
+    .crud-actions .btn,
+    .crud-actions form,
+    .crud-actions form .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .form-section {
+        padding: .85rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .info-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: .2rem;
+    }
+
+    .table-action-cell {
+        min-width: 128px;
+    }
+
+    .record-modal .modal-dialog {
+        margin: .5rem;
+    }
+
+    .record-modal .modal-body {
+        padding: .85rem;
+    }
+
+    .navbar .container-fluid {
+        align-items: stretch;
+    }
+
+    .navbar .navbar-brand {
+        min-width: 0;
     }
 }
 

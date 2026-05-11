@@ -20,7 +20,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 ### 1. Suite automatizada
 
 - Estado final validado original: `40 passed`
-- Estado tecnico actualizado 2026-05-07: `62 passed` con `pytest-cov`, cobertura total reportada `77%`
+- Estado tecnico actualizado 2026-05-11: `63 passed` con `pytest-cov`, cobertura total reportada `77%`
 - Cobertura reforzada sobre:
 - autenticacion
 - permisos por rol
@@ -54,6 +54,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - UX/UI etapa 2 quinto bloque: editar/eliminar historiales de rendimiento y atributos con endpoints, modales y tests
 - UX/UI etapa 2 sexto bloque: CRUD modal de historiales complementarios de jugador, incluyendo partidos/participaciones, fisico, disponibilidad y reportes scout
 - UX/UI etapa 2 sexto bloque: `settings.html` y `register.html` alineados visualmente con la linea aprobada de administracion/usuarios
+- UX/UI etapa 2 septimo bloque: `login.html` alineado con la misma linea visual y ajustes responsive para celular/tablet
 - correccion de arranque local con `ADMIN_PASSWORD` configurado
 
 ### 1.1. Cierre De Observaciones De Codigo Fuente 2026-04-27
@@ -84,6 +85,8 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - Se avanzo el quinto bloque de UX/UI etapa 2: editar/eliminar registros de rendimiento y atributos con endpoints propios, CSRF, permisos, modales y tests.
 - Se avanzo el sexto bloque de UX/UI etapa 2: alta/edicion/eliminacion de partidos/participaciones, evaluaciones fisicas, disponibilidad y reportes scout desde la ficha del jugador con modales centrados, CSRF, permisos y tests.
 - `settings.html` y `register.html` fueron redisenados con la misma linea visual aprobada para administracion y usuarios.
+- Se avanzo el septimo bloque de UX/UI etapa 2: `login.html` fue redisenado con el mismo patron visual y se agregaron ajustes responsive para celular/tablet.
+- Validacion del septimo bloque: `tests/test_pages.py` `8 passed`; suite completa `63 passed`; smoke HTTP local de `/login`, rutas principales, `settings`, `register` y ficha de jugador real demo respondio `200`.
 - Se corrigio el orden de inicializacion del bootstrap de administrador para que el servidor local arranque correctamente con `ADMIN_PASSWORD`.
 
 ### 2. Smoke funcional sobre la app real del repo
@@ -93,6 +96,7 @@ Se ejecuto una verificacion con `Flask test_client()` sobre la app apuntando a l
 Rutas verificadas con respuesta `200`:
 
 - `GET /`
+- `GET /login`
 - `GET /health`
 - `GET /players`
 - `GET /dashboard`
@@ -166,4 +170,4 @@ Estos puntos siguen siendo reales y no se deben ocultar:
 
 Con la evidencia actual, el MVP queda funcional, coherente con su alcance acotado y bastante mas defendible que al inicio de la revision. La rama `training` queda como base estable inicial, `reformas-finales` cerro las reformas livianas y `reformas-complejas` concentro los cambios estructurales hasta cerrar la fase 2 de blueprints por familia en `9f02b3c`. La siguiente etapa ya no es seguir separando rutas, sino elegir entre tres frentes reales: pulido UX/UI y CRUDs para mejorar la demo, rendimiento del dashboard a escala, o correccion del Word para que refleje fielmente este estado real.
 
-Para continuar el pulido UX/UI en `ux-crud-polish`, el siguiente bloque chico recomendado es hacer una pasada visual manual en navegador, ajustar detalles responsive si aparece algo concreto y luego elegir entre pulir `login.html` o actualizar el documento Word para que refleje fielmente este estado real.
+Para continuar el pulido UX/UI en `ux-crud-polish`, el siguiente bloque chico recomendado es hacer una pasada visual manual en navegador, ajustar detalles responsive si aparece algo concreto y luego elegir entre actualizar el documento Word o trabajar rendimiento del dashboard a escala.

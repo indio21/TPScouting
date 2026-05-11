@@ -1,6 +1,6 @@
 # Progreso Del MVP
 
-Fecha de actualizacion: 2026-05-07
+Fecha de actualizacion: 2026-05-11
 
 Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP real del proyecto `TPScouting`.
 
@@ -68,6 +68,10 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - `settings.html` y `register.html` quedaron alineados visualmente con la misma linea de UX/UI: cabecera de administracion/usuarios, metricas, tarjetas blancas, acciones compactas y formularios por secciones.
 - Validacion UX/UI etapa 2 sexto bloque: pruebas focales de modales complementarios `5 passed`; `tests/test_pages.py` `7 passed`; suite completa `62 passed` con cobertura total `77%`, con los `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
 - Smoke HTTP local con login admin: rutas principales, `settings`, `register`, ficha, historial, atributos y proyeccion de jugador real demo respondieron `200` en `http://127.0.0.1:5000/`.
+- UX/UI etapa 2 septimo bloque: `login.html` quedo alineado visualmente con el resto de administracion/usuarios, manteniendo endpoint, campos y CSRF.
+- Se agregaron ajustes responsive para celular/tablet en `styles.css`: shell mas compacto, cabeceras apiladas, chips en columna, botones a ancho completo, formularios comodos y modales con margen movil.
+- Se agrego test de render de `/login`.
+- Validacion UX/UI etapa 2 septimo bloque: `tests/test_pages.py` `8 passed`; suite completa `63 passed` con cobertura total `77%`; smoke HTTP local de `/login`, rutas principales, `settings`, `register` y ficha de jugador real demo respondio `200`.
 
 ## Actualizacion 2026-04-23
 

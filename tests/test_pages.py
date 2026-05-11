@@ -35,6 +35,16 @@ def test_settings_requires_admin_after_hotfix(client, app_module, db):
     assert resp.status_code == 403
 
 
+def test_login_page_renders_polished_layout(client):
+    resp = client.get("/login")
+    body = resp.get_data(as_text=True)
+
+    assert resp.status_code == 200
+    assert "auth-hero" in body
+    assert "Nombre de usuario" in body
+    assert "csrf_token" in body
+
+
 def test_staff_blueprint_keeps_legacy_endpoint_names(app_module):
     with app_module.app.test_request_context():
         assert url_for("list_coaches") == "/coaches"

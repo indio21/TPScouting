@@ -131,6 +131,19 @@ Validacion del sexto bloque:
 - Suite completa: `62 passed`, cobertura total `77%`, con los `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
 - Smoke HTTP local con login admin: `/health`, `/`, `/players`, `/dashboard`, `/compare`, `/compare/multi`, `/settings`, `/register`, `/player/30101`, `/player/30101/stats`, `/player/30101/attributes` y `/player/30101/predict` respondieron `200` en `http://127.0.0.1:5000/`.
 
+Septimo bloque de UX/UI etapa 2 aplicado:
+
+- `scouting_app/templates/login.html` fue alineado con la linea visual aprobada: cabecera verde/azul oscuro, icono de acceso, formulario en tarjeta, roles de acceso y acciones compactas.
+- `scouting_app/static/styles.css` suma ajustes responsive para celular/tablet: shell mas compacto, cabecera apilada, chips en columna, botones a ancho completo, formularios mas comodos y modales con margen reducido.
+- Se agrego una prueba de render de `/login` para verificar que el layout nuevo conserve formulario y CSRF.
+
+Validacion del septimo bloque:
+
+- `tests/test_pages.py`: `8 passed`.
+- Suite completa: `63 passed`, cobertura total `77%`, con los `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
+- Smoke HTTP local: `/login` respondio `200` y renderizo `auth-hero`; con login admin, `/health`, `/`, `/login`, `/players`, `/dashboard`, `/settings`, `/register` y `/player/30101` respondieron `200`.
+- Nota de verificacion: Playwright no esta instalado en la `.venv`, por lo que no se generaron capturas automatizadas responsive.
+
 ## Punto De Retome 2026-05-06
 
 - Rama: `ux-crud-polish`.
@@ -144,13 +157,13 @@ Arranque recomendado:
 
 1. Hacer una pasada visual manual en navegador sobre ficha de jugador, settings y registro.
 2. Si el usuario aprueba, cerrar este bloque con commit/push.
-3. Despues elegir entre pulir `login.html`, revisar responsive fino o pasar al documento Word.
+3. Despues elegir entre revisar pantallas puntuales en navegador o pasar al documento Word.
 
 Orden restante recomendado, de menor a mayor riesgo:
 
 1. Pasada visual en navegador y ajuste responsive si aparece algo concreto.
-2. Pulido menor de `login.html` para alinearlo con `register.html`.
-3. Documento Word de tesis: alinear narrativa, capturas y afirmaciones con el MVP real ya corregido.
+2. Documento Word de tesis: alinear narrativa, capturas y afirmaciones con el MVP real ya corregido.
+3. Rendimiento dashboard a escala, si se quiere seguir por codigo.
 
 ## Criterio De Cambio
 
