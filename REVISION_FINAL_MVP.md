@@ -20,7 +20,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 ### 1. Suite automatizada
 
 - Estado final validado original: `40 passed`
-- Estado tecnico actualizado 2026-05-11: `63 passed` con `pytest-cov`, cobertura total reportada `77%`
+- Estado tecnico actualizado 2026-05-11: `64 passed` con `pytest-cov`, cobertura total reportada `77%`
 - Cobertura reforzada sobre:
 - autenticacion
 - permisos por rol
@@ -55,6 +55,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - UX/UI etapa 2 sexto bloque: CRUD modal de historiales complementarios de jugador, incluyendo partidos/participaciones, fisico, disponibilidad y reportes scout
 - UX/UI etapa 2 sexto bloque: `settings.html` y `register.html` alineados visualmente con la linea aprobada de administracion/usuarios
 - UX/UI etapa 2 septimo bloque: `login.html` alineado con la misma linea visual y ajustes responsive para celular/tablet
+- UX/UI etapa 2 octavo bloque: Panel general redisenado como mesa de control dinamica por rol
 - correccion de arranque local con `ADMIN_PASSWORD` configurado
 
 ### 1.1. Cierre De Observaciones De Codigo Fuente 2026-04-27
@@ -88,6 +89,9 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - Se avanzo el septimo bloque de UX/UI etapa 2: `login.html` fue redisenado con el mismo patron visual y se agregaron ajustes responsive para celular/tablet.
 - Validacion del septimo bloque: `tests/test_pages.py` `8 passed`; suite completa `63 passed`; smoke HTTP local de `/login`, rutas principales, `settings`, `register` y ficha de jugador real demo respondio `200`.
 - Ajuste posterior de login: se redujo el impacto visual del hero, dejando `TPScouting` como titulo principal y corroborando que `admin/admin` autentica rapido en local (`POST /login` aprox. `136 ms`).
+- Se avanzo el octavo bloque de UX/UI etapa 2: el Panel general ahora prioriza decisiones de scouting o direccion tecnica segun rol, con KPIs compactos, listas accionables y graficos reducidos.
+- Se corrigio la cache del dashboard para incluir el modo de rol y evitar que scout/admin y director compartan HTML renderizado.
+- Validacion del octavo bloque: `tests/test_pages.py` `9 passed`; suite completa `64 passed`; smoke HTTP local de `/dashboard` con admin respondio `200` y renderizo `Mesa de scouting`.
 - Se corrigio el orden de inicializacion del bootstrap de administrador para que el servidor local arranque correctamente con `ADMIN_PASSWORD`.
 
 ### 2. Smoke funcional sobre la app real del repo

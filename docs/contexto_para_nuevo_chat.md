@@ -269,13 +269,18 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - Ajuste posterior de login: el hero se hizo mas delicado y compacto; titulo principal `TPScouting`, eyebrow `Acceso privado`, sin chips grandes en la cabecera.
 - Corroboracion local de velocidad con `admin/admin`: `POST /login` aprox. `136 ms`; redireccion/carga posterior de `/players` aprox. `352 ms`.
 - Nota: Playwright no esta instalado en la `.venv`, por lo que no hay capturas responsive automatizadas.
+- UX/UI etapa 2 octavo bloque: `dashboard.html` se redisenio como panel de control global, con KPIs arriba, listas accionables al centro y graficos compactos al final.
+- El dashboard ahora es dinamico por rol: `administrador`/`scout` ven `Mesa de scouting`; `director` ve `Estado del plantel`.
+- `routes/dashboard.py` calcula metricas desde datos reales existentes: alto potencial, actividad reciente, jugadores a revisar, reportes scout recientes, alertas fisicas, mejor forma reciente, evolucion y oportunidades por puesto.
+- La cache HTML del dashboard incluye el modo de rol en la clave para evitar mezclar vistas.
+- Validacion UX/UI etapa 2 octavo bloque: `tests/test_pages.py` `9 passed`; suite completa `64 passed`, cobertura total `77%`; smoke HTTP local con admin `/dashboard` respondio `200` y renderizo `Mesa de scouting`.
 
 ## Punto Actual De Retome
 
 - Rama actual: `ux-crud-polish`.
 - Usar siempre `.venv`: `.\.venv\Scripts\python.exe`.
 - Antes de seguir: revisar `git status -sb` y `git log --oneline --decorate -5`.
-- Siguiente paso recomendado: hacer pasada visual manual en navegador sobre login, ficha de jugador, `settings.html` y `register.html` en desktop/celular/tablet; si se aprueba, seguir con documento Word de tesis o ajustes responsive puntuales que aparezcan.
+- Siguiente paso recomendado: hacer pasada visual manual en navegador sobre dashboard, login, ficha de jugador, `settings.html` y `register.html` en desktop/celular/tablet; si se aprueba, seguir con documento Word de tesis o ajustes responsive puntuales que aparezcan.
 
 ## Performance
 

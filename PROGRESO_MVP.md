@@ -73,6 +73,11 @@ Este archivo resume, sin inventar nada, las etapas ya trabajadas sobre el MVP re
 - Se agrego test de render de `/login`.
 - Validacion UX/UI etapa 2 septimo bloque: `tests/test_pages.py` `8 passed`; suite completa `63 passed` con cobertura total `77%`; smoke HTTP local de `/login`, rutas principales, `settings`, `register` y ficha de jugador real demo respondio `200`.
 - Ajuste posterior: el hero de login se hizo mas sobrio y compacto, con `TPScouting` como titulo principal. La medicion local con `admin/admin` dio `POST /login` aprox. `136 ms` y `/players` posterior aprox. `352 ms`.
+- UX/UI etapa 2 octavo bloque: el Panel general paso a ser una mesa de control accionable, con KPIs compactos, listas de prioridad/seguimiento/riesgo y graficos mas pequenos al final.
+- El dashboard ahora cambia por rol: administrador/scout ven `Mesa de scouting`; director ve `Estado del plantel`.
+- Las metricas nuevas salen de datos reales ya existentes: proyecciones, stats, atributos, reportes scout, partidos, fisico y disponibilidad.
+- Se agrego el modo de rol a la clave de cache del dashboard para no mezclar vistas entre usuarios.
+- Validacion UX/UI etapa 2 octavo bloque: `tests/test_pages.py` `9 passed`; suite completa `64 passed` con cobertura total `77%`; smoke local de `/dashboard` con admin respondio `200` y renderizo `Mesa de scouting`.
 
 ## Actualizacion 2026-04-23
 

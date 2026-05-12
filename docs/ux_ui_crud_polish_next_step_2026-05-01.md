@@ -146,6 +146,31 @@ Validacion del septimo bloque:
 - Smoke HTTP local: `/login` respondio `200` y renderizo `auth-hero`; con login admin, `/health`, `/`, `/login`, `/players`, `/dashboard`, `/settings`, `/register` y `/player/30101` respondieron `200`.
 - Nota de verificacion: Playwright no esta instalado en la `.venv`, por lo que no se generaron capturas automatizadas responsive.
 
+Octavo bloque de UX/UI etapa 2 aplicado:
+
+- `scouting_app/templates/dashboard.html` se redisenio como panel de control global y no como pagina de graficos grandes.
+- `scouting_app/routes/dashboard.py` ahora calcula metricas accionables con datos reales existentes:
+  - jugadores evaluados
+  - alto potencial
+  - actividad/seguimiento reciente
+  - jugadores a revisar por falta de actividad
+  - reportes scout recientes
+  - alertas fisicas por lesion, disponibilidad baja o fatiga alta
+  - mejor forma reciente y evolucion en periodo
+  - oportunidades por puesto
+- El panel es dinamico por rol:
+  - `administrador` y `scout` ven una `Mesa de scouting`.
+  - `director` ve `Estado del plantel`.
+- La cache HTML del dashboard ahora incluye el modo de rol en la clave para no mezclar vistas entre scout/admin y director.
+- Los graficos se mantienen, pero pasan a tarjetas compactas al final del panel.
+- Se agrego test para verificar que el dashboard cambia su texto por rol y que admin no recibe la vista de director.
+
+Validacion del octavo bloque:
+
+- `tests/test_pages.py`: `9 passed`.
+- Suite completa: `64 passed`, cobertura total `77%`, con los `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
+- Smoke HTTP local con login admin: `/health`, `/dashboard`, `/players` y `/player/30101` respondieron `200`; `/dashboard` renderizo `Mesa de scouting`.
+
 ## Punto De Retome 2026-05-06
 
 - Rama: `ux-crud-polish`.
@@ -159,7 +184,7 @@ Arranque recomendado:
 
 1. Hacer una pasada visual manual en navegador sobre ficha de jugador, settings y registro.
 2. Si el usuario aprueba, cerrar este bloque con commit/push.
-3. Despues elegir entre revisar pantallas puntuales en navegador o pasar al documento Word.
+3. Despues elegir entre revisar pantallas puntuales en navegador, ajustar detalles del dashboard o pasar al documento Word.
 
 Orden restante recomendado, de menor a mayor riesgo:
 

@@ -28,6 +28,26 @@ def test_dashboard_ok_after_login(client, app_module, db):
     resp = client.get("/dashboard")
     assert resp.status_code == 200
 
+
+def test_dashboard_copy_changes_by_role(client, app_module, db):
+    _create_user(db, app_module.User, "admin_dash", "admin1234", role="administrador")
+    _create_user(db, app_module.User, "director_dash", "director123", role="director")
+
+    _login(client, "admin_dash", "admin1234")
+    admin_resp = client.get("/dashboard")
+    admin_body = admin_resp.get_data(as_text=True)
+    assert admin_resp.status_code == 200
+    assert "Mesa de scouting" in admin_body
+    assert "Estado del plantel" not in admin_body
+
+    client.get("/logout")
+    _login(client, "director_dash", "director123")
+    director_resp = client.get("/dashboard")
+    director_body = director_resp.get_data(as_text=True)
+    assert director_resp.status_code == 200
+    assert "Estado del plantel" in director_body
+    assert "Mesa de scouting" not in director_body
+
 def test_settings_requires_admin_after_hotfix(client, app_module, db):
     _create_user(db, app_module.User, "u3", "p3", role="scout")
     _login(client, "u3", "p3")
