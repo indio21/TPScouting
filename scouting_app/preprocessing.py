@@ -152,6 +152,7 @@ def player_base_dataframe_from_engine(engine) -> pd.DataFrame:
     query = select(
         Player.id.label("player_id"),
         Player.age,
+        Player.birth_date,
         Player.pace,
         Player.shooting,
         Player.passing,
@@ -166,7 +167,15 @@ def player_base_dataframe_from_engine(engine) -> pd.DataFrame:
         Player.potential_label,
     )
     with engine.connect() as connection:
-        return pd.read_sql(query, connection)
+        df = pd.read_sql(query, connection)
+    if not df.empty and "birth_date" in df.columns:
+        birth_dates = pd.to_datetime(df["birth_date"], errors="coerce")
+        calculated_ages = birth_dates.map(
+            lambda value: Player.calculate_age_from_birth_date(value.date()) if pd.notna(value) else np.nan
+        )
+        df["age"] = calculated_ages.fillna(df["age"])
+        df = df.drop(columns=["birth_date"])
+    return df
 
 
 def player_base_dataframe_from_players(players: Iterable[Player]) -> pd.DataFrame:
@@ -175,7 +184,7 @@ def player_base_dataframe_from_players(players: Iterable[Player]) -> pd.DataFram
         rows.append(
             {
                 "player_id": player.id,
-                "age": player.age,
+                "age": player.current_age,
                 "pace": player.pace,
                 "shooting": player.shooting,
                 "passing": player.passing,

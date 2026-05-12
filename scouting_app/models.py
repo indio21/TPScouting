@@ -6,7 +6,7 @@ creación rápida de prototipos; en un entorno real se recomienda
 normalizar aún más los datos y añadir restricciones de integridad.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import Column, Integer, String, Float, Boolean, Date, DateTime, ForeignKey, Text
 from sqlalchemy.orm import declarative_base, relationship
@@ -18,6 +18,14 @@ Base = declarative_base()
 class TimestampMixin:
     created_at = Column(DateTime, nullable=True, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=True, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+def calculate_age_from_birth_date(value, today=None):
+    if value is None:
+        return None
+    today = today or date.today()
+    birthday_passed = (today.month, today.day) >= (value.month, value.day)
+    return today.year - value.year - (0 if birthday_passed else 1)
 
 
 class Player(TimestampMixin, Base):
@@ -54,9 +62,22 @@ class Player(TimestampMixin, Base):
     # Potencial real/histórico (etiqueta).  En datos generados es aleatoria.
     potential_label = Column(Boolean, nullable=False)
 
+    calculate_age_from_birth_date = staticmethod(calculate_age_from_birth_date)
+
     @property
     def category_year(self):
         return self.birth_date.year if self.birth_date else None
+
+    @property
+    def current_age(self):
+        calculated = calculate_age_from_birth_date(self.birth_date)
+        return calculated if calculated is not None else self.age
+
+    def sync_age_from_birth_date(self):
+        calculated = calculate_age_from_birth_date(self.birth_date)
+        if calculated is not None:
+            self.age = calculated
+        return self.age
 
     stats = relationship("PlayerStat", back_populates="player", cascade="all, delete-orphan")
     attribute_history = relationship("PlayerAttributeHistory", back_populates="player", cascade="all, delete-orphan")
@@ -83,7 +104,7 @@ class Player(TimestampMixin, Base):
             "id": self.id,
             "name": self.name,
             "national_id": self.national_id,
-            "age": self.age,
+            "age": self.current_age,
             "birth_date": self.birth_date.isoformat() if self.birth_date else None,
             "category_year": self.category_year,
             "position": self.position,

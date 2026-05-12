@@ -498,7 +498,12 @@ def init_admin_user() -> None:
 def landing():
     db = Session()
     total_players = db.query(func.count(Player.id)).scalar() or 0
-    avg_age = db.query(func.avg(Player.age)).scalar()
+    age_values = [
+        player.current_age
+        for player in db.query(Player).options(load_only(Player.age, Player.birth_date)).all()
+        if player.current_age is not None
+    ]
+    avg_age = sum(age_values) / len(age_values) if age_values else None
     countries = db.query(Player.country).distinct().count()
     positions = db.query(Player.position).distinct().count()
     db.close()
@@ -1264,9 +1269,13 @@ def attribute_chart_payload(history: List[PlayerAttributeHistory]) -> Dict[str, 
     return {"labels": labels, "series": series}
 
 
+DEFAULT_POTENTIAL_MEDIUM_THRESHOLD = 0.60
+DEFAULT_POTENTIAL_HIGH_THRESHOLD = 0.80
+
+
 def potential_thresholds() -> Tuple[float, float]:
-    high = float(os.environ.get("POTENTIAL_HIGH_THRESHOLD", "0.60"))
-    medium = float(os.environ.get("POTENTIAL_MEDIUM_THRESHOLD", "0.35"))
+    high = float(os.environ.get("POTENTIAL_HIGH_THRESHOLD", str(DEFAULT_POTENTIAL_HIGH_THRESHOLD)))
+    medium = float(os.environ.get("POTENTIAL_MEDIUM_THRESHOLD", str(DEFAULT_POTENTIAL_MEDIUM_THRESHOLD)))
     if medium >= high:
         medium = max(0.0, high - 0.05)
     return medium, high

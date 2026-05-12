@@ -415,13 +415,18 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - UX/UI etapa 2 cuarto bloque: carga de historiales en modales y carga masiva de jugadores separada visualmente
 - UX/UI etapa 2 quinto bloque: editar/eliminar historiales de rendimiento y atributos con modales, endpoints y tests
 - UX/UI etapa 2 sexto/septimo/octavo bloque: historiales complementarios en modales, settings/register/login alineados y dashboard redisenado por rol
-- UX/UI etapa 2 noveno bloque iniciado: edad visible en listados/panel y categoria juvenil desde fecha de nacimiento
+- UX/UI etapa 2 noveno bloque: edad visible en listados/panel y categoria juvenil desde fecha de nacimiento
+- Correccion de modelo de datos de jugador: la fecha de nacimiento es fuente de verdad para edad y categoria; la edad manual se conserva solo como valor derivado/compatibilidad
+- Backfill demo autorizado: `players_updated_v2.db` fue completada con fechas de nacimiento demo estables para eliminar `Cat. N/D` en los 100 jugadores actuales
+- Umbrales de potencial actualizados: bajo `<60%`, medio `60-79%`, alto `>=80%`
 - Correccion de arranque local con `ADMIN_PASSWORD` configurado
 
 ## Puntos Que Siguen Parciales O Pendientes
 
 - Persistencia/despliegue final en Render
 - Categoria juvenil (`cat 2010`) implementada desde `birth_date`; jugadores viejos sin fecha quedan en `Cat. N/D`.
+- Jugadores legacy sin `birth_date`: no se inventa fecha de nacimiento; deben completarse manualmente si se quiere categoria real.
+- Para la base demo actual, el usuario autorizo fechas aleatorias controladas de MVP; se creo backup antes de completar `birth_date`.
 - Carga masiva de jugadores redisenada como vista CSV dedicada; queda pendiente solo revision visual/manual en navegador.
 - Optimizaciones adicionales de rendimiento
 - Nomenclatura `db` / `db_session` aceptada como parcial en endpoints Flask; no bloquea el MVP
@@ -441,8 +446,9 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Punto de retome: commit `a8ee6ea ux: move player history forms to offcanvas`, rama `ux-crud-polish` limpia y sincronizada.
 - Quinto bloque de etapa 2 aplicado: segunda etapa CRUD de historiales de jugadores, agregando editar/eliminar por fila con endpoints y tests propios.
 - Sexto/septimo/octavo bloque aplicados: historiales complementarios en modales, settings/register/login alineados y dashboard convertido en panel de control por rol.
-- Noveno bloque iniciado: edad visible en seguimiento/ranking/panel; categoria juvenil sale de `birth_date.year`.
-- Siguiente bloque sugerido: revisar visualmente `/players/import` en navegador y luego cerrar con commit/push si el usuario aprueba.
+- Noveno bloque aplicado: edad visible en seguimiento/ranking/panel; categoria juvenil sale de `birth_date.year`; altas, ediciones e importacion calculan edad desde fecha de nacimiento.
+- Decimo ajuste aplicado: backfill demo local de `birth_date` y umbrales de potencial bajo/medio/alto en `60/80`.
+- Siguiente bloque sugerido: revisar visualmente `/players/import`, `/players/manage`, `/dashboard`, `/compare/multi` y ficha de jugador; luego pasar al documento Word si no aparece nada visual.
 - Si la prioridad es academica: conviene pasar a alinear el Word con el MVP real.
 - Si la prioridad vuelve a ser tecnica: el siguiente frente fuerte es rendimiento del dashboard a escala.
 

@@ -39,6 +39,7 @@ def trim_operational_player_pool(db_session: SQLAlchemySession, max_players: int
         db_session.query(
             Player.id,
             Player.age,
+            Player.birth_date,
             stat_subq.c.last_stat_date,
             attr_subq.c.last_attr_date,
         )
@@ -51,7 +52,8 @@ def trim_operational_player_pool(db_session: SQLAlchemySession, max_players: int
         dates = [item_date for item_date in (row.last_stat_date, row.last_attr_date) if item_date is not None]
         last_activity = max(dates) if dates else date.min
         has_history = 1 if dates else 0
-        in_eval_range = 1 if is_valid_eval_age(int(row.age or 0)) else 0
+        current_age = Player.calculate_age_from_birth_date(row.birth_date) if row.birth_date else row.age
+        in_eval_range = 1 if is_valid_eval_age(int(current_age or 0)) else 0
         return (has_history, in_eval_range, last_activity, row.id)
 
     rows_sorted = sorted(rows, key=sort_key, reverse=True)
@@ -86,16 +88,13 @@ def backfill_player_photo_urls(db_session: SQLAlchemySession) -> int:
 
 def compute_operational_data_quality(db_session: SQLAlchemySession, eval_pool_max: int) -> Dict[str, int]:
     """Resume consistencia basica de la base operativa."""
-    players_total = db_session.query(func.count(Player.id)).scalar() or 0
+    players = db_session.query(Player).all()
+    players_total = len(players)
+    invalid_age = sum(1 for player in players if not is_valid_eval_age(int(player.current_age or 0)))
+    missing_birth_date = sum(1 for player in players if player.birth_date is None)
     missing_national_id = (
         db_session.query(func.count(Player.id))
         .filter((Player.national_id == None) | (func.trim(Player.national_id) == ""))  # noqa: E711
-        .scalar()
-        or 0
-    )
-    invalid_age = (
-        db_session.query(func.count(Player.id))
-        .filter((Player.age < 12) | (Player.age > 18))
         .scalar()
         or 0
     )
@@ -137,6 +136,7 @@ def compute_operational_data_quality(db_session: SQLAlchemySession, eval_pool_ma
         "players_total": int(players_total),
         "missing_national_id": int(missing_national_id),
         "invalid_age": int(invalid_age),
+        "missing_birth_date": int(missing_birth_date),
         "missing_name": int(missing_name),
         "missing_position": int(missing_position),
         "missing_photo_url": int(missing_photo_url),
@@ -197,21 +197,14 @@ def cleanup_operational_data(
     sync_history: Optional[Callable[[SQLAlchemySession], int]] = None,
 ) -> Dict[str, int]:
     """Limpia inconsistencias legacy sin inventar datos faltantes."""
-    invalid_player_ids = [
-        player_id
-        for (player_id,) in db_session.query(Player.id)
-        .filter(
-            (Player.name == None)  # noqa: E711
-            | (func.trim(Player.name) == "")
-            | (Player.position == None)  # noqa: E711
-            | (func.trim(Player.position) == "")
-            | (Player.national_id == None)  # noqa: E711
-            | (func.trim(Player.national_id) == "")
-            | (Player.age < 12)
-            | (Player.age > 18)
+    invalid_player_ids = []
+    for player in db_session.query(Player).all():
+        has_required_text = all(
+            (value or "").strip()
+            for value in (player.name, player.position, player.national_id)
         )
-        .all()
-    ]
+        if not has_required_text or not is_valid_eval_age(int(player.current_age or 0)):
+            invalid_player_ids.append(player.id)
 
     removed_invalid_players = len(invalid_player_ids)
     if invalid_player_ids:
@@ -236,4 +229,3 @@ def cleanup_operational_data(
         "trimmed_players": int(trimmed),
         **quality_after,
     }
-

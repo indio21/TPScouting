@@ -84,13 +84,10 @@
                         <label class="form-label" for="national_id">DNI / ID</label>
                         <input id="national_id" type="text" name="national_id" class="form-control" inputmode="numeric" pattern="\d*" placeholder="Solo numeros" required>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label" for="age">Edad</label>
-                        <input id="age" type="number" name="age" class="form-control" min="12" max="18" required>
-                    </div>
-                    <div class="col-md-3">
+                    <div class="col-md-5">
                         <label class="form-label" for="birth_date">Fecha nacimiento</label>
-                        <input id="birth_date" type="date" name="birth_date" class="form-control">
+                        <input id="birth_date" type="date" name="birth_date" class="form-control" required>
+                        <div class="form-text">La edad y la categoria se calculan desde esta fecha.</div>
                     </div>
                 </div>
             </div>

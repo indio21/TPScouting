@@ -32,7 +32,6 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
         "Nombre",
         "DNI_ID",
         "FechaNacimiento",
-        "Edad",
         "Posicion",
         "Club",
         "Pais",
@@ -54,7 +53,6 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
         "Nombre": ("nombre", "name"),
         "DNI_ID": ("dniid", "dni", "documento", "id", "dni/id"),
         "FechaNacimiento": ("fechanacimiento", "fecha nacimiento", "nacimiento", "birthdate"),
-        "Edad": ("edad", "age"),
         "Posicion": ("posicion", "puesto", "position"),
         "Club": ("club", "equipo"),
         "Pais": ("pais", "country"),
@@ -91,9 +89,7 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
         return parsed
 
     def _age_from_birth_date(value: date) -> int:
-        today = date.today()
-        birthday_passed = (today.month, today.day) >= (value.month, value.day)
-        return today.year - value.year - (0 if birthday_passed else 1)
+        return Player.calculate_age_from_birth_date(value)
 
     def _normalize_import_header(value: Optional[str]) -> str:
         raw = (value or "").strip().lower()
@@ -173,9 +169,7 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             national_id = deps.normalize_identifier(row.get("DNI_ID"))
             raw_birth_date = row.get("FechaNacimiento", "").strip()
             birth_date = _parse_optional_date_field(raw_birth_date, errors, "La fecha de nacimiento")
-            raw_age = row.get("Edad", "").strip()
-            calculated_age = _age_from_birth_date(birth_date) if birth_date else None
-            age = deps.parse_int_field(raw_age, calculated_age if calculated_age is not None else 0)
+            age = _age_from_birth_date(birth_date) if birth_date else 0
             position = deps.normalize_position_choice(row.get("Posicion"))
             club = _optional_strip(row.get("Club"))
             country = _optional_strip(row.get("Pais"))
@@ -191,10 +185,8 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                 errors.append("DNI/ID ya registrado.")
             if birth_date is None and not raw_birth_date:
                 errors.append("Fecha de nacimiento obligatoria.")
-            if not deps.is_valid_eval_age(age):
-                errors.append("Edad fuera del rango 12-18.")
-            if calculated_age is not None and raw_age and age != calculated_age:
-                warnings.append(f"Edad cargada {age}; por fecha corresponde {calculated_age}.")
+            elif birth_date is not None and not deps.is_valid_eval_age(age):
+                errors.append("La edad calculada por fecha de nacimiento debe estar entre 12 y 18.")
 
             attr_values: Dict[str, int] = {}
             import_attr_columns = {
@@ -1335,12 +1327,13 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             errors: List[str] = []
             name = (request.form.get("name") or "").strip()
             national_id = deps.normalize_identifier(request.form.get("national_id"))
-            age = deps.parse_int_field(request.form.get("age"))
+            raw_birth_date = request.form.get("birth_date")
             birth_date = _parse_optional_date_field(
-                request.form.get("birth_date"),
+                raw_birth_date,
                 errors,
                 "La fecha de nacimiento",
             )
+            age = _age_from_birth_date(birth_date) if birth_date else 0
             position = deps.normalize_position_choice(request.form.get("position"))
             club = (request.form.get("club") or "").strip() or None
             country = (request.form.get("country") or "").strip() or None
@@ -1357,8 +1350,10 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                 )
                 if repeated:
                     errors.append("El DNI ingresado pertenece a otro jugador.")
-            if not deps.is_valid_eval_age(age):
-                errors.append("La edad debe estar entre 12 y 18 años.")
+            if birth_date is None and not (raw_birth_date or "").strip():
+                errors.append("La fecha de nacimiento es obligatoria.")
+            elif birth_date is not None and not deps.is_valid_eval_age(age):
+                errors.append("La edad calculada por fecha de nacimiento debe estar entre 12 y 18 anos.")
             attr_values: Dict[str, int] = {}
             for field in deps.ATTRIBUTE_FIELDS:
                 value = deps.parse_int_field(request.form.get(field), getattr(player, field))
@@ -1379,6 +1374,7 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             player.national_id = national_id
             player.age = age
             player.birth_date = birth_date
+            player.sync_age_from_birth_date()
             player.position = position
             player.club = club
             player.country = country
@@ -1512,12 +1508,13 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                         )
                     name = (request.form.get("name") or "").strip()
                     national_id = deps.normalize_identifier(request.form.get("national_id"))
-                    age = deps.parse_int_field(request.form.get("age"))
+                    raw_birth_date = request.form.get("birth_date")
                     birth_date = _parse_optional_date_field(
-                        request.form.get("birth_date"),
+                        raw_birth_date,
                         errors,
                         "La fecha de nacimiento",
                     )
+                    age = _age_from_birth_date(birth_date) if birth_date else 0
                     position = deps.normalize_position_choice(request.form.get("position"))
                     club = (request.form.get("club") or "").strip() or None
                     country = (request.form.get("country") or "").strip() or None
@@ -1534,8 +1531,10 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                         )
                         if repeated:
                             errors.append("Ese DNI ya esta registrado en la base.")
-                    if not deps.is_valid_eval_age(age):
-                        errors.append("La edad debe estar entre 12 y 18 anos.")
+                    if birth_date is None and not (raw_birth_date or "").strip():
+                        errors.append("La fecha de nacimiento es obligatoria.")
+                    elif birth_date is not None and not deps.is_valid_eval_age(age):
+                        errors.append("La edad calculada por fecha de nacimiento debe estar entre 12 y 18 anos.")
                     attr_values: Dict[str, int] = {}
                     for field in deps.ATTRIBUTE_FIELDS:
                         value = deps.parse_int_field(request.form.get(field), 10)
@@ -1555,6 +1554,7 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                             potential_label=deps.parse_bool(request.form.get("potential_label")),
                             **attr_values,
                         )
+                        player.sync_age_from_birth_date()
                         db.add(player)
                         db.flush()
                         deps.sync_player_attribute_history(player, db, note="Alta de jugador")
@@ -1598,7 +1598,6 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                 "Juan Perez",
                 "40111222",
                 "2010-03-21",
-                "16",
                 "Delantero",
                 "Club Local",
                 "Argentina",
@@ -1663,10 +1662,11 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                         for row in valid_rows:
                             data = row["data"]
                             birth_date = datetime.strptime(str(data["birth_date"]), "%Y-%m-%d").date()
+                            age = _age_from_birth_date(birth_date)
                             player = Player(
                                 name=str(data["name"]),
                                 national_id=str(data["national_id"]),
-                                age=int(data["age"]),
+                                age=age,
                                 birth_date=birth_date,
                                 position=str(data["position"]),
                                 club=str(data["club"]) or None,

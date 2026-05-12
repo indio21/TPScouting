@@ -288,6 +288,30 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - Usar siempre `.venv`: `.\.venv\Scripts\python.exe`.
 - Antes de seguir: revisar `git status -sb` y `git log --oneline --decorate -5`.
 - Resumen compacto del bloque cerrado el 2026-05-12: categoria juvenil desde `birth_date`, edad/categoria visibles en pantallas de jugadores, y carga masiva redisenada como importacion CSV con plantilla Excel, previsualizacion y confirmacion de filas validas.
+
+Bloque correctivo iniciado el 2026-05-12 sobre edad/categoria:
+
+- `birth_date` pasa a ser la fuente de verdad para jugadores nuevos o editados.
+- Alta individual, edicion e importacion CSV ya no piden ni aceptan edad manual como dato de usuario.
+- `Player.current_age` calcula la edad desde `birth_date`; `Player.age` se conserva sincronizado como dato derivado por compatibilidad con ML, tests y datos legacy.
+- La categoria juvenil sigue saliendo de `Player.birth_date.year`.
+- Jugadores legacy sin fecha no se rellenan con fechas inventadas: conservan edad numerica vieja como fallback y muestran `Cat. N/D` hasta completar el dato real.
+- `settings` agrega control de jugadores sin fecha de nacimiento y evalua edad invalida desde la edad derivada cuando existe.
+- Validacion: pruebas focales `15 passed`; suite completa con cobertura `66 passed`, cobertura total `79%`, con `4 warnings` conocidos de scikit-learn por fixtures all-NaN.
+
+Ajuste posterior autorizado para demo/MVP:
+
+- La base operativa real tenia `100/100` jugadores sin `birth_date`; por eso la UI mostraba `Cat. N/D`.
+- Se creo backup antes de tocar datos: `scouting_app/players_updated_v2.before_birthdate_backfill_20260512_201239.db`.
+- Se completo `birth_date` con fechas demo estables que conservan edades entre `12` y `18` y permiten mostrar `Cat. YYYY`.
+- `sync_shortlist.py` ahora genera una `birth_date` demo deterministica cuando el origen legacy no trae fecha, para que una nueva sincronizacion no vuelva a dejar `Cat. N/D`.
+
+Ajuste posterior de umbrales de potencial:
+
+- `Bajo potencial`: menor a `60%`.
+- `Potencial medio`: desde `60%` hasta menor a `80%`.
+- `Alto potencial`: `80%` o mas.
+- `potential_label` ahora se activa con el mismo umbral alto (`>= 0.80`).
 - Siguiente paso recomendado: hacer pasada visual manual en navegador sobre `/players/import`, descargar plantilla CSV, probar preview/importacion con un archivo chico y revisar responsive. Despues conviene elegir entre ajustes visuales puntuales o documento Word de tesis.
 
 ## Performance
@@ -474,13 +498,13 @@ Hay cuatro caminos razonables:
 
 Recomendacion de arranque para el proximo chat:
 
-- Si la prioridad es mostrar mejor el producto: continuar desde `ux-crud-polish` con el plan de `docs/ux_ui_crud_polish_next_step_2026-05-01.md`.
-- Punto exacto anterior: commit `a8ee6ea ux: move player history forms to offcanvas`, rama `ux-crud-polish` limpia y sincronizada.
-- Ese punto ya fue completado: nuevos registros, edicion y eliminacion de rendimiento/atributos se abren en modales centrados.
-- Ya se separo visualmente la carga masiva de jugadores en `manage_players.html`.
-- Siguiente bloque recomendado: evaluar si conviene llevar el mismo patron CRUD con modales a otros historiales asociados a jugador, o pasar a administracion/configuracion (`settings.html`, `register.html`).
-- Luego: administracion/configuracion (`settings.html`, `register.html`).
-- Si la prioridad es cerrar evidencia academica: pasar al Word y corregirlo contra el repo real.
+- Continuar desde `ux-crud-polish`.
+- Bloque mas reciente cerrado el 2026-05-12: `birth_date` como fuente de verdad, edad derivada, categoria juvenil desde anio de nacimiento, backfill demo local autorizado y umbrales de potencial `60/80`.
+- La base local `players_updated_v2.db` quedo corregida con `missing_birth_date=0`; los `.db` no estan versionados por git.
+- El codigo versionado evita que futuras sincronizaciones desde origen legacy vuelvan a dejar `birth_date` vacio.
+- Validacion automatizada mas reciente: `67 passed`, cobertura total `79%`, con `4 warnings` conocidos de scikit-learn.
+- Servidor local probado en `http://127.0.0.1:5000`, `/health` respondio `200`.
+- Siguiente bloque recomendado: pasada visual manual de `/players/manage`, `/players/import`, `/dashboard`, `/compare/multi` y una ficha de jugador. Si esta todo ok, pasar al documento Word de tesis.
 
 Antes de tocar codigo en el proximo chat, revisar:
 

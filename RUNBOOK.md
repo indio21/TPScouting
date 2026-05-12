@@ -146,3 +146,16 @@ Acciones:
 - `scouting_app/app.py` sigue concentrando configuracion, rutas, seguridad, cache, pipeline e inferencia.
 - Para el MVP academico se mantiene asi para reducir cambios de alcance.
 - Una version productiva deberia separar rutas en blueprints y mover logica de negocio a servicios o modulos especificos.
+
+### 8.8 Categorias juveniles y fechas demo
+- La categoria juvenil visible (`Cat. YYYY`) sale de `Player.birth_date.year`.
+- En altas, ediciones e importacion CSV, la fecha de nacimiento es obligatoria y la edad se calcula desde esa fecha.
+- La base demo local puede contener fechas de nacimiento generadas para MVP cuando el origen legacy no tiene ese dato real.
+- `sync_shortlist.py` genera fechas demo deterministicas si el origen no trae `birth_date`, para evitar que una nueva sincronizacion vuelva a mostrar `Cat. N/D`.
+- Antes del backfill local del 2026-05-12 se creo backup: `scouting_app/players_updated_v2.before_birthdate_backfill_20260512_201239.db`.
+
+### 8.9 Umbrales de potencial
+- `Bajo potencial`: menor a `60%`.
+- `Potencial medio`: desde `60%` hasta `79%`.
+- `Alto potencial`: `80%` o mas.
+- La etiqueta interna `potential_label` usa el mismo umbral alto (`>= 0.80`).

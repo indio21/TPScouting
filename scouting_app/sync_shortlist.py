@@ -1,7 +1,9 @@
 """Sincroniza un subconjunto de jugadores desde la base de entrenamiento."""
 
 import argparse
+import hashlib
 import os
+from datetime import date, timedelta
 from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session as SQLAlchemySession, sessionmaker
@@ -21,11 +23,39 @@ from db_utils import normalize_db_url, create_app_engine, ensure_player_columns
 from player_logic import ATTRIBUTE_FIELDS, normalized_position, default_player_photo_url
 
 
+def _same_month_day_for_year(value: date, year: int) -> date:
+    try:
+        return value.replace(year=year)
+    except ValueError:
+        return value.replace(year=year, day=28)
+
+
+def demo_birth_date_from_age(age: int, seed_key: str = "", today: Optional[date] = None) -> date:
+    """Genera una fecha demo estable que conserva la edad actual del jugador."""
+    today = today or date.today()
+    age_int = int(age)
+    latest = _same_month_day_for_year(today, today.year - age_int)
+    earliest = _same_month_day_for_year(today, today.year - age_int - 1) + timedelta(days=1)
+    days = max((latest - earliest).days, 0)
+    digest = hashlib.sha256(f"{seed_key}:{age_int}".encode("utf-8")).digest()
+    offset = int.from_bytes(digest[:4], "big") % (days + 1)
+    return earliest + timedelta(days=offset)
+
+
+def player_birth_date_or_demo(src_player: Player) -> date:
+    source_birth_date = getattr(src_player, "birth_date", None)
+    if source_birth_date is not None:
+        return source_birth_date
+    seed_key = str(src_player.national_id or src_player.name or src_player.id or "")
+    return demo_birth_date_from_age(int(src_player.age), seed_key=seed_key)
+
+
 def copy_player_data(src_player: Player, dst_player: Player) -> None:
     dst_player.name = src_player.name
     dst_player.national_id = src_player.national_id
     dst_player.age = src_player.age
-    dst_player.birth_date = getattr(src_player, "birth_date", None)
+    dst_player.birth_date = player_birth_date_or_demo(src_player)
+    dst_player.sync_age_from_birth_date()
     dst_player.position = normalized_position(src_player.position)
     dst_player.club = src_player.club
     dst_player.country = src_player.country
@@ -256,6 +286,7 @@ def sync_shortlist(src_db: str, dst_db: str, limit: int, min_age: int, max_age: 
                     name=src_player.name,
                     national_id=src_player.national_id,
                     age=src_player.age,
+                    birth_date=player_birth_date_or_demo(src_player),
                     position=normalized_position(src_player.position),
                     club=src_player.club,
                     country=src_player.country,
@@ -266,6 +297,7 @@ def sync_shortlist(src_db: str, dst_db: str, limit: int, min_age: int, max_age: 
                     ),
                     potential_label=src_player.potential_label,
                 )
+                new_player.sync_age_from_birth_date()
                 for field in ATTRIBUTE_FIELDS:
                     setattr(new_player, field, getattr(src_player, field))
                 dst_session.add(new_player)

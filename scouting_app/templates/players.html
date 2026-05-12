@@ -113,14 +113,14 @@
                             <div class="fw-semibold">{{ player.name }}</div>
                             <small class="text-muted">
                                 {% if player.national_id %}DNI {{ player.national_id }}{% else %}ID {{ player.id }}{% endif %}
-                                <span class="d-sm-none d-block">{{ player.age }} anos</span>
+                                <span class="d-sm-none d-block">{{ player.current_age }} anos</span>
                                 <span class="d-md-none d-block">Cat. {{ player.category_year or 'N/D' }}</span>
                             </small>
                         </div>
                     </div>
                 </td>
                 <td>{{ display_position(player.position) }}</td>
-                <td class="d-none d-sm-table-cell">{{ player.age }} anos</td>
+                <td class="d-none d-sm-table-cell">{{ player.current_age }} anos</td>
                 <td class="d-none d-md-table-cell">Cat. {{ player.category_year or 'N/D' }}</td>
                 <td class="d-none d-md-table-cell">
                     <div class="fw-semibold">{{ display_position(row.best_position) }}</div>

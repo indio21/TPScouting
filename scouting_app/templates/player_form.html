@@ -15,8 +15,9 @@
         <input type="text" class="form-control" name="national_id" value="{{ player.national_id if player else '' }}" inputmode="numeric" pattern="\d*" required>
       </div>
       <div class="mb-3">
-        <label class="form-label">Edad</label>
-        <input type="number" class="form-control" name="age" value="{{ player.age if player else '' }}" min="12" max="18" required>
+        <label class="form-label">Fecha nacimiento</label>
+        <input type="date" class="form-control" name="birth_date" value="{{ player.birth_date.strftime('%Y-%m-%d') if player and player.birth_date else '' }}" required>
+        <div class="form-text">Edad y categoria se calculan desde esta fecha.</div>
       </div>
       <div class="mb-3">
         <label class="form-label">Posicion</label>

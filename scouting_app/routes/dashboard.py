@@ -171,7 +171,7 @@ def create_dashboard_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                     {
                         "id": player.id,
                         "name": player.name,
-                        "age": player.age,
+                        "age": player.current_age,
                         "juvenile_category": player.category_year,
                         "position": deps.display_position_label(player.position),
                         "probability": projection["combined_prob"],
@@ -235,7 +235,7 @@ def create_dashboard_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             {
                 "id": player.id,
                 "name": player.name,
-                "age": player.age,
+                "age": player.current_age,
                 "juvenile_category": player.category_year,
                 "position": deps.display_position_label(player.position),
                 "last_activity": activity_map.get(player.id),
@@ -281,7 +281,7 @@ def create_dashboard_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                 {
                     "id": player_id,
                     "name": player.name,
-                    "age": player.age,
+                    "age": player.current_age,
                     "juvenile_category": player.category_year,
                     "position": deps.display_position_label(player.position),
                     "date": record.record_date,
@@ -340,7 +340,7 @@ def create_dashboard_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                 {
                     "id": player_id,
                     "name": player.name,
-                    "age": player.age,
+                    "age": player.current_age,
                     "juvenile_category": player.category_year,
                     "position": deps.display_position_label(player.position),
                     "score": stat.final_score,
@@ -393,7 +393,7 @@ def create_dashboard_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                 {
                     "id": player_id,
                     "name": player_map[player_id].name if player_id in player_map else f"Jugador {player_id}",
-                    "age": player_map[player_id].age if player_id in player_map else None,
+                    "age": player_map[player_id].current_age if player_id in player_map else None,
                     "juvenile_category": player_map[player_id].category_year if player_id in player_map else None,
                     "delta": delta,
                     "start": values["first_date"],

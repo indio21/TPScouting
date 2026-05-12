@@ -62,7 +62,6 @@ def _valid_manage_player_payload(**overrides):
         "mode": "single",
         "name": "Nuevo Talento",
         "national_id": "40111222",
-        "age": "15",
         "birth_date": "2010-03-21",
         "position": "Delantero",
         "club": "Club Nuevo",
@@ -162,14 +161,23 @@ def _fit_test_preprocessor(app_module, players):
 def test_refresh_player_potential_uses_same_high_threshold(app_module):
     dummy_player = SimpleNamespace(potential_label=False)
     original = app_module.compute_projection
-    app_module.compute_projection = lambda player, db_session=None: {"combined_prob": 0.60}
+    app_module.compute_projection = lambda player, db_session=None: {"combined_prob": 0.80}
     try:
         projection = app_module.refresh_player_potential(dummy_player)
     finally:
         app_module.compute_projection = original
 
-    assert projection["combined_prob"] == 0.60
+    assert projection["combined_prob"] == 0.80
     assert dummy_player.potential_label is True
+
+
+def test_potential_categories_use_requested_percentage_ranges(app_module):
+    assert app_module.categorize_probability(0.59) == "Bajo potencial"
+    assert app_module.categorize_probability(0.60) == "Potencial medio"
+    assert app_module.categorize_probability(0.79) == "Potencial medio"
+    assert app_module.categorize_probability(0.80) == "Alto potencial"
+    assert app_module.is_high_potential_probability(0.79) is False
+    assert app_module.is_high_potential_probability(0.80) is True
 
 
 def test_app_module_fixture_uses_stable_module_name(app_module):
@@ -571,12 +579,11 @@ def test_mutating_post_routes_reject_missing_csrf(client, app_module, db):
     valid_player_payload = _valid_manage_player_payload(
         name="Sin Token",
         national_id="46660112",
-        age="16",
     )
     edit_payload = _valid_manage_player_payload(
         name="Editado Sin Token",
         national_id=player.national_id,
-        age=str(player.age),
+        birth_date=player.birth_date.strftime("%Y-%m-%d") if player.birth_date else "2010-03-21",
         position=player.position,
         potential_label="0",
     )
@@ -666,6 +673,7 @@ def test_manage_players_creates_valid_player(client, app_module, db):
     assert created.name == "Nuevo Talento"
     assert created.birth_date == date(2010, 3, 21)
     assert created.category_year == 2010
+    assert created.age == app_module.Player.calculate_age_from_birth_date(created.birth_date)
 
 
 def test_manage_players_rejects_invalid_age(client, app_module, db):
@@ -677,14 +685,14 @@ def test_manage_players_rejects_invalid_age(client, app_module, db):
         "/players/manage",
         data=_valid_manage_player_payload(
             national_id="40111223",
-            age="19",
+            birth_date="2007-03-21",
             csrf_token=csrf_token,
         ),
         follow_redirects=True,
     )
 
     assert response.status_code == 200
-    assert "La edad debe estar entre 12 y 18 anos" in response.get_data(as_text=True)
+    assert "edad calculada por fecha de nacimiento" in response.get_data(as_text=True).lower()
     assert db.query(app_module.Player).filter_by(national_id="40111223").count() == 0
 
 
@@ -698,7 +706,7 @@ def test_manage_players_rejects_missing_required_fields(client, app_module, db):
         data=_valid_manage_player_payload(
             name="",
             national_id="",
-            age="",
+            birth_date="",
             csrf_token=csrf_token,
         ),
         follow_redirects=True,
@@ -708,7 +716,7 @@ def test_manage_players_rejects_missing_required_fields(client, app_module, db):
     assert response.status_code == 200
     assert "El nombre es obligatorio" in body
     assert "DNI" in body
-    assert "edad debe estar entre 12 y 18" in body.lower()
+    assert "fecha de nacimiento" in body.lower()
     assert db.query(app_module.Player).count() == 0
 
 
@@ -724,7 +732,7 @@ def test_manage_players_rejects_duplicate_national_id(client, app_module, db):
             "mode": "single",
             "name": "Duplicado",
             "national_id": "41122334",
-            "age": "16",
+            "birth_date": "2010-03-21",
             "position": "Defensa",
             "club": "Club Dup",
             "country": "Argentina",
@@ -753,9 +761,9 @@ def test_import_players_preview_and_confirm_csv(client, app_module, db):
     _login(client, "scout_import", "scout1234")
     csrf_token = _get_csrf_token(client, "/players/import")
     csv_text = (
-        "Nombre,DNI_ID,FechaNacimiento,Edad,Posicion,Club,Pais,Ritmo,Disparo,Pase,Regate,"
+        "Nombre,DNI_ID,FechaNacimiento,Posicion,Club,Pais,Ritmo,Disparo,Pase,Regate,"
         "Defensa,Fisico,Vision,Marcaje,Determinacion,Tecnica,AltoPotencial,FotoURL\n"
-        "CSV Juvenil,50111222,2010-03-21,16,Delantero,Club CSV,Argentina,15,14,13,16,"
+        "CSV Juvenil,50111222,2010-03-21,Delantero,Club CSV,Argentina,15,14,13,16,"
         "10,14,15,12,16,17,1,\n"
     )
 
@@ -781,7 +789,6 @@ def test_import_players_preview_and_confirm_csv(client, app_module, db):
             "Nombre": "CSV Juvenil",
             "DNI_ID": "50111222",
             "FechaNacimiento": "2010-03-21",
-            "Edad": "16",
             "Posicion": "Delantero",
             "Club": "Club CSV",
             "Pais": "Argentina",
@@ -815,6 +822,7 @@ def test_import_players_preview_and_confirm_csv(client, app_module, db):
     assert created.name == "CSV Juvenil"
     assert created.birth_date == date(2010, 3, 21)
     assert created.category_year == 2010
+    assert created.age == app_module.Player.calculate_age_from_birth_date(created.birth_date)
 
 
 def test_edit_player_updates_core_fields(client, app_module, db):
@@ -828,7 +836,7 @@ def test_edit_player_updates_core_fields(client, app_module, db):
         data={
             "name": "Editar Final",
             "national_id": "42233446",
-            "age": "17",
+            "birth_date": "2009-03-21",
             "position": "Mediocampista",
             "club": "Club Editado",
             "country": "Uruguay",
@@ -853,6 +861,8 @@ def test_edit_player_updates_core_fields(client, app_module, db):
     db.refresh(player)
     assert player.name == "Editar Final"
     assert player.national_id == "42233446"
+    assert player.birth_date == date(2009, 3, 21)
+    assert player.age == app_module.Player.calculate_age_from_birth_date(player.birth_date)
     assert player.position == "Mediocampista"
 
 
@@ -1837,6 +1847,11 @@ def test_sync_shortlist_replace_copies_rich_demo_data(tmp_path, scouting_app_dir
     dst_url = f"sqlite:///{dst_path.as_posix()}"
 
     generate_module.main(40, src_url, seed=42, min_age=12, max_age=18, reset_existing=True)
+    src_engine = db_utils_module.create_app_engine(
+        db_utils_module.normalize_db_url(src_url, base_dir=str(scouting_app_dir))
+    )
+    with src_engine.begin() as conn:
+        conn.execute(text("UPDATE players SET birth_date = NULL"))
 
     dst_engine = db_utils_module.create_app_engine(
         db_utils_module.normalize_db_url(dst_url, base_dir=str(scouting_app_dir))
@@ -1862,6 +1877,10 @@ def test_sync_shortlist_replace_copies_rich_demo_data(tmp_path, scouting_app_dir
     try:
         assert session.query(models_module.User).count() == 1
         assert session.query(models_module.Player).count() == 12
+        for player in session.query(models_module.Player).all():
+            assert player.birth_date is not None
+            assert 12 <= player.current_age <= 18
+            assert player.category_year == player.birth_date.year
         assert session.query(models_module.PlayerStat).count() > 0
         assert session.query(models_module.PlayerAttributeHistory).count() > 0
         assert session.query(models_module.Match).count() > 0

@@ -37,7 +37,12 @@
     <div class="profile-metric-card">
         <span class="label">Edad invalida</span>
         <span class="value">{{ data_quality.invalid_age }}</span>
-        <span class="hint">Fuera del rango MVP</span>
+        <span class="hint">Calculada desde nacimiento</span>
+    </div>
+    <div class="profile-metric-card">
+        <span class="label">Sin nacimiento</span>
+        <span class="value">{{ data_quality.missing_birth_date }}</span>
+        <span class="hint">Legacy sin categoria real</span>
     </div>
     <div class="profile-metric-card">
         <span class="label">Sin foto</span>
@@ -98,6 +103,9 @@
                         </div>
                         <div class="col-sm-6 col-lg-4">
                             <div class="info-row"><span>Total jugadores</span><strong>{{ data_quality.players_total }}</strong></div>
+                        </div>
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="info-row"><span>Sin nacimiento</span><strong>{{ data_quality.missing_birth_date }}</strong></div>
                         </div>
                         <div class="col-sm-6 col-lg-4">
                             <div class="info-row"><span>Limite operativo</span><strong>{{ eval_pool_max }}</strong></div>

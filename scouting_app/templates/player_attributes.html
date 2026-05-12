@@ -15,7 +15,7 @@
                 <h1>{{ player.name }}</h1>
                 <div class="profile-meta">
                     <span class="profile-chip"><i class="bi bi-person-badge"></i> {{ display_position(player.position) }}</span>
-                    <span class="profile-chip"><i class="bi bi-calendar3"></i> {{ player.age }} anos</span>
+                    <span class="profile-chip"><i class="bi bi-calendar3"></i> {{ player.current_age }} anos</span>
                     <span class="profile-chip"><i class="bi bi-calendar-event"></i> Cat. {{ player.category_year or 'N/D' }}</span>
                     {% if player.club %}
                     <span class="profile-chip"><i class="bi bi-shield"></i> {{ player.club }}</span>

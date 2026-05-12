@@ -68,6 +68,7 @@ def create_settings_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                             "Calidad actual -> "
                             f"total={summary['players_total']}, "
                             f"sin_dni={summary['missing_national_id']}, "
+                            f"sin_nacimiento={summary['missing_birth_date']}, "
                             f"edad_invalida={summary['invalid_age']}, "
                             f"sin_nombre={summary['missing_name']}, "
                             f"sin_posicion={summary['missing_position']}, "

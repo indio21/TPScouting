@@ -191,9 +191,44 @@ Validacion del noveno bloque:
 
 - Rama: `ux-crud-polish`.
 - Bloque cerrado: categoria juvenil real desde fecha de nacimiento y carga masiva por CSV.
+
+## Correccion De Edad Y Categoria 2026-05-12
+
+- La fecha de nacimiento queda como fuente de verdad para edad y categoria.
+- Se quito la edad manual de alta individual, edicion de jugador y plantilla/importacion CSV.
+- La app calcula `Player.current_age` desde `birth_date` y sincroniza `Player.age` solo como valor derivado para mantener compatibilidad con ML y datos existentes.
+- `Player.category_year` continua usando el anio de nacimiento.
+- Los jugadores legacy sin fecha no reciben una fecha inventada: mantienen fallback de edad guardada y categoria `N/D` hasta que se complete la fecha real.
+- `settings.html` ahora muestra jugadores sin fecha de nacimiento y la auditoria calcula edad invalida desde la edad derivada cuando hay fecha.
+- Tests focales ejecutados: altas, validaciones, duplicados, importacion CSV, edicion y paginas principales (`15 passed`).
+- Suite completa ejecutada con cobertura: `66 passed`, cobertura total `79%`, con `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
+
+### Backfill Demo Autorizado
+
+- Para la demo/MVP, el usuario autorizo completar fechas aleatorias si daban edades entre `12` y `18`.
+- La base `players_updated_v2.db` tenia `100/100` jugadores sin `birth_date`; se creo backup `players_updated_v2.before_birthdate_backfill_20260512_201239.db`.
+- Se completaron fechas demo estables segun edad/DNI/nombre para que `Cat. YYYY` salga desde `birth_date.year`.
+- `sync_shortlist.py` quedo protegido: si la base origen no trae `birth_date`, genera una fecha demo deterministica y conserva la edad actual del jugador.
+
+### Umbrales De Potencial
+
+- `Bajo potencial`: menor a `60%`.
+- `Potencial medio`: `60%` a `79%`.
+- `Alto potencial`: `80%` o mas.
+- La etiqueta interna `potential_label` usa el mismo corte de alto potencial (`>= 0.80`).
 - Flujo de importacion: `Gestionar` conserva alta puntual; `Importar CSV` descarga plantilla compatible con Excel, sube archivo, previsualiza filas en tabla y confirma solo filas validas.
-- Validacion final del bloque: `66 passed`, cobertura total `79%`, con `4 warnings` conocidos de scikit-learn.
-- Proximo paso recomendado: revisar visualmente `/players/import` con un CSV chico y luego pasar a ajustes responsive/documento Word segun prioridad.
+- Validacion final del bloque: `67 passed`, cobertura total `79%`, con `4 warnings` conocidos de scikit-learn.
+- Proximo paso recomendado: revisar visualmente `/players/manage`, `/players/import`, `/dashboard`, `/compare/multi` y una ficha de jugador con las nuevas categorias.
+
+## Punto De Retome 2026-05-12
+
+- Rama: `ux-crud-polish`.
+- Bloque cerrado: fecha de nacimiento como fuente de verdad, categoria juvenil desde `birth_date.year`, backfill demo autorizado de la base local y umbrales de potencial `60/80`.
+- La base local `players_updated_v2.db` fue corregida en esta maquina, pero los `.db` no estan versionados por git.
+- El codigo versionado evita que futuras sincronizaciones desde origen legacy vuelvan a dejar `birth_date` vacio.
+- Validacion automatizada: `67 passed`, cobertura total `79%`.
+- Servidor local probado en `http://127.0.0.1:5000` con `/health` en `200`.
+- Si se continua manana, primero ejecutar `git status -sb` y luego revisar visualmente las pantallas con categorias y umbrales nuevos.
 
 ## Punto De Retome 2026-05-06
 
@@ -206,9 +241,9 @@ Validacion del noveno bloque:
 
 Arranque recomendado:
 
-1. Hacer una pasada visual manual en navegador sobre ficha de jugador, settings y registro.
-2. Si el usuario aprueba, cerrar este bloque con commit/push.
-3. Despues elegir entre revisar pantallas puntuales en navegador, ajustar detalles del dashboard o pasar al documento Word.
+1. Hacer una pasada visual manual en navegador sobre ficha de jugador, dashboard, comparador multiple e importacion CSV.
+2. Si el usuario aprueba, pasar al documento Word de tesis para alinear capturas y narrativa con el MVP real.
+3. Si aparece algo visual concreto, ajustar responsive o etiquetas puntuales.
 
 Orden restante recomendado, de menor a mayor riesgo:
 
@@ -223,7 +258,7 @@ Orden restante recomendado, de menor a mayor riesgo:
 - Mantener endpoints y nombres historicos.
 - Reusar clases ya creadas en `styles.css`: `page-heading`, `page-actions`, `crud-actions`, `form-section`, `table-action-cell`.
 - Mantener botones compactos y consistentes: `Nuevo`, `Editar`, `Eliminar`, `Ver detalle`, `Guardar`, `Cancelar`.
-- No tocar modelo, datos ni entrenamiento en esta etapa.
+- Evitar cambios grandes de modelo/entrenamiento salvo que el usuario lo pida explicitamente.
 
 ## Validacion Al Cerrar El Bloque
 
