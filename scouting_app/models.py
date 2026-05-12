@@ -33,6 +33,7 @@ class Player(TimestampMixin, Base):
     name = Column(String, nullable=False)
     national_id = Column(String, unique=True, nullable=True)
     age = Column(Integer, nullable=False)
+    birth_date = Column(Date, nullable=True)
     position = Column(String, nullable=False)
     club = Column(String, nullable=True)
     country = Column(String, nullable=True)
@@ -52,6 +53,10 @@ class Player(TimestampMixin, Base):
 
     # Potencial real/histórico (etiqueta).  En datos generados es aleatoria.
     potential_label = Column(Boolean, nullable=False)
+
+    @property
+    def category_year(self):
+        return self.birth_date.year if self.birth_date else None
 
     stats = relationship("PlayerStat", back_populates="player", cascade="all, delete-orphan")
     attribute_history = relationship("PlayerAttributeHistory", back_populates="player", cascade="all, delete-orphan")
@@ -79,6 +84,8 @@ class Player(TimestampMixin, Base):
             "name": self.name,
             "national_id": self.national_id,
             "age": self.age,
+            "birth_date": self.birth_date.isoformat() if self.birth_date else None,
+            "category_year": self.category_year,
             "position": self.position,
             "club": self.club,
             "country": self.country,

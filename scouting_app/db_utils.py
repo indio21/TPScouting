@@ -60,6 +60,7 @@ def ensure_player_columns(engine: Engine) -> int:
     table_specs = {
         "players": {
             "national_id": "TEXT" if engine.dialect.name == "sqlite" else "VARCHAR",
+            "birth_date": "DATE",
             "photo_url": "TEXT" if engine.dialect.name == "sqlite" else "VARCHAR",
             "created_at": "TIMESTAMP",
             "updated_at": "TIMESTAMP",

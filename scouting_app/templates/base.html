@@ -14,7 +14,7 @@
 <body class="{% block body_class %}{% endblock %}">
     {% set endpoint = request.endpoint or '' %}
     {% set dashboard_endpoints = ['dashboard'] %}
-    {% set player_endpoints = ['index', 'manage_players', 'player_detail', 'player_stats', 'player_attributes', 'predict_player', 'edit_player'] %}
+    {% set player_endpoints = ['index', 'manage_players', 'import_players', 'download_players_import_template', 'player_detail', 'player_stats', 'player_attributes', 'predict_player', 'edit_player', 'players.index', 'players.manage_players', 'players.import_players', 'players.download_players_import_template', 'players.player_detail', 'players.player_stats', 'players.player_attributes', 'players.predict_player', 'players.edit_player'] %}
     {% set compare_endpoints = ['compare_players', 'compare_multi'] %}
     {% set staff_endpoints = ['list_coaches', 'new_coach', 'edit_coach', 'delete_coach', 'list_directors', 'new_director', 'edit_director', 'delete_director'] %}
     {% set admin_endpoints = ['settings', 'register'] %}
@@ -50,14 +50,19 @@
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="playersMenu">
                             <li>
-                                <a class="dropdown-item d-flex align-items-center gap-2 {% if endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
+                                <a class="dropdown-item d-flex align-items-center gap-2 {% if endpoint in ['index', 'players.index'] %}active{% endif %}" href="{{ url_for('index') }}">
                                     <i class="bi bi-list-ul"></i> Listado
                                 </a>
                             </li>
                             {% if can_manage_players %}
                             <li>
-                                <a class="dropdown-item d-flex align-items-center gap-2 {% if endpoint == 'manage_players' %}active{% endif %}" href="{{ url_for('manage_players') }}">
+                                <a class="dropdown-item d-flex align-items-center gap-2 {% if endpoint in ['manage_players', 'players.manage_players'] %}active{% endif %}" href="{{ url_for('manage_players') }}">
                                     <i class="bi bi-person-plus"></i> Gestion
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2 {% if endpoint in ['import_players', 'download_players_import_template', 'players.import_players', 'players.download_players_import_template'] %}active{% endif %}" href="{{ url_for('import_players') }}">
+                                    <i class="bi bi-filetype-csv"></i> Importar CSV
                                 </a>
                             </li>
                             {% endif %}

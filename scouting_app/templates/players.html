@@ -92,6 +92,8 @@
             <tr>
                 <th>Nombre</th>
                 <th>Posicion</th>
+                <th class="d-none d-sm-table-cell">Edad</th>
+                <th class="d-none d-md-table-cell">Categoria</th>
                 <th class="d-none d-md-table-cell">Alternativa</th>
                 <th class="d-none d-md-table-cell">Club</th>
                 <th class="d-none d-lg-table-cell">Pais</th>
@@ -111,11 +113,15 @@
                             <div class="fw-semibold">{{ player.name }}</div>
                             <small class="text-muted">
                                 {% if player.national_id %}DNI {{ player.national_id }}{% else %}ID {{ player.id }}{% endif %}
+                                <span class="d-sm-none d-block">{{ player.age }} anos</span>
+                                <span class="d-md-none d-block">Cat. {{ player.category_year or 'N/D' }}</span>
                             </small>
                         </div>
                     </div>
                 </td>
                 <td>{{ display_position(player.position) }}</td>
+                <td class="d-none d-sm-table-cell">{{ player.age }} anos</td>
+                <td class="d-none d-md-table-cell">Cat. {{ player.category_year or 'N/D' }}</td>
                 <td class="d-none d-md-table-cell">
                     <div class="fw-semibold">{{ display_position(row.best_position) }}</div>
                     <small class="text-muted">Rendimiento en posicion: {{ row.fit_score }}</small>
@@ -159,7 +165,7 @@
             {% endfor %}
             {% else %}
             <tr>
-                <td colspan="7" class="text-center py-4">
+                <td colspan="9" class="text-center py-4">
                     No se encontraron jugadores con los filtros seleccionados.
                 </td>
             </tr>

@@ -1,3 +1,5 @@
+from datetime import date
+
 from werkzeug.security import generate_password_hash
 from flask import url_for
 
@@ -6,6 +8,34 @@ def _create_user(db, User, username, password, role="scout"):
     db.add(u)
     db.commit()
     return u
+
+def _create_player(app_module, db, **overrides):
+    payload = {
+        "name": "Jugador Base",
+        "national_id": "30123456",
+        "age": 16,
+        "birth_date": date(2010, 3, 21),
+        "position": "Defensa",
+        "club": "Club Base",
+        "country": "Argentina",
+        "photo_url": "",
+        "pace": 10,
+        "shooting": 9,
+        "passing": 11,
+        "dribbling": 10,
+        "defending": 12,
+        "physical": 11,
+        "vision": 10,
+        "tackling": 12,
+        "determination": 13,
+        "technique": 9,
+        "potential_label": False,
+    }
+    payload.update(overrides)
+    player = app_module.Player(**payload)
+    db.add(player)
+    db.commit()
+    return player
 
 def _get_csrf_token(client, path="/login"):
     client.get(path)
@@ -18,9 +48,14 @@ def _login(client, username, password):
 
 def test_players_list_ok_after_login(client, app_module, db):
     _create_user(db, app_module.User, "u", "p", role="scout")
+    _create_player(app_module, db, name="Juvenil Listado", age=16)
     _login(client, "u", "p")
     resp = client.get("/players")
+    body = resp.get_data(as_text=True)
     assert resp.status_code == 200
+    assert "Juvenil Listado" in body
+    assert "16 anos" in body
+    assert "Cat. 2010" in body
 
 def test_dashboard_ok_after_login(client, app_module, db):
     _create_user(db, app_module.User, "u2", "p2", role="scout")
@@ -32,17 +67,21 @@ def test_dashboard_ok_after_login(client, app_module, db):
 def test_dashboard_copy_changes_by_role(client, app_module, db):
     _create_user(db, app_module.User, "admin_dash", "admin1234", role="administrador")
     _create_user(db, app_module.User, "director_dash", "director123", role="director")
+    _create_player(app_module, db, name="Juvenil Dashboard", age=16)
 
     _login(client, "admin_dash", "admin1234")
-    admin_resp = client.get("/dashboard")
+    admin_resp = client.get("/dashboard?period=custom&start=2026-01-01&end=2026-01-31")
     admin_body = admin_resp.get_data(as_text=True)
     assert admin_resp.status_code == 200
     assert "Mesa de scouting" in admin_body
     assert "Estado del plantel" not in admin_body
+    assert "Juvenil Dashboard" in admin_body
+    assert "16 anos" in admin_body
+    assert "Cat. 2010" in admin_body
 
     client.get("/logout")
     _login(client, "director_dash", "director123")
-    director_resp = client.get("/dashboard")
+    director_resp = client.get("/dashboard?period=custom&start=2026-01-01&end=2026-01-31")
     director_body = director_resp.get_data(as_text=True)
     assert director_resp.status_code == 200
     assert "Estado del plantel" in director_body
@@ -81,6 +120,8 @@ def test_players_blueprint_keeps_legacy_endpoint_names(app_module):
     with app_module.app.test_request_context():
         assert url_for("index") == "/players"
         assert url_for("manage_players") == "/players/manage"
+        assert url_for("import_players") == "/players/import"
+        assert url_for("download_players_import_template") == "/players/import/template.csv"
         assert url_for("player_detail", player_id=9) == "/player/9"
         assert url_for("add_player_match_history", player_id=9) == "/player/9/matches/add"
         assert (

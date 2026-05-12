@@ -127,6 +127,7 @@ def create_dashboard_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                     Player.id,
                     Player.name,
                     Player.age,
+                    Player.birth_date,
                     Player.position,
                     Player.pace,
                     Player.shooting,
@@ -170,6 +171,8 @@ def create_dashboard_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                     {
                         "id": player.id,
                         "name": player.name,
+                        "age": player.age,
+                        "juvenile_category": player.category_year,
                         "position": deps.display_position_label(player.position),
                         "probability": projection["combined_prob"],
                         "category": projection["category"],
@@ -232,6 +235,8 @@ def create_dashboard_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             {
                 "id": player.id,
                 "name": player.name,
+                "age": player.age,
+                "juvenile_category": player.category_year,
                 "position": deps.display_position_label(player.position),
                 "last_activity": activity_map.get(player.id),
                 "last_activity_label": _date_label(activity_map.get(player.id)),
@@ -276,6 +281,8 @@ def create_dashboard_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                 {
                     "id": player_id,
                     "name": player.name,
+                    "age": player.age,
+                    "juvenile_category": player.category_year,
                     "position": deps.display_position_label(player.position),
                     "date": record.record_date,
                     "availability_pct": record.availability_pct,
@@ -333,6 +340,8 @@ def create_dashboard_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                 {
                     "id": player_id,
                     "name": player.name,
+                    "age": player.age,
+                    "juvenile_category": player.category_year,
                     "position": deps.display_position_label(player.position),
                     "score": stat.final_score,
                     "date": stat.record_date,
@@ -384,6 +393,8 @@ def create_dashboard_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                 {
                     "id": player_id,
                     "name": player_map[player_id].name if player_id in player_map else f"Jugador {player_id}",
+                    "age": player_map[player_id].age if player_id in player_map else None,
+                    "juvenile_category": player_map[player_id].category_year if player_id in player_map else None,
                     "delta": delta,
                     "start": values["first_date"],
                     "end": values["last_date"],

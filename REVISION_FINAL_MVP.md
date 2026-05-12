@@ -56,6 +56,8 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - UX/UI etapa 2 sexto bloque: `settings.html` y `register.html` alineados visualmente con la linea aprobada de administracion/usuarios
 - UX/UI etapa 2 septimo bloque: `login.html` alineado con la misma linea visual y ajustes responsive para celular/tablet
 - UX/UI etapa 2 octavo bloque: Panel general redisenado como mesa de control dinamica por rol
+- UX/UI etapa 2 noveno bloque iniciado: edad visible en seguimiento/panel y categoria juvenil desde fecha de nacimiento
+- UX/UI etapa 2 noveno bloque: carga masiva redisenada como importacion CSV con plantilla Excel, previsualizacion y errores por fila
 - correccion de arranque local con `ADMIN_PASSWORD` configurado
 
 ### 1.1. Cierre De Observaciones De Codigo Fuente 2026-04-27
@@ -168,6 +170,8 @@ Estos puntos siguen siendo reales y no se deben ocultar:
 - despliegue final en Render todavia requiere cierre operativo completo
 - la app sigue siendo un MVP; no esta pensada para alta concurrencia
 - persisten deudas de calidad no criticas: aunque arquitectura fase 2 ya separo `auth`, `staff`, `players`, `compare`, `settings` y `dashboard`, siguen quedando helpers compartidos en `app.py`, convenciones parciales en endpoints Flask y tooling dev opcional
+- la categoria juvenil tipo `cat 2010` ya se deriva de `Player.birth_date`; jugadores legacy sin fecha muestran `Cat. N/D` hasta completar el dato
+- la carga masiva ya tiene vista dedicada CSV; queda pendiente revisarla visualmente en navegador y ajustar detalles de usabilidad si aparecen
 - el documento Word todavia no fue alineado con el estado corregido del MVP en esta fase
 - la evidencia del modelo sigue basada en datos sinteticos; no hay validacion externa con datos reales
 

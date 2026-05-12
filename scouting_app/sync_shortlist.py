@@ -25,6 +25,7 @@ def copy_player_data(src_player: Player, dst_player: Player) -> None:
     dst_player.name = src_player.name
     dst_player.national_id = src_player.national_id
     dst_player.age = src_player.age
+    dst_player.birth_date = getattr(src_player, "birth_date", None)
     dst_player.position = normalized_position(src_player.position)
     dst_player.club = src_player.club
     dst_player.country = src_player.country

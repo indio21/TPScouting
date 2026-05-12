@@ -1,4 +1,5 @@
 import importlib
+import io
 import json
 from datetime import date
 from types import SimpleNamespace
@@ -32,6 +33,7 @@ def _create_player(app_module, db, **overrides):
         "name": "Jugador Base",
         "national_id": "30123456",
         "age": 16,
+        "birth_date": date(2010, 3, 21),
         "position": "Defensa",
         "club": "Club Base",
         "country": "Argentina",
@@ -61,6 +63,7 @@ def _valid_manage_player_payload(**overrides):
         "name": "Nuevo Talento",
         "national_id": "40111222",
         "age": "15",
+        "birth_date": "2010-03-21",
         "position": "Delantero",
         "club": "Club Nuevo",
         "country": "Argentina",
@@ -661,6 +664,8 @@ def test_manage_players_creates_valid_player(client, app_module, db):
     created = db.query(app_module.Player).filter_by(national_id="40111222").first()
     assert created is not None
     assert created.name == "Nuevo Talento"
+    assert created.birth_date == date(2010, 3, 21)
+    assert created.category_year == 2010
 
 
 def test_manage_players_rejects_invalid_age(client, app_module, db):
@@ -741,6 +746,75 @@ def test_manage_players_rejects_duplicate_national_id(client, app_module, db):
     assert response.status_code == 200
     assert "ya esta registrado" in response.get_data(as_text=True)
     assert db.query(app_module.Player).filter_by(name="Duplicado").count() == 0
+
+
+def test_import_players_preview_and_confirm_csv(client, app_module, db):
+    _create_user(db, app_module.User, "scout_import", "scout1234", role="scout")
+    _login(client, "scout_import", "scout1234")
+    csrf_token = _get_csrf_token(client, "/players/import")
+    csv_text = (
+        "Nombre,DNI_ID,FechaNacimiento,Edad,Posicion,Club,Pais,Ritmo,Disparo,Pase,Regate,"
+        "Defensa,Fisico,Vision,Marcaje,Determinacion,Tecnica,AltoPotencial,FotoURL\n"
+        "CSV Juvenil,50111222,2010-03-21,16,Delantero,Club CSV,Argentina,15,14,13,16,"
+        "10,14,15,12,16,17,1,\n"
+    )
+
+    preview_response = client.post(
+        "/players/import",
+        data={
+            "csrf_token": csrf_token,
+            "mode": "preview",
+            "csv_file": (io.BytesIO(csv_text.encode("utf-8")), "jugadores.csv"),
+        },
+        content_type="multipart/form-data",
+    )
+    preview_body = preview_response.get_data(as_text=True)
+
+    assert preview_response.status_code == 200
+    assert "CSV Juvenil" in preview_body
+    assert "Cat. 2010" in preview_body
+    assert "Importar 1 filas validas" in preview_body
+
+    csrf_token = _get_csrf_token(client, "/players/import")
+    payload = [
+        {
+            "Nombre": "CSV Juvenil",
+            "DNI_ID": "50111222",
+            "FechaNacimiento": "2010-03-21",
+            "Edad": "16",
+            "Posicion": "Delantero",
+            "Club": "Club CSV",
+            "Pais": "Argentina",
+            "Ritmo": "15",
+            "Disparo": "14",
+            "Pase": "13",
+            "Regate": "16",
+            "Defensa": "10",
+            "Fisico": "14",
+            "Vision": "15",
+            "Marcaje": "12",
+            "Determinacion": "16",
+            "Tecnica": "17",
+            "AltoPotencial": "1",
+            "FotoURL": "",
+        }
+    ]
+    confirm_response = client.post(
+        "/players/import",
+        data={
+            "csrf_token": csrf_token,
+            "mode": "confirm",
+            "import_payload": json.dumps(payload),
+        },
+        follow_redirects=False,
+    )
+
+    assert confirm_response.status_code in (301, 302)
+    created = db.query(app_module.Player).filter_by(national_id="50111222").first()
+    assert created is not None
+    assert created.name == "CSV Juvenil"
+    assert created.birth_date == date(2010, 3, 21)
+    assert created.category_year == 2010
 
 
 def test_edit_player_updates_core_fields(client, app_module, db):
@@ -1847,6 +1921,36 @@ def test_ensure_player_columns_migrates_physical_and_availability_tables(tmp_pat
             ).one()
         assert row.created_at is not None
         assert row.updated_at is not None
+
+
+def test_ensure_player_columns_adds_birth_date_to_legacy_players_table(tmp_path, scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    db_utils_module = importlib.import_module("db_utils")
+
+    db_path = tmp_path / "legacy_players_birth_date.db"
+    db_url = f"sqlite:///{db_path.as_posix()}"
+    engine = db_utils_module.create_app_engine(db_url)
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "CREATE TABLE players ("
+                "id INTEGER PRIMARY KEY, "
+                "name TEXT NOT NULL, "
+                "national_id TEXT, "
+                "age INTEGER NOT NULL, "
+                "position TEXT NOT NULL, "
+                "photo_url TEXT)"
+            )
+        )
+
+    added_columns = db_utils_module.ensure_player_columns(engine)
+
+    assert added_columns == 3
+    inspector = inspect(engine)
+    columns = {column["name"] for column in inspector.get_columns("players")}
+    assert {"birth_date", "created_at", "updated_at"}.issubset(columns)
 
 
 def test_training_dataframe_merges_historical_features(tmp_path, scouting_app_dir, monkeypatch):

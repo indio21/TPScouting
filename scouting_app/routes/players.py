@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+import csv
+import io
+import json
+import unicodedata
+from datetime import date, datetime
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, flash, redirect, render_template, request, url_for
 from sqlalchemy import desc, func
 from sqlalchemy.orm import joinedload, load_only
 
@@ -23,9 +28,224 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
     PhysicalAssessment = deps.PhysicalAssessment
     PlayerAvailability = deps.PlayerAvailability
 
+    IMPORT_COLUMNS = [
+        "Nombre",
+        "DNI_ID",
+        "FechaNacimiento",
+        "Edad",
+        "Posicion",
+        "Club",
+        "Pais",
+        "Ritmo",
+        "Disparo",
+        "Pase",
+        "Regate",
+        "Defensa",
+        "Fisico",
+        "Vision",
+        "Marcaje",
+        "Determinacion",
+        "Tecnica",
+        "AltoPotencial",
+        "FotoURL",
+    ]
+
+    IMPORT_COLUMN_ALIASES = {
+        "Nombre": ("nombre", "name"),
+        "DNI_ID": ("dniid", "dni", "documento", "id", "dni/id"),
+        "FechaNacimiento": ("fechanacimiento", "fecha nacimiento", "nacimiento", "birthdate"),
+        "Edad": ("edad", "age"),
+        "Posicion": ("posicion", "puesto", "position"),
+        "Club": ("club", "equipo"),
+        "Pais": ("pais", "country"),
+        "Ritmo": ("ritmo", "pace"),
+        "Disparo": ("disparo", "shooting"),
+        "Pase": ("pase", "passing"),
+        "Regate": ("regate", "dribbling"),
+        "Defensa": ("defensa", "defending"),
+        "Fisico": ("fisico", "physical"),
+        "Vision": ("vision",),
+        "Marcaje": ("marcaje", "tackling"),
+        "Determinacion": ("determinacion", "determination"),
+        "Tecnica": ("tecnica", "technique"),
+        "AltoPotencial": ("altopotencial", "alto potencial", "potential", "potencial"),
+        "FotoURL": ("fotourl", "foto url", "foto", "photo", "photourl"),
+    }
+
     def _optional_strip(value: Optional[str]) -> Optional[str]:
         stripped = (value or "").strip()
         return stripped or None
+
+    def _parse_optional_date_field(value: Optional[str], errors: List[str], label: str) -> Optional[date]:
+        raw = (value or "").strip()
+        if not raw:
+            return None
+        try:
+            parsed = datetime.strptime(raw, "%Y-%m-%d").date()
+        except ValueError:
+            errors.append(f"{label} debe tener formato YYYY-MM-DD.")
+            return None
+        if parsed > date.today():
+            errors.append(f"{label} no puede ser futura.")
+            return None
+        return parsed
+
+    def _age_from_birth_date(value: date) -> int:
+        today = date.today()
+        birthday_passed = (today.month, today.day) >= (value.month, value.day)
+        return today.year - value.year - (0 if birthday_passed else 1)
+
+    def _normalize_import_header(value: Optional[str]) -> str:
+        raw = (value or "").strip().lower()
+        normalized = unicodedata.normalize("NFKD", raw)
+        ascii_text = "".join(char for char in normalized if not unicodedata.combining(char))
+        return "".join(char for char in ascii_text if char.isalnum())
+
+    def _import_value(row: Dict[str, str], header_map: Dict[str, str], column: str) -> str:
+        source = header_map.get(column)
+        if not source:
+            return ""
+        return (row.get(source) or "").strip()
+
+    def _build_import_header_map(fieldnames: Optional[List[str]]) -> tuple[Dict[str, str], List[str]]:
+        header_map: Dict[str, str] = {}
+        missing: List[str] = []
+        normalized_sources = {
+            _normalize_import_header(fieldname): fieldname
+            for fieldname in (fieldnames or [])
+            if fieldname
+        }
+        for column in IMPORT_COLUMNS:
+            candidates = (column, *IMPORT_COLUMN_ALIASES.get(column, ()))
+            match = next(
+                (
+                    normalized_sources.get(_normalize_import_header(candidate))
+                    for candidate in candidates
+                    if _normalize_import_header(candidate) in normalized_sources
+                ),
+                None,
+            )
+            if match:
+                header_map[column] = match
+            elif column != "FotoURL":
+                missing.append(column)
+        return header_map, missing
+
+    def _decode_csv_upload(upload) -> str:
+        raw = upload.read()
+        if not raw:
+            raise ValueError("El archivo esta vacio.")
+        try:
+            return raw.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            return raw.decode("cp1252")
+
+    def _csv_rows_from_upload(upload) -> List[Dict[str, str]]:
+        text = _decode_csv_upload(upload)
+        sample = text[:2048]
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=",;")
+        except csv.Error:
+            dialect = csv.excel
+        reader = csv.DictReader(io.StringIO(text), dialect=dialect)
+        header_map, missing = _build_import_header_map(reader.fieldnames)
+        if missing:
+            raise ValueError("Faltan columnas: " + ", ".join(missing) + ".")
+        return [
+            {column: _import_value(row, header_map, column) for column in IMPORT_COLUMNS}
+            for row in reader
+            if any((value or "").strip() for value in row.values())
+        ]
+
+    def _validate_import_rows(rows: List[Dict[str, str]], db) -> List[Dict[str, object]]:
+        current_total = db.query(func.count(Player.id)).scalar() or 0
+        available_slots = max(deps.EVAL_POOL_MAX - current_total, 0)
+        seen_ids = set()
+        valid_count = 0
+        preview_rows: List[Dict[str, object]] = []
+
+        for idx, row in enumerate(rows, start=1):
+            errors: List[str] = []
+            warnings: List[str] = []
+            clean: Dict[str, object] = {}
+
+            name = row.get("Nombre", "").strip()
+            national_id = deps.normalize_identifier(row.get("DNI_ID"))
+            raw_birth_date = row.get("FechaNacimiento", "").strip()
+            birth_date = _parse_optional_date_field(raw_birth_date, errors, "La fecha de nacimiento")
+            raw_age = row.get("Edad", "").strip()
+            calculated_age = _age_from_birth_date(birth_date) if birth_date else None
+            age = deps.parse_int_field(raw_age, calculated_age if calculated_age is not None else 0)
+            position = deps.normalize_position_choice(row.get("Posicion"))
+            club = _optional_strip(row.get("Club"))
+            country = _optional_strip(row.get("Pais"))
+            photo_url = _optional_strip(row.get("FotoURL"))
+
+            if not name:
+                errors.append("Nombre obligatorio.")
+            if not national_id:
+                errors.append("DNI/ID obligatorio y solo numerico.")
+            elif national_id in seen_ids:
+                errors.append("DNI/ID repetido en el archivo.")
+            elif db.query(Player.id).filter(Player.national_id == national_id).first():
+                errors.append("DNI/ID ya registrado.")
+            if birth_date is None and not raw_birth_date:
+                errors.append("Fecha de nacimiento obligatoria.")
+            if not deps.is_valid_eval_age(age):
+                errors.append("Edad fuera del rango 12-18.")
+            if calculated_age is not None and raw_age and age != calculated_age:
+                warnings.append(f"Edad cargada {age}; por fecha corresponde {calculated_age}.")
+
+            attr_values: Dict[str, int] = {}
+            import_attr_columns = {
+                "Ritmo": "pace",
+                "Disparo": "shooting",
+                "Pase": "passing",
+                "Regate": "dribbling",
+                "Defensa": "defending",
+                "Fisico": "physical",
+                "Vision": "vision",
+                "Marcaje": "tackling",
+                "Determinacion": "determination",
+                "Tecnica": "technique",
+            }
+            for column, field in import_attr_columns.items():
+                value = deps.parse_int_field(row.get(column), default=-1)
+                if not deps.is_valid_attribute(value):
+                    errors.append(f"{column} debe estar entre 0 y 20.")
+                attr_values[field] = value
+
+            if not errors:
+                valid_count += 1
+                seen_ids.add(national_id)
+                if valid_count > available_slots:
+                    errors.append(f"Supera el cupo disponible ({available_slots}).")
+
+            clean.update(
+                {
+                    "name": name,
+                    "national_id": national_id,
+                    "birth_date": birth_date.isoformat() if birth_date else "",
+                    "age": age,
+                    "position": position,
+                    "club": club or "",
+                    "country": country or "",
+                    "photo_url": photo_url or "",
+                    "potential_label": deps.parse_bool(row.get("AltoPotencial")),
+                    **attr_values,
+                }
+            )
+            preview_rows.append(
+                {
+                    "line": idx,
+                    "data": clean,
+                    "category_year": birth_date.year if birth_date else None,
+                    "errors": errors,
+                    "warnings": warnings,
+                    "is_valid": not errors,
+                }
+            )
+        return preview_rows
 
     def _parse_required_text_field(value: Optional[str], label: str, errors: List[str]) -> str:
         stripped = (value or "").strip()
@@ -323,6 +543,7 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             Player.name,
             Player.national_id,
             Player.age,
+            Player.birth_date,
             Player.position,
             Player.club,
             Player.country,
@@ -1115,6 +1336,11 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             name = (request.form.get("name") or "").strip()
             national_id = deps.normalize_identifier(request.form.get("national_id"))
             age = deps.parse_int_field(request.form.get("age"))
+            birth_date = _parse_optional_date_field(
+                request.form.get("birth_date"),
+                errors,
+                "La fecha de nacimiento",
+            )
             position = deps.normalize_position_choice(request.form.get("position"))
             club = (request.form.get("club") or "").strip() or None
             country = (request.form.get("country") or "").strip() or None
@@ -1152,6 +1378,7 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             player.name = name
             player.national_id = national_id
             player.age = age
+            player.birth_date = birth_date
             player.position = position
             player.club = club
             player.country = country
@@ -1286,6 +1513,11 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                     name = (request.form.get("name") or "").strip()
                     national_id = deps.normalize_identifier(request.form.get("national_id"))
                     age = deps.parse_int_field(request.form.get("age"))
+                    birth_date = _parse_optional_date_field(
+                        request.form.get("birth_date"),
+                        errors,
+                        "La fecha de nacimiento",
+                    )
                     position = deps.normalize_position_choice(request.form.get("position"))
                     club = (request.form.get("club") or "").strip() or None
                     country = (request.form.get("country") or "").strip() or None
@@ -1315,6 +1547,7 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                             name=name,
                             national_id=national_id,
                             age=age,
+                            birth_date=birth_date,
                             position=position,
                             club=club,
                             country=country,
@@ -1332,93 +1565,8 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                         flash(f"Listo: se agrego a {player.name} al seguimiento.", "success")
                         return redirect(url_for("manage_players"))
                 elif mode == "bulk":
-                    bulk_input = request.form.get("bulk_input") or ""
-                    lines = [line.strip() for line in bulk_input.splitlines() if line.strip()]
-                    current_total = db.query(func.count(Player.id)).scalar() or 0
-                    available_slots = max(deps.EVAL_POOL_MAX - current_total, 0)
-                    if available_slots <= 0:
-                        errors.append(
-                            f"No hay cupo disponible. Limite actual: {deps.EVAL_POOL_MAX} jugadores evaluables."
-                        )
-                    if not lines:
-                        errors.append("Ingresa al menos una fila en la carga masiva.")
-                    else:
-                        seen_ids = set()
-                        for idx, line in enumerate(lines, start=1):
-                            if len(created) >= available_slots:
-                                errors.append(
-                                    f"Se alcanzo el limite de {deps.EVAL_POOL_MAX} jugadores. "
-                                    "El resto de filas fue omitido."
-                                )
-                                break
-                            parts = [part.strip() for part in line.split(",")]
-                            if len(parts) < 17:
-                                errors.append(f"Linea {idx}: se esperaban 17 o 18 columnas (recibido {len(parts)}).")
-                                continue
-                            try:
-                                name = parts[0]
-                                national_id = deps.normalize_identifier(parts[1])
-                                age = int(parts[2])
-                                position = deps.normalize_position_choice(parts[3])
-                                club = parts[4] or None
-                                country = parts[5] or None
-                                raw_photo_url = parts[17] if len(parts) > 17 else ""
-                                if not national_id:
-                                    raise ValueError("DNI no valido.")
-                                if national_id in seen_ids:
-                                    raise ValueError("DNI repetido en la carga.")
-                                exists = (
-                                    db.query(Player.id)
-                                    .filter(Player.national_id == national_id)
-                                    .first()
-                                )
-                                if exists:
-                                    raise ValueError("DNI ya registrado en la base.")
-                                if not deps.is_valid_eval_age(age):
-                                    raise ValueError("Edad fuera del rango permitido (12-18).")
-                                attr_values = {}
-                                for offset, field in enumerate(deps.ATTRIBUTE_FIELDS, start=6):
-                                    value = int(parts[offset])
-                                    if not deps.is_valid_attribute(value):
-                                        raise ValueError(f"{deps.ATTRIBUTE_LABELS[field]} fuera de rango.")
-                                    attr_values[field] = value
-                                potential_flag = deps.parse_bool(parts[16]) if len(parts) > 16 else False
-                                player = Player(
-                                    name=name,
-                                    national_id=national_id,
-                                    age=age,
-                                    position=position,
-                                    club=club,
-                                    country=country,
-                                    photo_url=(
-                                        raw_photo_url.strip()
-                                        or deps.default_player_photo_url(name=name, national_id=national_id)
-                                    ),
-                                    potential_label=potential_flag,
-                                    **attr_values,
-                                )
-                                seen_ids.add(national_id)
-                            except (ValueError, IndexError) as exc:
-                                errors.append(f"Linea {idx}: {exc}")
-                                continue
-                            db.add(player)
-                            db.flush()
-                            deps.sync_player_attribute_history(player, db, note="Alta masiva de jugador")
-                            deps.refresh_player_potential(player, db)
-                            created.append(player.name)
-                        if created and not errors:
-                            db.commit()
-                            deps.invalidate_dashboard_cache()
-                            flash(f"Listo: se agregaron {len(created)} jugadores.", "success")
-                        elif created and errors:
-                            db.commit()
-                            deps.invalidate_dashboard_cache()
-                            flash(
-                                f"Se agregaron {len(created)} jugadores, pero quedaron advertencias para revisar.",
-                                "warning",
-                            )
-                        else:
-                            db.rollback()
+                    flash("La carga masiva ahora se realiza desde la importacion CSV con plantilla.", "warning")
+                    return redirect(url_for("import_players"))
                 else:
                     errors.append("Modo de carga desconocido.")
             finally:
@@ -1426,8 +1574,6 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             if errors:
                 for message in errors:
                     flash(message, "danger")
-            if created and mode == "bulk":
-                return redirect(url_for("manage_players"))
         attribute_sequence = [(field, deps.ATTRIBUTE_LABELS[field]) for field in deps.ATTRIBUTE_FIELDS]
         db_metrics = Session()
         current_total = db_metrics.query(func.count(Player.id)).scalar() or 0
@@ -1437,6 +1583,143 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             attribute_labels=deps.ATTRIBUTE_LABELS,
             attribute_sequence=attribute_sequence,
             position_options=deps.POSITION_OPTIONS,
+            current_total=current_total,
+            max_players=deps.EVAL_POOL_MAX,
+        )
+
+    @bp.route("/players/import/template.csv")
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def download_players_import_template():
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(IMPORT_COLUMNS)
+        writer.writerow(
+            [
+                "Juan Perez",
+                "40111222",
+                "2010-03-21",
+                "16",
+                "Delantero",
+                "Club Local",
+                "Argentina",
+                "15",
+                "14",
+                "13",
+                "16",
+                "10",
+                "14",
+                "15",
+                "12",
+                "16",
+                "17",
+                "1",
+                "",
+            ]
+        )
+        content = "\ufeff" + output.getvalue()
+        return Response(
+            content,
+            mimetype="text/csv; charset=utf-8",
+            headers={"Content-Disposition": "attachment; filename=plantilla_jugadores_tpscouting.csv"},
+        )
+
+    @bp.route("/players/import", methods=["GET", "POST"])
+    @deps.roles_required(deps.ROLE_ADMIN, deps.ROLE_SCOUT)
+    def import_players():
+        preview_rows: Optional[List[Dict[str, object]]] = None
+        import_payload = ""
+        if request.method == "POST":
+            deps.require_csrf()
+            mode = request.form.get("mode", "preview")
+            db = Session()
+            try:
+                if mode == "preview":
+                    upload = request.files.get("csv_file")
+                    if not upload or not upload.filename:
+                        flash("Selecciona un archivo CSV generado desde la plantilla.", "danger")
+                    else:
+                        try:
+                            raw_rows = _csv_rows_from_upload(upload)
+                            preview_rows = _validate_import_rows(raw_rows, db)
+                            import_payload = json.dumps(raw_rows, ensure_ascii=False)
+                            valid_count = sum(1 for row in preview_rows if row["is_valid"])
+                            if valid_count:
+                                flash(f"Previsualizacion lista: {valid_count} filas validas.", "success")
+                            else:
+                                flash("La previsualizacion no tiene filas validas para importar.", "warning")
+                        except (UnicodeDecodeError, ValueError, csv.Error) as exc:
+                            flash(f"No se pudo leer el CSV: {exc}", "danger")
+                elif mode == "confirm":
+                    try:
+                        raw_rows = json.loads(request.form.get("import_payload") or "[]")
+                    except json.JSONDecodeError:
+                        raw_rows = []
+                    if not raw_rows:
+                        flash("No hay filas previsualizadas para importar.", "danger")
+                    else:
+                        preview_rows = _validate_import_rows(raw_rows, db)
+                        valid_rows = [row for row in preview_rows if row["is_valid"]]
+                        imported = 0
+                        for row in valid_rows:
+                            data = row["data"]
+                            birth_date = datetime.strptime(str(data["birth_date"]), "%Y-%m-%d").date()
+                            player = Player(
+                                name=str(data["name"]),
+                                national_id=str(data["national_id"]),
+                                age=int(data["age"]),
+                                birth_date=birth_date,
+                                position=str(data["position"]),
+                                club=str(data["club"]) or None,
+                                country=str(data["country"]) or None,
+                                photo_url=str(data["photo_url"])
+                                or deps.default_player_photo_url(
+                                    name=str(data["name"]),
+                                    national_id=str(data["national_id"]),
+                                ),
+                                pace=int(data["pace"]),
+                                shooting=int(data["shooting"]),
+                                passing=int(data["passing"]),
+                                dribbling=int(data["dribbling"]),
+                                defending=int(data["defending"]),
+                                physical=int(data["physical"]),
+                                vision=int(data["vision"]),
+                                tackling=int(data["tackling"]),
+                                determination=int(data["determination"]),
+                                technique=int(data["technique"]),
+                                potential_label=bool(data["potential_label"]),
+                            )
+                            db.add(player)
+                            db.flush()
+                            deps.sync_player_attribute_history(player, db, note="Importacion CSV de jugador")
+                            deps.refresh_player_potential(player, db)
+                            imported += 1
+                        if imported:
+                            db.commit()
+                            deps.invalidate_dashboard_cache()
+                            flash(f"Listo: se importaron {imported} jugadores desde CSV.", "success")
+                            return redirect(url_for("import_players"))
+                        db.rollback()
+                        import_payload = json.dumps(raw_rows, ensure_ascii=False)
+                        flash("No se importaron jugadores porque no habia filas validas.", "warning")
+                else:
+                    flash("Modo de importacion desconocido.", "danger")
+            finally:
+                db.close()
+
+        if preview_rows is None:
+            preview_rows = []
+        valid_count = sum(1 for row in preview_rows if row["is_valid"])
+        invalid_count = len(preview_rows) - valid_count
+        db_metrics = Session()
+        current_total = db_metrics.query(func.count(Player.id)).scalar() or 0
+        db_metrics.close()
+        return render_template(
+            "import_players.html",
+            import_columns=IMPORT_COLUMNS,
+            preview_rows=preview_rows,
+            import_payload=import_payload,
+            valid_count=valid_count,
+            invalid_count=invalid_count,
             current_total=current_total,
             max_players=deps.EVAL_POOL_MAX,
         )

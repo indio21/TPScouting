@@ -1616,6 +1616,8 @@ register_legacy_endpoint_aliases(
         ("delete_player", "/delete_player/<int:player_id>", ("POST",)),
         ("predict_player", "/player/<int:player_id>/predict", ("GET",)),
         ("manage_players", "/players/manage", ("GET", "POST")),
+        ("import_players", "/players/import", ("GET", "POST")),
+        ("download_players_import_template", "/players/import/template.csv", ("GET",)),
     ),
 )
 

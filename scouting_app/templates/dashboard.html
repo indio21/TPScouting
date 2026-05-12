@@ -60,7 +60,12 @@
                             <td class="text-muted">{{ loop.index }}</td>
                             <td>
                                 <div class="fw-semibold">{{ row.name }}</div>
-                                <small class="text-muted">{{ row.position }} · ID {{ row.id }}</small>
+                                <small class="text-muted">
+                                    {{ row.position }}
+                                    {% if row.age is not none %}&middot; {{ row.age }} anos{% endif %}
+                                    &middot; Cat. {{ row.juvenile_category or 'N/D' }}
+                                    &middot; ID {{ row.id }}
+                                </small>
                             </td>
                             <td>
                                 {% if primary_kind == 'form' %}
@@ -107,9 +112,12 @@
                     <div>
                         <div class="fw-semibold">{{ row.name }}</div>
                         <small class="text-muted">
-                            {{ row.position }} ·
+                            {{ row.position }}
+                            {% if row.age is not none %}&middot; {{ row.age }} anos{% endif %}
+                            &middot; Cat. {{ row.juvenile_category or 'N/D' }}
+                            &middot;
                             {% if dashboard_mode == 'director' %}
-                            {{ row.reasons }} · {{ row.date.strftime('%Y-%m-%d') if row.date else 'Sin fecha' }}
+                            {{ row.reasons }} &middot; {{ row.date.strftime('%Y-%m-%d') if row.date else 'Sin fecha' }}
                             {% else %}
                             Ultimo: {{ row.last_activity_label }}
                             {% endif %}
@@ -147,11 +155,14 @@
                     <div>
                         <div class="fw-semibold">{{ row.name }}</div>
                         <small class="text-muted">
-                            {{ row.position }} ·
+                            {{ row.position }}
+                            {% if row.age is not none %}&middot; {{ row.age }} anos{% endif %}
+                            &middot; Cat. {{ row.juvenile_category or 'N/D' }}
+                            &middot;
                             {% if dashboard_mode == 'director' %}
                             Ultimo: {{ row.last_activity_label }}
                             {% else %}
-                            {{ (row.probability * 100)|round(1) }}% · {{ row.category }}
+                            {{ (row.probability * 100)|round(1) }}% &middot; {{ row.category }}
                             {% endif %}
                         </small>
                     </div>
@@ -202,7 +213,9 @@
                             <td class="text-muted">{{ loop.index }}</td>
                             <td>
                                 <div class="fw-semibold">{{ row.name }}</div>
-                                <small class="text-muted">ID {{ row.id }}</small>
+                                <small class="text-muted">
+                                    {% if row.age is not none %}{{ row.age }} anos &middot; {% endif %}Cat. {{ row.juvenile_category or 'N/D' }} &middot; ID {{ row.id }}
+                                </small>
                             </td>
                             <td>
                                 <span class="badge {% if row.delta > 0 %}bg-success{% elif row.delta < 0 %}bg-danger{% else %}bg-secondary{% endif %}">

@@ -171,6 +171,30 @@ Validacion del octavo bloque:
 - Suite completa: `64 passed`, cobertura total `77%`, con los `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
 - Smoke HTTP local con login admin: `/health`, `/dashboard`, `/players` y `/player/30101` respondieron `200`; `/dashboard` renderizo `Mesa de scouting`.
 
+Noveno bloque de UX/UI etapa 2 iniciado:
+
+- `scouting_app/templates/players.html` muestra edad en el listado de jugadores en seguimiento.
+- `scouting_app/routes/dashboard.py` y `scouting_app/templates/dashboard.html` pasan y muestran edad en las filas accionables del panel general: prioridad de scouting, a revisar, oportunidades por puesto, forma reciente, alertas/evolucion.
+- `Player` ahora guarda `birth_date` opcional. `ensure_player_columns` migra bases existentes agregando esa columna.
+- La categoria juvenil se muestra como `Cat. 2010/2009/etc.` derivada de `player.birth_date.year`.
+- Alta individual y edicion de jugador aceptan fecha de nacimiento.
+- Jugadores legacy sin fecha muestran `Cat. N/D` hasta que se cargue el dato real.
+- Carga masiva redisenada como vista dedicada en `/players/import`: descarga plantilla CSV compatible con Excel, subida de archivo, previsualizacion en tabla, errores/advertencias por fila y confirmacion para importar filas validas.
+- `manage_players.html` ya no muestra textarea de carga masiva; conserva alta puntual y deriva a la importacion CSV.
+
+Validacion del noveno bloque:
+
+- Pruebas focales: `12 passed`.
+- Suite completa: `66 passed`, cobertura total `79%`, con los `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN.
+
+## Cierre De Sesion 2026-05-12
+
+- Rama: `ux-crud-polish`.
+- Bloque cerrado: categoria juvenil real desde fecha de nacimiento y carga masiva por CSV.
+- Flujo de importacion: `Gestionar` conserva alta puntual; `Importar CSV` descarga plantilla compatible con Excel, sube archivo, previsualiza filas en tabla y confirma solo filas validas.
+- Validacion final del bloque: `66 passed`, cobertura total `79%`, con `4 warnings` conocidos de scikit-learn.
+- Proximo paso recomendado: revisar visualmente `/players/import` con un CSV chico y luego pasar a ajustes responsive/documento Word segun prioridad.
+
 ## Punto De Retome 2026-05-06
 
 - Rama: `ux-crud-polish`.

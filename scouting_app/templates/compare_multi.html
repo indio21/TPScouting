@@ -68,7 +68,7 @@
                 <img src="{{ row.photo_url }}" alt="Foto {{ row.name }}" loading="lazy">
                 <span class="talent-map-tooltip">
                     <strong>{{ row.name }}</strong><br>
-                    {{ display_position(row.position) }} · {{ row.age }} anos<br>
+                    {{ display_position(row.position) }} &middot; {{ row.age }} anos &middot; Cat. {{ row.juvenile_category or 'N/D' }}<br>
                     Potencial: {{ row.probability }}%<br>
                     Fit: {{ row.fit_score }}<br>
                     {{ row.club or 'Sin club' }}
@@ -126,6 +126,7 @@
                                 <th>Jugador</th>
                                 <th>Puesto</th>
                                 <th>Edad</th>
+                                <th>Categoria</th>
                                 <th>Club</th>
                                 <th>Fit</th>
                                 <th>Potencial</th>
@@ -143,6 +144,7 @@
                                 </td>
                                 <td>{{ display_position(row.position) }}</td>
                                 <td>{{ row.age }}</td>
+                                <td>Cat. {{ row.juvenile_category or 'N/D' }}</td>
                                 <td>{{ row.club or 'Sin club' }}</td>
                                 <td>{{ row.fit_score }}</td>
                                 <td>
@@ -211,6 +213,8 @@
                     <tr>
                         <th>Jugador</th>
                         <th>Posicion</th>
+                        <th>Edad</th>
+                        <th>Categoria</th>
                         {% for label in comparison.chart_payload.labels %}
                         <th>{{ label }}</th>
                         {% endfor %}
@@ -222,6 +226,8 @@
                     <tr>
                         <td>{{ row.name }}</td>
                         <td>{{ display_position(row.position) if row.position else '-' }}</td>
+                        <td>{{ row.age }} anos</td>
+                        <td>Cat. {{ row.juvenile_category or 'N/D' }}</td>
                         {% for label in comparison.chart_payload.labels %}
                         <td>{{ row.attributes_map[label] }}</td>
                         {% endfor %}

@@ -30,7 +30,7 @@
                 <a class="btn btn-outline-light btn-sm d-flex align-items-center gap-2" href="#alta-individual">
                     <i class="bi bi-person-plus"></i> Alta individual
                 </a>
-                <a class="btn btn-outline-light btn-sm d-flex align-items-center gap-2" href="#carga-masiva">
+                <a class="btn btn-outline-light btn-sm d-flex align-items-center gap-2" href="{{ url_for('import_players') }}">
                     <i class="bi bi-upload"></i> Carga masiva
                 </a>
             </div>
@@ -76,17 +76,21 @@
             <div class="form-section">
                 <div class="form-section-title">Datos personales</div>
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-5">
                         <label class="form-label" for="name">Nombre</label>
                         <input id="name" type="text" name="name" class="form-control" required>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label" for="national_id">DNI / ID</label>
                         <input id="national_id" type="text" name="national_id" class="form-control" inputmode="numeric" pattern="\d*" placeholder="Solo numeros" required>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label" for="age">Edad</label>
                         <input id="age" type="number" name="age" class="form-control" min="12" max="18" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="birth_date">Fecha nacimiento</label>
+                        <input id="birth_date" type="date" name="birth_date" class="form-control">
                     </div>
                 </div>
             </div>
@@ -150,75 +154,48 @@
 <section class="card bulk-import-card" id="carga-masiva">
     <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
         <div>
-            <span>Carga masiva</span>
-            <small class="text-muted d-block">Importa varios jugadores desde texto separado por comas.</small>
+            <span>Carga masiva por plantilla</span>
+            <small class="text-muted d-block">Descarga la plantilla, completala en Excel y valida el archivo antes de guardar.</small>
         </div>
-        <span class="badge text-bg-light border">17 columnas + foto opcional</span>
+        <a class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2" href="{{ url_for('import_players') }}">
+            <i class="bi bi-filetype-csv"></i> Importar CSV
+        </a>
     </div>
     <div class="card-body">
         <div class="bulk-guide-list mb-4">
             <div class="bulk-guide-item">
-                <i class="bi bi-list-ol"></i>
+                <i class="bi bi-download"></i>
                 <div>
-                    <strong>Una fila por jugador</strong>
-                    <span>Las lineas vacias se ignoran.</span>
+                    <strong>Descargar plantilla</strong>
+                    <span>La tabla ya trae todos los campos esperados por la app.</span>
                 </div>
             </div>
             <div class="bulk-guide-item">
-                <i class="bi bi-braces"></i>
+                <i class="bi bi-table"></i>
                 <div>
-                    <strong>Campos separados por coma</strong>
-                    <span>El orden debe respetarse para que la validacion sea correcta.</span>
+                    <strong>Completar en Excel</strong>
+                    <span>Sirve para cargar varios juveniles observados en practica o partido.</span>
                 </div>
             </div>
             <div class="bulk-guide-item">
-                <i class="bi bi-image"></i>
+                <i class="bi bi-check2-square"></i>
                 <div>
-                    <strong>Foto opcional</strong>
-                    <span>La columna 18 puede incluir una URL de imagen.</span>
+                    <strong>Previsualizar errores</strong>
+                    <span>La app muestra una tabla con filas validas, advertencias y errores.</span>
                 </div>
             </div>
         </div>
-
-        <form method="post">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            <input type="hidden" name="mode" value="bulk">
-            <div class="row g-4 align-items-start">
-                <div class="col-lg-7">
-                    <label class="form-label" for="bulk_input">Jugadores a importar</label>
-                    <textarea id="bulk_input" name="bulk_input" class="form-control bulk-textarea" rows="12" placeholder="Ejemplo:
-Juan Perez,40111222,15,Delantero,Club Local,Argentina,15,14,13,16,10,14,15,12,16,17,1
-Luis Gomez,40888777,17,Mediocampista,Club B,Chile,13,11,15,14,12,13,14,13,15,14,0,https://picsum.photos/seed/luis-gomez/400/400"></textarea>
-                </div>
-                <div class="col-lg-5">
-                    <div class="bulk-format-box">
-                        <div class="form-section-title mb-2">Orden esperado</div>
-                        <p class="small text-muted mb-2">
-                            Nombre, DNI, Edad, Posicion, Club, Pais, Ritmo, Disparo, Pase, Regate, Defensa, Fisico,
-                            Vision, Marcaje, Determinacion, Tecnica, AltoPotencial (1/0).
-                        </p>
-                        <div class="bulk-example">
-                            <span>Foto opcional</span>
-                            <code>...,AltoPotencial,FotoURL</code>
-                        </div>
-                    </div>
-                    <div class="alert alert-light border mt-3 mb-0">
-                        <div class="fw-semibold d-flex align-items-center gap-2 mb-1">
-                            <i class="bi bi-info-circle"></i> Validacion por fila
-                        </div>
-                        <p class="small text-muted mb-0">
-                            Si una fila tiene error, la app lo informa sin ocultar el resto del resultado de la carga.
-                        </p>
-                    </div>
-                </div>
+        <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+            <small class="text-muted">La carga masiva ya no usa texto libre: se valida desde archivo CSV compatible con Excel.</small>
+            <div class="page-actions">
+                <a class="btn btn-outline-secondary d-flex align-items-center gap-2" href="{{ url_for('download_players_import_template') }}">
+                    <i class="bi bi-download"></i> Descargar plantilla
+                </a>
+                <a class="btn btn-primary d-flex align-items-center gap-2" href="{{ url_for('import_players') }}">
+                    <i class="bi bi-upload"></i> Ir a importacion
+                </a>
             </div>
-            <div class="mt-4 d-flex flex-column flex-md-row justify-content-between gap-2">
-                <small class="text-muted">Recomendado para altas iniciales o actualizacion controlada de planteles.</small>
-                <button type="submit" class="btn btn-outline-primary d-flex align-items-center gap-2 justify-content-center">
-                    <i class="bi bi-upload"></i> Procesar carga masiva
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
 </section>
 {% endblock %}

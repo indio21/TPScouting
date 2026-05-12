@@ -18,6 +18,7 @@
                 <div class="profile-meta">
                     <span class="profile-chip"><i class="bi bi-person-badge"></i> {{ display_position(player.position) }}</span>
                     <span class="profile-chip"><i class="bi bi-calendar3"></i> {{ player.age }} anos</span>
+                    <span class="profile-chip"><i class="bi bi-calendar-event"></i> Cat. {{ player.category_year or 'N/D' }}</span>
                     {% if player.club %}
                     <span class="profile-chip"><i class="bi bi-shield"></i> {{ player.club }}</span>
                     {% endif %}
@@ -106,6 +107,14 @@
                     <div class="info-row">
                         <span>Edad</span>
                         <strong>{{ player.age }} anos</strong>
+                    </div>
+                    <div class="info-row">
+                        <span>Categoria</span>
+                        <strong>{{ player.category_year or 'N/D' }}</strong>
+                    </div>
+                    <div class="info-row">
+                        <span>Fecha nacimiento</span>
+                        <strong>{{ player.birth_date.strftime('%Y-%m-%d') if player.birth_date else 'N/D' }}</strong>
                     </div>
                 </div>
 

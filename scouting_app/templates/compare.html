@@ -120,6 +120,7 @@
                     <div class="d-flex flex-wrap gap-2">
                         <span class="badge bg-primary">{{ display_position(player.position) }}</span>
                         <span class="badge bg-light text-dark">{{ player.age }} anos</span>
+                        <span class="badge bg-light text-dark">Cat. {{ player.juvenile_category or 'N/D' }}</span>
                         {% if player.club %}<span class="badge bg-secondary">{{ player.club }}</span>{% endif %}
                     </div>
                 </div>

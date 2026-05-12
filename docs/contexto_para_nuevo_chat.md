@@ -274,13 +274,21 @@ Decision: usar PyTorch crudo como score principal del MVP porque prioriza mejor 
 - `routes/dashboard.py` calcula metricas desde datos reales existentes: alto potencial, actividad reciente, jugadores a revisar, reportes scout recientes, alertas fisicas, mejor forma reciente, evolucion y oportunidades por puesto.
 - La cache HTML del dashboard incluye el modo de rol en la clave para evitar mezclar vistas.
 - Validacion UX/UI etapa 2 octavo bloque: `tests/test_pages.py` `9 passed`; suite completa `64 passed`, cobertura total `77%`; smoke HTTP local con admin `/dashboard` respondio `200` y renderizo `Mesa de scouting`.
+- UX/UI etapa 2 noveno bloque iniciado: se agrego la edad ya existente a `Jugadores en seguimiento` y a los listados accionables del `Panel general` (`Prioridad de scouting`, `A revisar`, `Oportunidades por puesto`, forma reciente/evolucion).
+- Se agrego `birth_date` opcional en `Player`; `ensure_player_columns` migra bases existentes.
+- La categoria juvenil se muestra como `Cat. 2010/2009/etc.` desde `player.birth_date.year`; jugadores legacy sin fecha muestran `Cat. N/D`.
+- Alta individual y edicion aceptan fecha de nacimiento.
+- La carga masiva fue redisenada como vista dedicada en `/players/import`: descarga plantilla CSV compatible con Excel, subida de archivo, previsualizacion en tabla, errores/advertencias por fila y confirmacion de filas validas.
+- `manage_players.html` ya no usa textarea de carga masiva; mantiene alta puntual y deriva a la importacion CSV.
+- Validacion UX/UI etapa 2 noveno bloque: pruebas focales `12 passed`; suite completa `66 passed`, cobertura total `79%`, con `4 warnings` conocidos de scikit-learn.
 
 ## Punto Actual De Retome
 
 - Rama actual: `ux-crud-polish`.
 - Usar siempre `.venv`: `.\.venv\Scripts\python.exe`.
 - Antes de seguir: revisar `git status -sb` y `git log --oneline --decorate -5`.
-- Siguiente paso recomendado: hacer pasada visual manual en navegador sobre dashboard, login, ficha de jugador, `settings.html` y `register.html` en desktop/celular/tablet; si se aprueba, seguir con documento Word de tesis o ajustes responsive puntuales que aparezcan.
+- Resumen compacto del bloque cerrado el 2026-05-12: categoria juvenil desde `birth_date`, edad/categoria visibles en pantallas de jugadores, y carga masiva redisenada como importacion CSV con plantilla Excel, previsualizacion y confirmacion de filas validas.
+- Siguiente paso recomendado: hacer pasada visual manual en navegador sobre `/players/import`, descargar plantilla CSV, probar preview/importacion con un archivo chico y revisar responsive. Despues conviene elegir entre ajustes visuales puntuales o documento Word de tesis.
 
 ## Performance
 
@@ -302,7 +310,7 @@ cd C:\Tesis\TPScouting
 
 Resultado:
 
-- `52 passed`
+- `66 passed`
 - `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
 
 Ultima validacion completa con cobertura:
@@ -314,8 +322,8 @@ cd C:\Tesis\TPScouting
 
 Resultado:
 
-- `52 passed`
-- cobertura total reportada: `77%`
+- `66 passed`
+- cobertura total reportada: `79%`
 - `4 warnings` conocidos de scikit-learn por fixtures con columnas all-NaN
 
 Validacion UX/UI etapa 1:

@@ -160,6 +160,7 @@ def generate_player(min_age: int = EVAL_MIN_AGE, max_age: int = EVAL_MAX_AGE) ->
 
     name = f"{random.choice(names)} {random.choice(surnames)}"
     age = random.randint(min_age, max_age)
+    birth_date = date(date.today().year - age, 1, 1) + timedelta(days=random.randint(0, 364))
     position = normalized_position(random.choice(positions))
     club = random.choice(clubs)
     country = random.choice(countries)
@@ -172,6 +173,7 @@ def generate_player(min_age: int = EVAL_MIN_AGE, max_age: int = EVAL_MAX_AGE) ->
         name=name,
         national_id=next_identifier(),
         age=age,
+        birth_date=birth_date,
         position=position,
         club=club,
         country=country,
