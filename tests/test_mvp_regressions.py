@@ -907,6 +907,26 @@ def test_manage_players_rejects_duplicate_national_id(client, app_module, db):
     assert db.query(app_module.Player).filter_by(name="Duplicado").count() == 0
 
 
+def test_manage_players_rejects_attribute_below_current_range(client, app_module, db):
+    _create_user(db, app_module.User, "scout_attr_low", "scout1234", role="scout")
+    _login(client, "scout_attr_low", "scout1234")
+    csrf_token = _get_csrf_token(client, "/players/manage")
+
+    response = client.post(
+        "/players/manage",
+        data=_valid_manage_player_payload(
+            national_id="40111224",
+            pace="-1",
+            csrf_token=csrf_token,
+        ),
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert "Ritmo debe ubicarse entre 0 y 20" in response.get_data(as_text=True)
+    assert db.query(app_module.Player).filter_by(national_id="40111224").count() == 0
+
+
 def test_import_players_preview_and_confirm_csv(client, app_module, db):
     _create_user(db, app_module.User, "scout_import", "scout1234", role="scout")
     _login(client, "scout_import", "scout1234")
@@ -1031,6 +1051,18 @@ def test_delete_player_removes_record(client, app_module, db):
 
     assert response.status_code in (301, 302)
     assert db.query(app_module.Player).filter_by(id=player.id).count() == 0
+
+
+def test_predict_player_without_loaded_model_returns_controlled_error(client, app_module, db):
+    _create_user(db, app_module.User, "scout_no_model", "scout1234", role="scout")
+    player = _create_player(app_module, db, name="Sin Modelo", national_id="44455666")
+    app_module.model = None
+    _login(client, "scout_no_model", "scout1234")
+
+    response = client.get(f"/player/{player.id}/predict")
+
+    assert response.status_code == 500
+    assert "No hay calculo disponible todavia" in response.get_data(as_text=True)
 
 
 def test_player_stats_reject_invalid_percentages(client, app_module, db):

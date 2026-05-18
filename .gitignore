@@ -5,6 +5,7 @@
 *.so
 .pytest_cache/
 .coverage*
+coverage.xml
 .venv/
 venv/
 .env

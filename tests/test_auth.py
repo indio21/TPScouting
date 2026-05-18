@@ -36,6 +36,25 @@ def test_protected_requires_login_redirects_to_login(client):
     assert resp.status_code in (301, 302)
     assert "/login" in resp.headers.get("Location", "")
 
+
+def test_core_protected_pages_require_login(client):
+    protected_paths = [
+        "/players",
+        "/dashboard",
+        "/compare",
+        "/compare/multi",
+        "/settings",
+        "/players/manage",
+        "/players/import",
+        "/player/1/predict",
+    ]
+
+    for path in protected_paths:
+        resp = client.get(path, follow_redirects=False)
+        assert resp.status_code in (301, 302), path
+        assert "/login" in resp.headers.get("Location", ""), path
+
+
 def test_login_success_sets_session_and_redirects(client, app_module, db):
     _create_user(db, app_module.User, "user1", "pass1", role="scout")
     csrf_token = _get_csrf_token(client, "/login")

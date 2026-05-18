@@ -12,6 +12,9 @@ para atacarlos en pasos controlados sin perder contexto.
   tests de secret key/admin password/CSRF y documentacion de rate limiting.
 - Tests al cierre de Fase 2: `76 passed`, cobertura total `80%`.
 - Tests al cierre de Fase 3: `79 passed`, cobertura total `80%`.
+- Fase 4 en curso: CI publica `coverage.xml` como artefacto y se refuerzan tests
+  de rutas protegidas, inputs invalidos y comportamiento sin modelo cargado.
+- Tests al cierre de Fase 4: `82 passed`, cobertura total `80%`.
 
 ## Riesgos restantes despues de Fase 1
 
@@ -75,3 +78,18 @@ para atacarlos en pasos controlados sin perder contexto.
      valida `input_dim`; el DataLoader/sampler usa seed explicito; metricas,
      calibradores y runtime registran warnings cuando caen a fallback.
    - Riesgo restante: la validacion predictiva sigue dependiendo de dataset sintetico.
+
+## Riesgos/decisiones registrados durante Fase 4
+
+1. Rango de atributos.
+   - Estado: documentado para confirmar con el documento academico final.
+   - Evidencia: el codigo actual valida atributos `0-20` en `player_logic.py` y
+     mensajes de `routes/players.py`; la fase de testing refuerza ese contrato.
+   - Accion sugerida: si el documento final afirma `1-20`, alinear documento o
+     cambiar regla funcional en una fase separada porque impacta generacion de
+     datos sinteticos, validaciones y textos de UI.
+
+2. Cobertura CI.
+   - Estado: mejorado.
+   - Accion aplicada Fase 4: GitHub Actions genera `coverage.xml` y lo sube como
+     artefacto por version de Python.
