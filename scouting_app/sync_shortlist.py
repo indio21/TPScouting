@@ -23,6 +23,15 @@ from db_utils import normalize_db_url, create_app_engine, ensure_player_columns
 from player_logic import ATTRIBUTE_FIELDS, normalized_position, default_player_photo_url
 
 
+def validate_sync_params(limit: int, min_age: int, max_age: int) -> None:
+    if limit < 1:
+        raise ValueError("El limite de sincronizacion debe ser mayor o igual a 1.")
+    if min_age < 10:
+        raise ValueError("La edad minima de sincronizacion debe ser mayor o igual a 10.")
+    if max_age < min_age:
+        raise ValueError("La edad maxima no puede ser menor que la edad minima.")
+
+
 def _same_month_day_for_year(value: date, year: int) -> date:
     try:
         return value.replace(year=year)
@@ -237,7 +246,8 @@ def copy_player_related_data(
         )
 
 
-def sync_shortlist(src_db: str, dst_db: str, limit: int, min_age: int, max_age: int, replace: bool = False) -> None:
+def sync_shortlist(src_db: str, dst_db: str, limit: int, min_age: int, max_age: int, replace: bool = False) -> Dict[str, int]:
+    validate_sync_params(limit, min_age, max_age)
     base_dir = os.path.dirname(os.path.abspath(__file__))
     src_engine = create_app_engine(normalize_db_url(src_db, base_dir=base_dir))
     dst_engine = create_app_engine(normalize_db_url(dst_db, base_dir=base_dir))
@@ -307,11 +317,22 @@ def sync_shortlist(src_db: str, dst_db: str, limit: int, min_age: int, max_age: 
                 existing_total += 1
             synced += 1
         dst_session.commit()
+        summary = {
+            "updated": int(updated),
+            "inserted": int(inserted),
+            "processed": int(synced),
+            "skipped": int(skipped),
+            "total_operational": int(existing_total),
+            "limit": int(limit),
+            "min_age": int(min_age),
+            "max_age": int(max_age),
+        }
         print(
             f"Sincronizacion completada. actualizados={updated}, insertados={inserted}, "
             f"procesados={synced}, omitidos={skipped}, total_operativo={existing_total}, "
             f"limite={limit}, rango={min_age}-{max_age}, replace={replace}."
         )
+        return summary
     finally:
         src_session.close()
         dst_session.close()
@@ -326,9 +347,10 @@ def main() -> None:
     parser.add_argument("--max-age", type=int, default=18, help="Edad maxima")
     parser.add_argument("--replace", action="store_true", help="Reemplaza jugadores y datos deportivos de la base operativa")
     args = parser.parse_args()
-    if args.min_age < 10 or args.max_age < args.min_age:
-        raise SystemExit("Rango de edades invalido.")
-    sync_shortlist(args.src_db, args.dst_db, args.limit, args.min_age, args.max_age, replace=args.replace)
+    try:
+        sync_shortlist(args.src_db, args.dst_db, args.limit, args.min_age, args.max_age, replace=args.replace)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
 
 
 if __name__ == "__main__":

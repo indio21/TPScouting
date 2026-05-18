@@ -11,6 +11,7 @@ para atacarlos en pasos controlados sin perder contexto.
 - Fase 2 completada: logout por POST + CSRF, headers basicos de seguridad,
   tests de secret key/admin password/CSRF y documentacion de rate limiting.
 - Tests al cierre de Fase 2: `76 passed`, cobertura total `80%`.
+- Tests al cierre de Fase 3: `79 passed`, cobertura total `80%`.
 
 ## Riesgos restantes despues de Fase 1
 
@@ -50,21 +51,27 @@ para atacarlos en pasos controlados sin perder contexto.
 ## Riesgos pendientes para continuar desde Fase 3
 
 1. Migraciones manuales sin Alembic.
-   - Estado: aceptado para MVP.
-   - Accion sugerida Fase 3: verificar transacciones/commits y dejar documentada la
-     limitacion de migraciones manuales.
+   - Estado: aceptado para MVP y documentado.
+   - Accion aplicada Fase 3: se verifico que `ensure_player_columns` usa
+     `engine.begin()` y queda documentado como migracion manual transaccional.
+   - Riesgo restante: no reemplaza un sistema formal de migraciones como Alembic.
 
 2. `sync_shortlist` y base operativa.
-   - Estado: pendiente de revision Fase 3.
-   - Accion sugerida: revisar limites de sincronizacion, edad/categoria y no superar
-     `EVAL_POOL_MAX`.
+   - Estado: mitigado para MVP.
+   - Accion aplicada Fase 3: `sync_shortlist.py` valida `limit`, `min_age` y
+     `max_age`, y devuelve un resumen verificable de sincronizacion.
+   - Riesgo restante: si se usa sin `replace`, no borra jugadores operativos
+     existentes que excedan el limite; el recorte final sigue en el pipeline/app.
 
 3. Cache in-memory.
-   - Estado: limitado por TTL y cantidad maxima.
-   - Accion sugerida: revisar invalidaciones principales y documentar que no es
-     compartido entre procesos.
+   - Estado: documentado.
+   - Accion aplicada Fase 3: se explicito en RUNBOOK que el cache tiene TTL/max
+     entradas y no se comparte entre procesos.
+   - Riesgo restante: para produccion multi-instancia se requiere Redis/cache externo.
 
 4. Modelo ML y metricas.
-   - Estado: checkpoints con `input_dim` y warnings de metricas ya existen.
-   - Accion sugerida: revisar consistencia de dimension entrenamiento/inferencia,
-     uso de `SEED` y logging de errores/fallbacks.
+   - Estado: mitigado para MVP.
+   - Accion aplicada Fase 3: checkpoints guardan `input_dim` y `seed`; la carga
+     valida `input_dim`; el DataLoader/sampler usa seed explicito; metricas,
+     calibradores y runtime registran warnings cuando caen a fallback.
+   - Riesgo restante: la validacion predictiva sigue dependiendo de dataset sintetico.

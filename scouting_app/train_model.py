@@ -6,6 +6,7 @@ import argparse
 import copy
 import csv
 import json
+import logging
 import os
 import random
 from datetime import datetime
@@ -60,6 +61,7 @@ DEFAULT_SAMPLER_STRATEGY = os.environ.get("TRAIN_SAMPLER_STRATEGY", "shuffle").s
 DEFAULT_LINEAR_PRIOR_STRENGTH = float(os.environ.get("TRAIN_LINEAR_PRIOR_STRENGTH", "0.0001"))
 DEFAULT_SPLITS_FILENAME = "training_splits.json"
 MODEL_CHECKPOINT_VERSION = 1
+logger = logging.getLogger(__name__)
 
 random.seed(SEED)
 np.random.seed(SEED)
@@ -119,6 +121,7 @@ def model_checkpoint(model: nn.Module, input_dim: Optional[int] = None) -> Dict[
         "version": MODEL_CHECKPOINT_VERSION,
         "model_class": model.__class__.__name__,
         "input_dim": int(input_dim if input_dim is not None else model_input_dim(model)),
+        "seed": int(SEED),
         "model_state": model.state_dict(),
     }
 
@@ -138,10 +141,12 @@ def load_model_checkpoint(
         state_dict = artifact["model_state"]
         stored_input_dim = artifact.get("input_dim")
         version = artifact.get("version", 0)
+        seed = artifact.get("seed")
     else:
         state_dict = artifact
         stored_input_dim = None
         version = 0
+        seed = None
 
     if stored_input_dim is not None and expected_input_dim is not None:
         if int(stored_input_dim) != int(expected_input_dim):
@@ -153,6 +158,7 @@ def load_model_checkpoint(
     return {
         "version": version,
         "input_dim": stored_input_dim,
+        "seed": seed,
         "state_dict": state_dict,
         "is_legacy_state_dict": stored_input_dim is None,
     }
@@ -346,6 +352,7 @@ def classification_metrics(
     except Exception as exc:
         roc_auc = ""
         metric_warnings.append(f"ROC-AUC no calculado: {exc}")
+        logger.warning("ROC-AUC no calculado: %s", exc)
 
     try:
         if len(np.unique(y_true)) < 2:
@@ -354,6 +361,7 @@ def classification_metrics(
     except Exception as exc:
         pr_auc = ""
         metric_warnings.append(f"PR-AUC no calculado: {exc}")
+        logger.warning("PR-AUC no calculado: %s", exc)
 
     try:
         f1 = float(f1_score(y_true, y_pred, zero_division=0))
@@ -364,6 +372,7 @@ def classification_metrics(
         f1 = precision = recall = ""
         cm = []
         metric_warnings.append(f"F1/precision/recall no calculados: {exc}")
+        logger.warning("F1/precision/recall no calculados: %s", exc)
 
     return {
         "threshold": float(threshold),
@@ -400,6 +409,12 @@ def tensor_from_array(values: np.ndarray) -> torch.Tensor:
     return torch.tensor(values, dtype=torch.float32)
 
 
+def seeded_torch_generator(offset: int = 0) -> torch.Generator:
+    generator = torch.Generator()
+    generator.manual_seed(int(SEED) + int(offset))
+    return generator
+
+
 def sigmoid_numpy(values: np.ndarray) -> np.ndarray:
     return 1.0 / (1.0 + np.exp(-values))
 
@@ -428,9 +443,15 @@ def make_train_loader(
             weights=torch.tensor(sample_weights, dtype=torch.float32),
             num_samples=len(sample_weights),
             replacement=True,
+            generator=seeded_torch_generator(offset=1),
         )
         return DataLoader(dataset, batch_size=min(batch_size, len(dataset)), sampler=sampler)
-    return DataLoader(dataset, batch_size=min(batch_size, len(dataset)), shuffle=True)
+    return DataLoader(
+        dataset,
+        batch_size=min(batch_size, len(dataset)),
+        shuffle=True,
+        generator=seeded_torch_generator(offset=2),
+    )
 
 
 def fit_probability_calibrator(y_true: np.ndarray, y_prob: np.ndarray) -> Tuple[Optional[object], str, float]:
@@ -446,16 +467,16 @@ def fit_probability_calibrator(y_true: np.ndarray, y_prob: np.ndarray) -> Tuple[
         isotonic.fit(y_prob, y_true)
         iso_prob = np.clip(np.asarray(isotonic.predict(y_prob), dtype=np.float32), 0.0, 1.0)
         candidates.append(("isotonic", isotonic, iso_prob))
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Calibrador isotonic omitido: %s", exc)
 
     try:
         platt = LogisticRegression(max_iter=2000, class_weight="balanced", random_state=SEED)
         platt.fit(y_prob.reshape(-1, 1), y_true)
         platt_prob = platt.predict_proba(y_prob.reshape(-1, 1))[:, 1].astype(np.float32)
         candidates.append(("platt", platt, platt_prob))
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Calibrador Platt omitido: %s", exc)
 
     best_method = "none"
     best_calibrator = None
@@ -488,7 +509,8 @@ def apply_probability_calibrator(calibrator: Optional[object], y_prob: np.ndarra
         if hasattr(calibrator, "predict_proba"):
             return calibrator.predict_proba(np.asarray(y_prob).reshape(-1, 1))[:, 1].astype(np.float32)
         return np.clip(np.asarray(calibrator.predict(y_prob), dtype=np.float32), 0.0, 1.0)
-    except Exception:
+    except Exception as exc:
+        logger.warning("No se pudo aplicar calibrador de probabilidad: %s", exc)
         return np.asarray(y_prob, dtype=np.float32).reshape(-1)
 
 

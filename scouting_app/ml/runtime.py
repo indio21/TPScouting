@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Callable, List, Optional, Tuple
 
@@ -11,6 +12,8 @@ from joblib import load as joblib_load
 
 from preprocessing import load_preprocessor as load_saved_preprocessor, preprocessor_input_dim
 from train_model import PlayerNet, load_model_checkpoint
+
+logger = logging.getLogger(__name__)
 
 
 def load_model_state(model_path: str, input_dim: int) -> PlayerNet:
@@ -30,7 +33,8 @@ def load_probability_calibrator(calibrator_path: str) -> Optional[object]:
         return None
     try:
         return joblib_load(calibrator_path)
-    except Exception:
+    except Exception as exc:
+        logger.warning("No se pudo cargar el calibrador de probabilidad %s: %s", calibrator_path, exc)
         return None
 
 
@@ -42,7 +46,8 @@ def apply_probability_calibrator(calibrator: Optional[object], probabilities: Li
         if hasattr(calibrator, "predict_proba"):
             return calibrator.predict_proba(raw.reshape(-1, 1))[:, 1].astype(np.float32)
         return np.clip(np.asarray(calibrator.predict(raw), dtype=np.float32), 0.0, 1.0)
-    except Exception:
+    except Exception as exc:
+        logger.warning("No se pudo aplicar el calibrador de probabilidad en runtime: %s", exc)
         return raw
 
 
@@ -77,6 +82,7 @@ def load_runtime_artifacts(
     try:
         model = load_model_state(model_path, input_dim)
     except RuntimeError as exc:
+        logger.warning("Modelo incompatible con preprocesador: %s", exc)
         retrain_or_raise(
             "Advertencia: modelo incompatible con el preprocesador actual. Intentando reentrenar automaticamente.",
             original_exc=exc,
@@ -86,4 +92,3 @@ def load_runtime_artifacts(
         model = load_model_state(model_path, input_dim)
     calibrator = load_probability_calibrator(calibrator_path) if calibrator_path else None
     return model, preprocessor, calibrator
-

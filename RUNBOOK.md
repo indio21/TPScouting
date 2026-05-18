@@ -28,6 +28,15 @@ Este runbook cubre operación mínima, backup/restore de SQLite, healthcheck y b
 - El rate limiting de login es in-memory y por proceso. Mitiga fuerza bruta basica en MVP, pero para produccion real deberia moverse a Redis, DB o servicio externo.
 - Se agregan headers basicos: `X-Content-Type-Options`, `X-Frame-Options` y `Referrer-Policy`.
 
+## 1.2) Datos y ML
+
+- Las migraciones manuales de columnas usan transacciones con `engine.begin()` en `ensure_player_columns`.
+- `sync_shortlist.py` valida `limit`, `min_age` y `max_age` antes de copiar jugadores.
+- El cache del dashboard es in-memory, con TTL y cantidad maxima; no se comparte entre procesos.
+- Los checkpoints del modelo guardan `input_dim` y `seed`, y la carga valida compatibilidad con el preprocesador.
+- El entrenamiento fija seed para `random`, `numpy`, `torch` y el orden de `DataLoader`/sampler.
+- Las metricas y calibradores registran warnings cuando no pueden calcularse o aplicarse, sin ocultar el fallback.
+
 ## 2) Arranque local
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt

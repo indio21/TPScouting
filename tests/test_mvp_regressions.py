@@ -1,6 +1,7 @@
 import importlib
 import io
 import json
+import logging
 import sys
 from datetime import date
 from types import SimpleNamespace
@@ -1826,6 +1827,7 @@ def test_training_main_persists_preprocessor_artifact(tmp_path, scouting_app_dir
     assert metadata["artifacts"]["splits_path"] == str(splits_path.resolve())
     checkpoint = train_module.load_model_checkpoint(str(model_path))
     assert checkpoint["input_dim"] == metadata["model"]["input_dim"]
+    assert checkpoint["seed"] == metadata["seed"]
     assert checkpoint["is_legacy_state_dict"] is False
     assert len(splits["train_player_ids"]) > 0
     assert len(splits["validation_player_ids"]) > 0
@@ -1848,6 +1850,39 @@ def test_classification_metrics_reports_unavailable_metric_warnings(scouting_app
     assert metrics["pr_auc"] == ""
     assert any("ROC-AUC no calculado" in warning for warning in metrics["warnings"])
     assert any("PR-AUC no calculado" in warning for warning in metrics["warnings"])
+
+
+def test_classification_metrics_logs_unavailable_metric_warnings(scouting_app_dir, monkeypatch, caplog):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    train_module = importlib.import_module("train_model")
+
+    with caplog.at_level(logging.WARNING, logger="train_model"):
+        train_module.classification_metrics(
+            np.zeros(4, dtype=np.float32),
+            np.array([0.1, 0.2, 0.3, 0.4], dtype=np.float32),
+            0.5,
+        )
+
+    assert "ROC-AUC no calculado" in caplog.text
+    assert "PR-AUC no calculado" in caplog.text
+
+
+def test_train_loader_shuffle_is_seeded(scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    train_module = importlib.import_module("train_model")
+    x_values = np.arange(24, dtype=np.float32).reshape(12, 2)
+    y_values = np.array([0, 1] * 6, dtype=np.float32)
+
+    loader_one = train_module.make_train_loader(x_values, y_values, batch_size=3, strategy="shuffle")
+    loader_two = train_module.make_train_loader(x_values, y_values, batch_size=3, strategy="shuffle")
+    order_one = [batch_x[:, 0].tolist() for batch_x, _ in loader_one]
+    order_two = [batch_x[:, 0].tolist() for batch_x, _ in loader_two]
+
+    assert order_one == order_two
 
 
 def test_temporal_training_dataframe_cache_reuses_cached_artifact(tmp_path, scouting_app_dir, monkeypatch):
@@ -2021,7 +2056,11 @@ def test_sync_shortlist_replace_copies_rich_demo_data(tmp_path, scouting_app_dir
     finally:
         session.close()
 
-    sync_module.sync_shortlist(src_url, dst_url, limit=12, min_age=12, max_age=18, replace=True)
+    summary = sync_module.sync_shortlist(src_url, dst_url, limit=12, min_age=12, max_age=18, replace=True)
+
+    assert summary["inserted"] == 12
+    assert summary["total_operational"] == 12
+    assert summary["limit"] == 12
 
     session = DstSession()
     try:
@@ -2040,6 +2079,20 @@ def test_sync_shortlist_replace_copies_rich_demo_data(tmp_path, scouting_app_dir
         assert session.query(models_module.PlayerAvailability).count() > 0
     finally:
         session.close()
+
+
+def test_sync_shortlist_rejects_invalid_limits(scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    sync_module = importlib.import_module("sync_shortlist")
+
+    with pytest.raises(ValueError, match="limite"):
+        sync_module.validate_sync_params(0, 12, 18)
+    with pytest.raises(ValueError, match="edad minima"):
+        sync_module.validate_sync_params(10, 9, 18)
+    with pytest.raises(ValueError, match="edad maxima"):
+        sync_module.validate_sync_params(10, 18, 12)
 
 
 def test_ensure_player_columns_migrates_physical_and_availability_tables(tmp_path, scouting_app_dir, monkeypatch):
