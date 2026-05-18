@@ -4,6 +4,8 @@ Fecha: 2026-04-26
 
 Adenda tecnica: 2026-04-27
 
+Adenda de cierre de auditoria: 2026-05-18
+
 Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en evidencia ejecutada sobre el proyecto y sobre la demo incluida en el repositorio.
 
 ## Alcance Revisado
@@ -21,6 +23,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 
 - Estado final validado original: `40 passed`
 - Estado tecnico actualizado 2026-05-11: `64 passed` con `pytest-cov`, cobertura total reportada `77%`
+- Estado tecnico actualizado 2026-05-17/18: `83 passed, 1 skipped`, cobertura total `80%`
 - Cobertura reforzada sobre:
 - autenticacion
 - permisos por rol
@@ -59,6 +62,7 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - UX/UI etapa 2 noveno bloque iniciado: edad visible en seguimiento/panel y categoria juvenil desde fecha de nacimiento
 - UX/UI etapa 2 noveno bloque: carga masiva redisenada como importacion CSV con plantilla Excel, previsualizacion y errores por fila
 - correccion de arranque local con `ADMIN_PASSWORD` configurado
+- auditoria tecnica por fases: seguridad, datos/ML, testing/CI, escala `1-20`, smoke visual Playwright y smoke Render preparado
 
 ### 1.1. Cierre De Observaciones De Codigo Fuente 2026-04-27
 
@@ -95,6 +99,9 @@ Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en e
 - Se corrigio la cache del dashboard para incluir el modo de rol y evitar que scout/admin y director compartan HTML renderizado.
 - Validacion del octavo bloque: `tests/test_pages.py` `9 passed`; suite completa `64 passed`; smoke HTTP local de `/dashboard` con admin respondio `200` y renderizo `Mesa de scouting`.
 - Se corrigio el orden de inicializacion del bootstrap de administrador para que el servidor local arranque correctamente con `ADMIN_PASSWORD`.
+- Se alineo la escala funcional de atributos/reportes/fisico a `1-20` y se normalizaron bases heredadas mediante `ensure_player_columns`.
+- Se agrego smoke visual Playwright opt-in y script de smoke real de Render con `RENDER_SMOKE_BASE_URL`.
+- Se avanzo Fase 5 de calidad/documentacion con constantes nombradas adicionales, type hint puntual en mantenimiento operativo y actualizacion de README/RUNBOOK/contexto.
 
 ### 2. Smoke funcional sobre la app real del repo
 
@@ -175,11 +182,11 @@ Estos puntos siguen siendo reales y no se deben ocultar:
 - la base demo fue completada con fechas de nacimiento demo autorizadas para que los 100 jugadores actuales muestren categoria `Cat. YYYY`; se dejo backup previo de la DB
 - los cortes visibles de potencial quedan definidos como bajo menor a `60%`, medio entre `60%` y `79%`, y alto desde `80%`
 - la carga masiva ya tiene vista dedicada CSV; queda pendiente revisarla visualmente en navegador y ajustar detalles de usabilidad si aparecen
-- el documento Word todavia no fue alineado con el estado corregido del MVP en esta fase
+- el documento Word de auditoria tecnica esta actualizado; el documento final de tesis todavia debe alinearse narrativamente con el MVP real
 - la evidencia del modelo sigue basada en datos sinteticos; no hay validacion externa con datos reales
 
 ## Conclusion
 
-Con la evidencia actual, el MVP queda funcional, coherente con su alcance acotado y bastante mas defendible que al inicio de la revision. La rama `training` queda como base estable inicial, `reformas-finales` cerro las reformas livianas y `reformas-complejas` concentro los cambios estructurales hasta cerrar la fase 2 de blueprints por familia en `9f02b3c`. La siguiente etapa ya no es seguir separando rutas, sino elegir entre tres frentes reales: pulido UX/UI y CRUDs para mejorar la demo, rendimiento del dashboard a escala, o correccion del Word para que refleje fielmente este estado real.
+Con la evidencia actual, el MVP queda funcional, coherente con su alcance acotado y bastante mas defendible que al inicio de la revision. La rama `training` queda como base estable inicial, `reformas-finales` cerro las reformas livianas, `reformas-complejas` concentro los cambios estructurales y `ux-crud-polish` contiene el pulido visual mas el cierre de auditoria tecnica mergeado. La siguiente etapa real es elegir entre revisar visualmente la demo completa, mejorar rendimiento del dashboard a escala o alinear el documento final de tesis con este estado real.
 
 Para continuar el pulido UX/UI en `ux-crud-polish`, el siguiente bloque chico recomendado es hacer una pasada visual manual en navegador, ajustar detalles responsive si aparece algo concreto y luego elegir entre actualizar el documento Word o trabajar rendimiento del dashboard a escala.

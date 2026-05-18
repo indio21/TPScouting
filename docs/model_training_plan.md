@@ -1,8 +1,8 @@
 # Plan tecnico de entrenamiento
 
 ## Resumen
-- Este plan se actualiza sobre la rama activa `reformas-finales`.
-- `training` queda como rama estable cerrada del MVP corregido; `reformas-finales` queda como rama activa para nuevas reformas.
+- Este plan queda como referencia tecnica del modelo y se mantiene actualizado desde `ux-crud-polish`.
+- `training` queda como rama estable historica; `reformas-finales` y `reformas-complejas` ya cerraron sus bloques; `ux-crud-polish` es la rama actual de pulido/auditoria.
 - PyTorch sigue siendo el modelo principal del MVP.
 - `LogisticRegression(class_weight="balanced")` queda formalizada como baseline obligatorio de comparacion.
 - La documentacion tecnica y la evidencia se guardan separadas del documento final de tesis.
@@ -104,5 +104,6 @@
 
 ## Decisiones fijas
 - No se toca todavia el documento final de tesis.
-- `training` queda cerrada como base estable; las nuevas reformas continuan en `reformas-finales` salvo decision explicita en contrario.
+- Las nuevas reformas continuan en `ux-crud-polish` salvo decision explicita en contrario.
 - El producto sigue acotado a scouting juvenil 12-18 para clubes formativos sin grandes presupuestos.
+- La escala funcional vigente para atributos y reportes en escala es `1-20`.

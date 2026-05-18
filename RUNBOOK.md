@@ -4,7 +4,9 @@ Este runbook cubre operación mínima, backup/restore de SQLite, healthcheck y b
 
 ## Estado de ramas
 - `training`: base estable cerrada del MVP corregido.
-- `reformas-finales`: rama activa para nuevas reformas.
+- `reformas-finales`: bloque de reformas livianas cerrado.
+- `reformas-complejas`: bloque de arquitectura/blueprints cerrado.
+- `ux-crud-polish`: rama actual para pulido UX/UI, auditoria y cierre documental.
 
 ## 1) Variables de entorno (producción)
 - `APP_SECRET_KEY` (obligatoria; no usar el default del código).
@@ -39,6 +41,13 @@ Este runbook cubre operación mínima, backup/restore de SQLite, healthcheck y b
 - El entrenamiento fija seed para `random`, `numpy`, `torch` y el orden de `DataLoader`/sampler.
 - Las metricas y calibradores registran warnings cuando no pueden calcularse o aplicarse, sin ocultar el fallback.
 - Los atributos tecnicos, campos fisicos en escala y reportes scout se validan como escala `1-20`. `ensure_player_columns` normaliza valores heredados fuera de rango.
+- Las categorias juveniles se derivan del anio de `birth_date`. La edad operativa tambien se recalcula desde esa fecha en altas, ediciones e importacion CSV.
+
+## 1.3) Estado de validacion
+
+- Ultima suite completa documentada: `83 passed, 1 skipped`, cobertura total `80%`.
+- Smoke Playwright opt-in: `1 passed` con `RUN_PLAYWRIGHT=1`.
+- Smoke Render: script disponible, pero requiere URL real en `RENDER_SMOKE_BASE_URL`.
 
 ## 2) Arranque local
 ```powershell

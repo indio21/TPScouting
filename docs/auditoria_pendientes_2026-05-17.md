@@ -5,16 +5,19 @@ para atacarlos en pasos controlados sin perder contexto.
 
 ## Estado de avance
 
-- Rama de trabajo: `auditoria-correcciones-mvp`.
+- Rama de trabajo original: `auditoria-correcciones-mvp`.
+- Rama actual mergeada: `ux-crud-polish`.
 - Fase 1 completada: guardrail contra SQLite en produccion, umbrales de potencial
   robustos y lock de pipeline con archivo.
 - Fase 2 completada: logout por POST + CSRF, headers basicos de seguridad,
   tests de secret key/admin password/CSRF y documentacion de rate limiting.
 - Tests al cierre de Fase 2: `76 passed`, cobertura total `80%`.
 - Tests al cierre de Fase 3: `79 passed`, cobertura total `80%`.
-- Fase 4 en curso: CI publica `coverage.xml` como artefacto y se refuerzan tests
+- Fase 4 completada: CI publica `coverage.xml` como artefacto y se refuerzan tests
   de rutas protegidas, inputs invalidos y comportamiento sin modelo cargado.
 - Tests al cierre de Fase 4: `82 passed`, cobertura total `80%`.
+- Tests al cierre del bloque escala/smoke: `83 passed, 1 skipped`, cobertura total `80%`.
+- Fase 5 completada en alcance MVP: documentacion actualizada, constantes nombradas adicionales y type hint puntual sin refactor grande.
 
 ## Riesgos restantes despues de Fase 1
 
@@ -32,10 +35,10 @@ para atacarlos en pasos controlados sin perder contexto.
      para version futura.
 
 3. Documentacion final pendiente.
-   - Estado: parcialmente actualizada; cierre integral pendiente para Fase 5.
+   - Estado: README/RUNBOOK/contexto/auditoria actualizados en Fase 5.
    - Motivo: las limitaciones de despliegue, cache, lock, dataset sintetico y score
      combinado deben quedar reflejadas en README/RUNBOOK/documento academico.
-   - Accion sugerida: actualizar documentacion al cerrar las fases tecnicas.
+   - Accion sugerida: alinear el documento final de tesis con el MVP real.
 
 ## Riesgos/limitaciones registrados durante Fase 2
 
@@ -119,3 +122,28 @@ para atacarlos en pasos controlados sin perder contexto.
      opcionalmente `/dashboard` autenticado usando `RENDER_SMOKE_BASE_URL`.
    - Riesgo restante: no se encontro una URL publica fija de Render en el repo; se
      debe ejecutar con la URL real del servicio desplegado.
+
+## Cierre de Fase 5 - Calidad y documentacion
+
+1. Documentacion operativa.
+   - Estado: actualizada.
+   - Accion aplicada: `README.md`, `RUNBOOK.md`, `README_TESTS.md`,
+     `REVISION_FINAL_MVP.md`, `PROGRESO_MVP.md`, `docs/contexto_para_nuevo_chat.md`
+     y documentos tecnicos de entrenamiento fueron alineados con `ux-crud-polish`,
+     escala `1-20`, tests actuales y smoke Playwright/Render.
+
+2. Calidad de codigo sin refactor grande.
+   - Estado: aplicado.
+   - Accion aplicada: se agregaron constantes nombradas para cupo operativo,
+     cantidad default de dataset, vencimiento del lock de pipeline, umbral de
+     sugerencias y bandas de score; se agrego type hint puntual a `sort_key`.
+
+3. Riesgos que quedan vivos.
+   - Smoke real de Render pendiente hasta contar con URL real del servicio.
+   - Rate limiting, cache y lock siguen siendo in-memory/locales, aceptables para
+     MVP pero no para produccion multi-instancia.
+   - No hay Alembic; las migraciones manuales transaccionales alcanzan para MVP.
+   - Dataset y evaluacion del modelo siguen siendo sinteticos; falta validacion
+     externa con datos reales.
+   - El documento final de tesis debe revisar narrativa, capturas y afirmaciones
+     para que coincidan con el MVP real.

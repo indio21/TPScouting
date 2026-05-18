@@ -27,13 +27,24 @@ Trabajo final orientado al scouting de futbol juvenil, con una app web para:
 - `docs/explicacion_cambios_revision_codigo_2026-04-27.md`: explicacion simple de los ultimos cambios de hardening
 - `docs/model_training_evidence.md`: evidencia tecnica del entrenamiento y comparacion con baseline
 - `docs/model_training_plan.md`: plan tecnico vigente del modelo
+- `docs/auditoria_pendientes_2026-05-17.md`: riesgos vivos y cierre por fases de auditoria
+- `scripts/smoke_render.py`: smoke HTTP contra la URL real de Render
 - `render.yaml`: configuracion de deploy en Render
 - `RUNBOOK.md`: guia operativa (healthcheck, backup/restore, admin, incidentes)
 
 ## Ramas de trabajo
 
 - `training`: rama estable cerrada con las correcciones del MVP.
-- `reformas-finales`: rama activa para nuevas reformas y ajustes posteriores.
+- `ux-crud-polish`: rama actual de pulido UX/UI y cierre de auditoria, sincronizada con GitHub.
+- `auditoria-correcciones-mvp`: rama de correcciones de auditoria ya mergeada en `ux-crud-polish`.
+
+## Estado actual
+
+- Fecha de referencia: 2026-05-18.
+- Escala de atributos tecnicos, fisicos en escala y reportes scout: `1-20`.
+- Potencial bajo: menor a `60%`; medio: `60%` a `79%`; alto: `80%` o mas.
+- La edad y categoria juvenil se derivan de `birth_date`; `Player.age` queda como compatibilidad operativa.
+- Tests al ultimo cierre: `83 passed, 1 skipped`, cobertura total `80%`.
 
 ## Bases de datos del MVP
 
@@ -79,6 +90,12 @@ Nota: en deploy (Render) la clave de admin se configura por variable de entorno 
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
+```
+
+Con reporte XML de cobertura:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing --cov-report=xml
 ```
 
 Smoke visual opcional con Playwright:

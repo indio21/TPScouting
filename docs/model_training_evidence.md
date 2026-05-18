@@ -1,13 +1,14 @@
 # Evidencia tecnica del entrenamiento
 
 ## Estado actual de la rama
-- Rama analizada: `reformas-finales`
+- Rama analizada originalmente: `reformas-finales`
 - Rama estable cerrada del MVP corregido: `training`.
-- Rama activa para nuevas reformas: `reformas-finales`.
+- Rama activa actual para pulido/auditoria: `ux-crud-polish`.
 - Cambio estructural ya incorporado: pipeline compartido de preprocesamiento con `pandas`, `ColumnTransformer`, `SimpleImputer`, `MinMaxScaler`, `OneHotEncoder` y persistencia en `preprocessor.joblib`.
 - Artefactos actuales del entrenamiento: `model.pt`, `preprocessor.joblib`, `training_metadata.json` y `experiments.csv`.
 - Artefacto adicional actual: `probability_calibrator.joblib`.
 - El objetivo del producto se mantiene acotado a scouting juvenil de 12 a 18 anos para clubes formativos.
+- La escala vigente de atributos tecnicos, campos fisicos en escala y reportes scout es `1-20`.
 
 ## Diagnostico previo verificado antes de endurecer el entrenamiento
 - Dataset original analizado: 20000 jugadores sinteticos.

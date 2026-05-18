@@ -1,12 +1,13 @@
 # Mejora de prediccion - avance tecnico
 
 ## Estado actual
-- Rama de trabajo: `reformas-finales`
+- Rama de trabajo original: `reformas-finales`
 - Rama estable cerrada del MVP corregido: `training`
-- Rama activa para nuevas reformas: `reformas-finales`
+- Rama activa actual para pulido/auditoria: `ux-crud-polish`
 - Ultimo commit publicado antes de esta etapa: `a7e6f7f`
 - Objetivo de esta iteracion: cerrar la brecha entre PyTorch y el baseline lineal despues de sumar `PhysicalAssessment` y `Availability`, sin perder la riqueza metodologica ya ganada.
 - Alcance del producto mantenido: scouting juvenil de 12 a 18 anos para clubes formativos.
+- Escala funcional vigente en app y datos normalizados: atributos/reportes en `1-20`.
 
 ## Que se implemento en esta etapa
 - Se mantuvo la base enriquecida con dos fuentes nuevas de senal longitudinal:

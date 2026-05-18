@@ -7,8 +7,10 @@ Este documento define como regenerar localmente los artefactos del MVP sin versi
 ## Estado De Ramas
 
 - `training`: rama estable con las correcciones del MVP cerradas hasta `b6c21ea`.
-- `reformas-finales`: rama activa para nuevas reformas, creada desde `training` el 2026-04-26.
-- Las nuevas modificaciones deben realizarse sobre `reformas-finales` salvo decision explicita en contrario.
+- `reformas-finales`: bloque de reformas livianas cerrado.
+- `reformas-complejas`: bloque de arquitectura/blueprints cerrado.
+- `ux-crud-polish`: rama actual para pulido UX/UI, auditoria y cierre documental.
+- `auditoria-correcciones-mvp`: rama de auditoria tecnica ya mergeada en `ux-crud-polish`.
 
 ## Decision De Versionado
 
@@ -68,6 +70,8 @@ Resultado esperado de la ultima corrida documentada:
 - PyTorch calibrado test: `PR-AUC=0.4617`, `F1=0.5162`.
 - Baseline logistic test: `PR-AUC=0.4728`, `F1=0.4875`.
 
+Nota de escala vigente: los atributos tecnicos, campos fisicos en escala y reportes scout se validan en `1-20`. Si se regenera una base legacy, `ensure_player_columns` normaliza valores fuera de rango.
+
 ## Base Operativa Para Demo Local
 
 Sincronizar una shortlist de hasta `100` jugadores juveniles desde la base de entrenamiento:
@@ -119,4 +123,9 @@ cd C:\Tesis\TPScouting
 .\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
 ```
 
-Ultima validacion documentada: `48 passed`, cobertura total reportada `77%`.
+Validacion historica documentada en esa etapa: `48 passed`, cobertura total reportada `77%`.
+
+Validacion actualizada 2026-05-17/18:
+
+- Suite completa: `83 passed, 1 skipped`, cobertura total `80%`.
+- Smoke visual Playwright: `1 passed` con `RUN_PLAYWRIGHT=1`.

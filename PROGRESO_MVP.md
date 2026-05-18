@@ -373,7 +373,8 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 
 - La suite automatizada actual termina pasando en esta maquina.
 - Ultimo estado validado sin cobertura: `52 passed`, con `4 warnings` conocidos de scikit-learn
-- Ultimo estado validado con cobertura: `52 passed`, cobertura total `77%`
+- Ultimo estado validado con cobertura historico: `52 passed`, cobertura total `77%`
+- Ultimo estado validado actualizado: `83 passed, 1 skipped`, cobertura total `80%`
 
 ## Puntos Mejorados De Forma Clara
 
@@ -420,6 +421,8 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Backfill demo autorizado: `players_updated_v2.db` fue completada con fechas de nacimiento demo estables para eliminar `Cat. N/D` en los 100 jugadores actuales
 - Umbrales de potencial actualizados: bajo `<60%`, medio `60-79%`, alto `>=80%`
 - Correccion de arranque local con `ADMIN_PASSWORD` configurado
+- Auditoria tecnica por fases mergeada en `ux-crud-polish`: seguridad, datos/ML, testing/CI, escala de atributos `1-20`, smoke visual Playwright y smoke Render preparado
+- Fase 5 iniciada/cerrada en bloque chico: constantes nombradas adicionales en `app.py`, type hint puntual en mantenimiento operativo y documentacion actualizada
 
 ## Puntos Que Siguen Parciales O Pendientes
 
@@ -432,7 +435,7 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Nomenclatura `db` / `db_session` aceptada como parcial en endpoints Flask; no bloquea el MVP
 - Herramientas dev opcionales todavia parciales (`ruff`, `black`, `mypy`)
 - Rutas Flask parcialmente separadas en blueprints; quedan en `app.py` landing, health, error handlers y helpers compartidos
-- Correccion del documento Word, que todavia no se empezo en esta fase
+- Documento Word de auditoria tecnica actualizado; sigue pendiente alinear el documento final de tesis con el MVP real
 
 ## Siguiente Decision Recomendada
 
@@ -448,7 +451,7 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Sexto/septimo/octavo bloque aplicados: historiales complementarios en modales, settings/register/login alineados y dashboard convertido en panel de control por rol.
 - Noveno bloque aplicado: edad visible en seguimiento/ranking/panel; categoria juvenil sale de `birth_date.year`; altas, ediciones e importacion calculan edad desde fecha de nacimiento.
 - Decimo ajuste aplicado: backfill demo local de `birth_date` y umbrales de potencial bajo/medio/alto en `60/80`.
-- Siguiente bloque sugerido: revisar visualmente `/players/import`, `/players/manage`, `/dashboard`, `/compare/multi` y ficha de jugador; luego pasar al documento Word si no aparece nada visual.
+- Siguiente bloque sugerido: revisar visualmente `/players/import`, `/players/manage`, `/dashboard`, `/compare/multi` y ficha de jugador; luego pasar al documento final de tesis si no aparece nada visual.
 - Si la prioridad es academica: conviene pasar a alinear el Word con el MVP real.
 - Si la prioridad vuelve a ser tecnica: el siguiente frente fuerte es rendimiento del dashboard a escala.
 
@@ -459,7 +462,7 @@ Tomando como base la checklist operativa del MVP:
 - No quedan bloques principales del MVP real abiertos en esta fase.
 
 - Luego queda 1 bloque grande aparte:
-- correccion del documento Word para alinearlo con el MVP ya corregido
+- correccion del documento final de tesis para alinearlo con el MVP ya corregido
 
 ## Regla De Trabajo
 

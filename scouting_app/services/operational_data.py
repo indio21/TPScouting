@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Callable, Dict, Optional, Set
+from typing import Any, Callable, Dict, Optional, Set, Tuple
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session as SQLAlchemySession
@@ -48,7 +48,7 @@ def trim_operational_player_pool(db_session: SQLAlchemySession, max_players: int
         .all()
     )
 
-    def sort_key(row):
+    def sort_key(row: Any) -> Tuple[int, int, date, int]:
         dates = [item_date for item_date in (row.last_stat_date, row.last_attr_date) if item_date is not None]
         last_activity = max(dates) if dates else date.min
         has_history = 1 if dates else 0

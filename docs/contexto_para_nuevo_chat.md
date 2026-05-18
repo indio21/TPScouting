@@ -496,9 +496,9 @@ Actualizacion de auditoria 2026-05-17:
 - Se agrego smoke visual opt-in con Playwright en `tests/test_visual_smoke.py`; se ejecuta con `RUN_PLAYWRIGHT=1`.
 - Se agrego `scripts/smoke_render.py` para validar el deploy real con `RENDER_SMOKE_BASE_URL`; no se encontro URL publica fija en el repo.
 - Documento de auditoria Word actualizado: `docs/evaluacion_codigo_fuente_2026-05-17.docx`.
-- Luego de terminar esta tanda, corresponde pedir aprobacion para seguir con Fase 5.
+- Fase 5 completada en alcance MVP: documentacion principal actualizada, constantes nombradas adicionales en `app.py` y type hint puntual en mantenimiento operativo.
 
-La rama `training` queda como base estable de las correcciones del MVP. La rama `reformas-finales` queda cerrada como bloque liviano. La arquitectura grande quedo cerrada en `reformas-complejas`; el pulido visual continua en `ux-crud-polish`.
+La rama `training` queda como base estable de las correcciones del MVP. La rama `reformas-finales` queda cerrada como bloque liviano. La arquitectura grande quedo cerrada en `reformas-complejas`; el pulido visual y la auditoria mergeada continuan en `ux-crud-polish`.
 
 Hay cuatro caminos razonables:
 

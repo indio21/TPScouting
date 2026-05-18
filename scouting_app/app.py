@@ -126,6 +126,10 @@ DEFAULT_CACHE_TTL_SECONDS = 60
 DEFAULT_CACHE_MAX_ENTRIES = 128
 DEFAULT_PLAYER_LIST_PER_PAGE = 50
 DEFAULT_MAX_COMPARE_PLAYERS = 2000
+DEFAULT_EVAL_POOL_MAX = 100
+TRAINING_DATASET_DEFAULT_PLAYERS = 20000
+PIPELINE_LOCK_MIN_STALE_SECONDS = 60
+PIPELINE_LOCK_DEFAULT_STALE_SECONDS = 12 * 60 * 60
 
 MATCH_MINUTES_DENOMINATOR = 90.0
 MAX_MINUTES_FACTOR = 1.5
@@ -142,6 +146,10 @@ MATCH_CONSISTENCY_WEIGHT = 0.5
 PERCENT_DENOMINATOR = 100.0
 MIN_STATS_RATING = 1.0
 MAX_STATS_RATING = 10.0
+DEFAULT_SUGGESTION_THRESHOLD = 14
+DEFAULT_SUGGESTION_COUNT = 3
+SCORE_BAND_HIGH_THRESHOLD = 15
+SCORE_BAND_MEDIUM_THRESHOLD = 10
 
 try:
     _CACHE_TTL_SECONDS = max(1, int(os.environ.get("CACHE_TTL_SECONDS", str(DEFAULT_CACHE_TTL_SECONDS))))
@@ -169,9 +177,12 @@ _LOGIN_ATTEMPTS = _LOGIN_RATE_LIMITER.attempts
 
 # --- Guardrails pipeline (evita doble ejecucion concurrente) ---
 try:
-    _PIPELINE_LOCK_STALE_SECONDS = max(60, int(os.environ.get("PIPELINE_LOCK_STALE_SECONDS", str(12 * 60 * 60))))
+    _PIPELINE_LOCK_STALE_SECONDS = max(
+        PIPELINE_LOCK_MIN_STALE_SECONDS,
+        int(os.environ.get("PIPELINE_LOCK_STALE_SECONDS", str(PIPELINE_LOCK_DEFAULT_STALE_SECONDS))),
+    )
 except ValueError:
-    _PIPELINE_LOCK_STALE_SECONDS = 12 * 60 * 60
+    _PIPELINE_LOCK_STALE_SECONDS = PIPELINE_LOCK_DEFAULT_STALE_SECONDS
 _PIPELINE_LOCK = PipelineFileLock(
     os.environ.get("PIPELINE_LOCK_PATH", os.path.join(BASE_DIR, ".pipeline_update.lock")),
     stale_seconds=_PIPELINE_LOCK_STALE_SECONDS,
@@ -284,9 +295,9 @@ if _is_prod_runtime and not env_flag("ALLOW_SQLITE_IN_PRODUCTION") and (
         "Configurar APP_DB_URL y TRAINING_DB_URL con PostgreSQL para evitar perdida de datos."
     )
 try:
-    EVAL_POOL_MAX = max(1, int(os.environ.get("EVAL_POOL_MAX", "100")))
+    EVAL_POOL_MAX = max(1, int(os.environ.get("EVAL_POOL_MAX", str(DEFAULT_EVAL_POOL_MAX))))
 except ValueError:
-    EVAL_POOL_MAX = 100
+    EVAL_POOL_MAX = DEFAULT_EVAL_POOL_MAX
 
 SYNC_SHORTLIST_ENABLED = env_flag("SYNC_SHORTLIST_ENABLED")
 
@@ -384,7 +395,7 @@ def ensure_training_dataset(min_players: int = 1) -> Tuple[bool, List[str]]:
         sys.executable,
         "generate_data.py",
         "--num-players",
-        "20000",
+        str(TRAINING_DATASET_DEFAULT_PLAYERS),
         "--db-url",
         TRAINING_DB_URL,
     ]
@@ -798,7 +809,11 @@ def health():
 def prepare_input(player: Player) -> torch.Tensor:
     return players_to_model_tensor([player])
 
-def compute_suggestions(player: Player, threshold: int = 14, top_n: int = 3) -> List[Tuple[str, int]]:
+def compute_suggestions(
+    player: Player,
+    threshold: int = DEFAULT_SUGGESTION_THRESHOLD,
+    top_n: int = DEFAULT_SUGGESTION_COUNT,
+) -> List[Tuple[str, int]]:
     attrs = {
         "Ritmo (pace)": player.pace,
         "Disparo (shooting)": player.shooting,
@@ -816,9 +831,9 @@ def compute_suggestions(player: Player, threshold: int = 14, top_n: int = 3) -> 
 
 
 def score_band(score: float) -> str:
-    if score >= 15:
+    if score >= SCORE_BAND_HIGH_THRESHOLD:
         return "Alto"
-    if score >= 10:
+    if score >= SCORE_BAND_MEDIUM_THRESHOLD:
         return "Medio"
     return "Bajo"
 
