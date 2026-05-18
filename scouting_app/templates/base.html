@@ -166,9 +166,12 @@
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="{{ first_url('logout','signout') }}">
-                                    <i class="bi bi-box-arrow-right"></i> Cerrar sesion
-                                </a>
+                                <form method="post" action="{{ first_url('logout','signout') }}" class="m-0">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                    <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-danger">
+                                        <i class="bi bi-box-arrow-right"></i> Cerrar sesion
+                                    </button>
+                                </form>
                             </li>
                         </ul>
                     </li>

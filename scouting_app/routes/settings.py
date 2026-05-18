@@ -29,12 +29,16 @@ def create_settings_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                     status_messages = ["Ya hay una actualizacion en curso. Reintenta en unos minutos."]
                     flash("Ya hay una actualizacion en curso. Reintenta en unos minutos.", "warning")
                 else:
+                    success = False
                     try:
                         success, logs = deps.update_database_pipeline(
                             limit=deps.EVAL_POOL_MAX,
                             sync_shortlist=deps.SYNC_SHORTLIST_ENABLED,
                         )
                         status_messages = logs
+                    except Exception as exc:
+                        current_app.logger.exception("Pipeline update_database failed unexpectedly")
+                        status_messages = [f"No se pudo completar la actualizacion: {exc}"]
                     finally:
                         duration = round(time.time() - start, 2)
                         status_messages.append(f"Duracion total de la actualizacion: {duration}s")

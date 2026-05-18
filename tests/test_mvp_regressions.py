@@ -1,10 +1,12 @@
 import importlib
 import io
 import json
+import sys
 from datetime import date
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 from sqlalchemy import inspect, text
 from werkzeug.security import generate_password_hash
 from sqlalchemy.orm import sessionmaker
@@ -178,6 +180,153 @@ def test_potential_categories_use_requested_percentage_ranges(app_module):
     assert app_module.categorize_probability(0.80) == "Alto potencial"
     assert app_module.is_high_potential_probability(0.79) is False
     assert app_module.is_high_potential_probability(0.80) is True
+
+
+def test_potential_thresholds_ignore_invalid_env(app_module, monkeypatch):
+    monkeypatch.setenv("POTENTIAL_MEDIUM_THRESHOLD", "valor-invalido")
+    monkeypatch.setenv("POTENTIAL_HIGH_THRESHOLD", "2")
+
+    assert app_module.potential_thresholds() == (0.60, 0.80)
+
+
+def test_potential_thresholds_keep_medium_below_high(app_module, monkeypatch):
+    monkeypatch.setenv("POTENTIAL_MEDIUM_THRESHOLD", "0.95")
+    monkeypatch.setenv("POTENTIAL_HIGH_THRESHOLD", "0.80")
+
+    assert app_module.potential_thresholds() == (0.75, 0.80)
+
+
+def test_production_runtime_rejects_sqlite_without_explicit_opt_in(tmp_path, scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+    monkeypatch.setenv("ENV", "production")
+    monkeypatch.delenv("FLASK_ENV", raising=False)
+    monkeypatch.delenv("RENDER", raising=False)
+    monkeypatch.delenv("ALLOW_SQLITE_IN_PRODUCTION", raising=False)
+    monkeypatch.setenv("APP_SECRET_KEY", "test-secret-123")
+    monkeypatch.setenv("APP_DB_URL", f"sqlite:///{(tmp_path / 'app.db').as_posix()}")
+    monkeypatch.setenv("TRAINING_DB_URL", f"sqlite:///{(tmp_path / 'training.db').as_posix()}")
+
+    module_name = "scouting_app_prod_sqlite_guard_test"
+    sys.modules.pop(module_name, None)
+    spec = importlib.util.spec_from_file_location(module_name, scouting_app_dir / "app.py")
+    mod = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    sys.modules[module_name] = mod
+    try:
+        with pytest.raises(RuntimeError, match="SQLite no esta permitido"):
+            spec.loader.exec_module(mod)
+    finally:
+        sys.modules.pop(module_name, None)
+
+
+def test_render_runtime_requires_secret_key(scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+    monkeypatch.setenv("RENDER", "true")
+    monkeypatch.delenv("APP_SECRET_KEY", raising=False)
+    monkeypatch.setenv("APP_DB_URL", "postgresql://user:pass@localhost/app_db")
+    monkeypatch.setenv("TRAINING_DB_URL", "postgresql://user:pass@localhost/training_db")
+
+    module_name = "scouting_app_render_secret_guard_test"
+    sys.modules.pop(module_name, None)
+    spec = importlib.util.spec_from_file_location(module_name, scouting_app_dir / "app.py")
+    mod = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    sys.modules[module_name] = mod
+    try:
+        with pytest.raises(RuntimeError, match="APP_SECRET_KEY must be set"):
+            spec.loader.exec_module(mod)
+    finally:
+        sys.modules.pop(module_name, None)
+
+
+def test_bootstrap_admin_rejects_weak_password(app_module, db, monkeypatch):
+    monkeypatch.setenv("ADMIN_USERNAME", "weak_bootstrap_admin")
+    monkeypatch.setenv("ADMIN_PASSWORD", "abcdef")
+
+    app_module.init_admin_user()
+
+    assert db.query(app_module.User).filter_by(username="weak_bootstrap_admin").count() == 0
+
+
+def test_pipeline_file_lock_blocks_parallel_acquire(tmp_path, scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    from services.locks import PipelineFileLock
+
+    lock_path = tmp_path / "pipeline.lock"
+    first_lock = PipelineFileLock(lock_path)
+    second_lock = PipelineFileLock(lock_path)
+
+    assert first_lock.acquire(blocking=False) is True
+    try:
+        assert second_lock.acquire(blocking=False) is False
+    finally:
+        first_lock.release()
+
+    assert second_lock.acquire(blocking=False) is True
+    second_lock.release()
+
+
+def test_settings_pipeline_exception_returns_message_and_releases_lock(scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    settings_module = importlib.import_module("routes.settings")
+    captured = {}
+
+    def fake_render_template(template_name, **kwargs):
+        captured.update(kwargs)
+        return "ok"
+
+    monkeypatch.setattr(settings_module, "render_template", fake_render_template)
+
+    from flask import Flask
+
+    class FakeLock:
+        def __init__(self):
+            self.released = False
+
+        def acquire(self, blocking=True):
+            return True
+
+        def release(self):
+            self.released = True
+
+    class FakeSession:
+        def close(self):
+            pass
+
+    def roles_required(_role):
+        def decorator(fn):
+            return fn
+
+        return decorator
+
+    def failing_pipeline(**_kwargs):
+        raise RuntimeError("fallo controlado")
+
+    fake_lock = FakeLock()
+    deps = SimpleNamespace(
+        ROLE_ADMIN="administrador",
+        roles_required=roles_required,
+        require_csrf=lambda: None,
+        pipeline_lock=fake_lock,
+        update_database_pipeline=failing_pipeline,
+        EVAL_POOL_MAX=100,
+        SYNC_SHORTLIST_ENABLED=False,
+        Session=lambda: FakeSession(),
+        compute_operational_data_quality=lambda _db: {},
+        cleanup_operational_data=lambda _db: {},
+        invalidate_dashboard_cache=lambda: None,
+    )
+    app = Flask(__name__)
+    app.secret_key = "test-secret"
+    app.register_blueprint(settings_module.create_settings_blueprint(deps=deps))
+
+    response = app.test_client().post("/settings", data={"action": "update_database"})
+
+    assert response.status_code == 200
+    assert fake_lock.released is True
+    assert captured["status_messages"][0] == "No se pudo completar la actualizacion: fallo controlado"
 
 
 def test_app_module_fixture_uses_stable_module_name(app_module):
@@ -589,6 +738,7 @@ def test_mutating_post_routes_reject_missing_csrf(client, app_module, db):
     )
     routes = [
         ("/login", {"username": "admin_no_csrf", "password": "admin1234"}),
+        ("/logout", {}),
         ("/register", {"username": "sin_token", "password": "Password123", "role": "scout"}),
         ("/players/manage", valid_player_payload),
         (

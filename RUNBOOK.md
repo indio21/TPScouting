@@ -15,6 +15,18 @@ Este runbook cubre operación mínima, backup/restore de SQLite, healthcheck y b
 - `CACHE_MAX_ENTRIES` (opcional; limite del cache del dashboard, default `128`).
 - `PLAYER_LIST_PER_PAGE` (opcional; paginacion del listado, default `50`).
 - `MAX_COMPARE_PLAYERS` (opcional; limite de jugadores cargados en comparadores, default `2000`).
+- `LOGIN_RATE_LIMIT_WINDOW_SECONDS` (opcional; ventana del rate limiting de login, default `300`).
+- `LOGIN_RATE_LIMIT_MAX_ATTEMPTS` (opcional; intentos fallidos por IP + usuario, default `5`).
+- `ALLOW_SQLITE_IN_PRODUCTION` (solo emergencia; mantener apagado en Render para evitar filesystem efimero).
+
+## 1.1) Seguridad MVP
+
+- En produccion/Render, `APP_SECRET_KEY` es obligatoria. Si falta, la app no arranca.
+- SQLite queda bloqueado en produccion salvo opt-in explicito con `ALLOW_SQLITE_IN_PRODUCTION=1`.
+- Los formularios POST que modifican datos validan CSRF.
+- El cierre de sesion usa POST con CSRF.
+- El rate limiting de login es in-memory y por proceso. Mitiga fuerza bruta basica en MVP, pero para produccion real deberia moverse a Redis, DB o servicio externo.
+- Se agregan headers basicos: `X-Content-Type-Options`, `X-Frame-Options` y `Referrer-Policy`.
 
 ## 2) Arranque local
 ```powershell

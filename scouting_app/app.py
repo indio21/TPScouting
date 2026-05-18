@@ -1,7 +1,6 @@
 import os
 import logging
 import time
-import threading
 import secrets
 import sys
 import subprocess
@@ -31,7 +30,7 @@ from models import (
 )
 from werkzeug.security import generate_password_hash
 from functools import wraps
-from db_utils import normalize_db_url, create_app_engine, ensure_player_columns
+from db_utils import normalize_db_url, create_app_engine, ensure_player_columns, is_sqlite_url
 from ml.runtime import (
     apply_probability_calibrator,
     load_model_state,
@@ -68,6 +67,7 @@ from player_logic import (
     default_player_photo_url,
 )
 from services.cache import TTLCache
+from services.locks import PipelineFileLock
 from services.operational_data import (
     backfill_player_photo_urls,
     cleanup_operational_data as _cleanup_operational_data,
@@ -108,6 +108,15 @@ except Exception:
 
 # Logger root para librerías (opcional)
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO))
+
+
+def env_flag(name: str, default: str = "0") -> bool:
+    return (os.environ.get(name, default).strip().lower() in {"1", "true", "yes", "y", "si", "s", "on"})
+
+
+def is_production_runtime() -> bool:
+    env = (os.environ.get("FLASK_ENV") or os.environ.get("ENV") or "").strip().lower()
+    return env in {"production", "prod"} or env_flag("RENDER")
 
 
 # --- Cache in-memory con TTL (MVP) ---
@@ -156,9 +165,15 @@ _LOGIN_RATE_LIMITER = LoginRateLimiter(_LOGIN_RATE_LIMIT_WINDOW_SECONDS, _LOGIN_
 _LOGIN_ATTEMPTS = _LOGIN_RATE_LIMITER.attempts
 
 
-# --- Guardrails pipeline (evita doble ejecución concurrente) ---
-# Lock intra-proceso: en Gunicorn depende de mantener --workers 1 para no correr pipelines en paralelo.
-_PIPELINE_LOCK = threading.Lock()
+# --- Guardrails pipeline (evita doble ejecucion concurrente) ---
+try:
+    _PIPELINE_LOCK_STALE_SECONDS = max(60, int(os.environ.get("PIPELINE_LOCK_STALE_SECONDS", str(12 * 60 * 60))))
+except ValueError:
+    _PIPELINE_LOCK_STALE_SECONDS = 12 * 60 * 60
+_PIPELINE_LOCK = PipelineFileLock(
+    os.environ.get("PIPELINE_LOCK_PATH", os.path.join(BASE_DIR, ".pipeline_update.lock")),
+    stale_seconds=_PIPELINE_LOCK_STALE_SECONDS,
+)
 
 
 def _cache_get(key: str) -> Optional[Any]:
@@ -208,24 +223,31 @@ def clear_failed_logins(username: Optional[str]) -> None:
 
 
 # --- Secret key obligatoria en producción ---
-_env2 = (os.environ.get("FLASK_ENV") or os.environ.get("ENV") or "").lower()
+_is_prod_runtime = is_production_runtime()
 _secret = os.environ.get("APP_SECRET_KEY", "")
-if _env2 in ("production", "prod") and (not _secret or _secret == "reemplazar-esta-clave"):
+if _is_prod_runtime and (not _secret or _secret == "reemplazar-esta-clave"):
     raise RuntimeError("APP_SECRET_KEY must be set in production")
 if _secret and _secret != "reemplazar-esta-clave":
     app.secret_key = _secret
 else:
     app.secret_key = secrets.token_urlsafe(32)
-    if _env2 not in ("production", "prod"):
+    if not _is_prod_runtime:
         app.logger.warning("APP_SECRET_KEY no configurada. Se genero una clave efimera para esta ejecucion.")
 
 
 # --- Cookies de sesión (hardening mínimo) ---
-_env = (os.environ.get("FLASK_ENV") or os.environ.get("ENV") or "").lower()
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-if _env in ("production", "prod"):
+if _is_prod_runtime:
     app.config["SESSION_COOKIE_SECURE"] = True
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "same-origin")
+    return response
 
 
 # --- CSRF mínimo (session token) ---
@@ -252,18 +274,21 @@ TRAINING_DB_URL = normalize_db_url(
     os.environ.get("TRAINING_DB_URL", "sqlite:///players_training.db"),
     base_dir=BASE_DIR,
 )
+if _is_prod_runtime and not env_flag("ALLOW_SQLITE_IN_PRODUCTION") and (
+    is_sqlite_url(APP_DB_URL) or is_sqlite_url(TRAINING_DB_URL)
+):
+    raise RuntimeError(
+        "SQLite no esta permitido en produccion sin ALLOW_SQLITE_IN_PRODUCTION=1. "
+        "Configurar APP_DB_URL y TRAINING_DB_URL con PostgreSQL para evitar perdida de datos."
+    )
 try:
     EVAL_POOL_MAX = max(1, int(os.environ.get("EVAL_POOL_MAX", "100")))
 except ValueError:
     EVAL_POOL_MAX = 100
 
-SYNC_SHORTLIST_ENABLED = (os.environ.get("SYNC_SHORTLIST_ENABLED", "0").strip().lower() in {
-    "1", "true", "yes", "y", "si", "s", "on"
-})
+SYNC_SHORTLIST_ENABLED = env_flag("SYNC_SHORTLIST_ENABLED")
 
-ENFORCE_EVAL_POOL_LIMIT = (os.environ.get("ENFORCE_EVAL_POOL_LIMIT", "1").strip().lower() in {
-    "1", "true", "yes", "y", "si", "s", "on"
-})
+ENFORCE_EVAL_POOL_LIMIT = env_flag("ENFORCE_EVAL_POOL_LIMIT", "1")
 
 engine = create_app_engine(APP_DB_URL)
 Session = sessionmaker(bind=engine, expire_on_commit=False)
@@ -454,10 +479,8 @@ def update_database_pipeline(limit: int = EVAL_POOL_MAX, sync_shortlist: bool = 
 def init_admin_user() -> None:
     username = (os.environ.get("ADMIN_USERNAME") or "admin").strip()
     password = (os.environ.get("ADMIN_PASSWORD") or "").strip()
-    allow_default = (os.environ.get("ALLOW_DEFAULT_ADMIN") or "").strip().lower() in {
-        "1", "true", "yes", "y", "si", "s", "on"
-    }
-    is_prod = (os.environ.get("FLASK_ENV") or os.environ.get("ENV") or "").lower() in {"production", "prod"}
+    allow_default = env_flag("ALLOW_DEFAULT_ADMIN")
+    is_prod = is_production_runtime()
 
     if not password:
         # En produccion no crear admin por defecto.
@@ -679,7 +702,7 @@ register_legacy_endpoint_aliases(
     "auth",
     (
         ("login", "/login", ("GET", "POST")),
-        ("logout", "/logout", ("GET",)),
+        ("logout", "/logout", ("POST",)),
         ("register", "/register", ("GET", "POST")),
     ),
 )
@@ -1273,10 +1296,30 @@ DEFAULT_POTENTIAL_MEDIUM_THRESHOLD = 0.60
 DEFAULT_POTENTIAL_HIGH_THRESHOLD = 0.80
 
 
+def probability_env(name: str, default: float) -> float:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        app.logger.warning("%s invalido (%r). Se usa %.2f.", name, raw, default)
+        return default
+    if not 0.0 <= value <= 1.0:
+        app.logger.warning("%s fuera de rango (%r). Se usa %.2f.", name, raw, default)
+        return default
+    return value
+
+
 def potential_thresholds() -> Tuple[float, float]:
-    high = float(os.environ.get("POTENTIAL_HIGH_THRESHOLD", str(DEFAULT_POTENTIAL_HIGH_THRESHOLD)))
-    medium = float(os.environ.get("POTENTIAL_MEDIUM_THRESHOLD", str(DEFAULT_POTENTIAL_MEDIUM_THRESHOLD)))
+    high = probability_env("POTENTIAL_HIGH_THRESHOLD", DEFAULT_POTENTIAL_HIGH_THRESHOLD)
+    medium = probability_env("POTENTIAL_MEDIUM_THRESHOLD", DEFAULT_POTENTIAL_MEDIUM_THRESHOLD)
     if medium >= high:
+        app.logger.warning(
+            "POTENTIAL_MEDIUM_THRESHOLD debe ser menor que POTENTIAL_HIGH_THRESHOLD. "
+            "Se ajusta medium a %.2f.",
+            max(0.0, high - 0.05),
+        )
         medium = max(0.0, high - 0.05)
     return medium, high
 

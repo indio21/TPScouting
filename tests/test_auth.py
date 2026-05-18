@@ -17,6 +17,14 @@ def test_landing_public_ok(client):
     assert resp.status_code == 200
 
 
+def test_security_headers_are_present(client):
+    resp = client.get("/")
+
+    assert resp.headers["X-Content-Type-Options"] == "nosniff"
+    assert resp.headers["X-Frame-Options"] == "DENY"
+    assert resp.headers["Referrer-Policy"] == "same-origin"
+
+
 def test_auth_blueprint_keeps_legacy_endpoint_names(app_module):
     with app_module.app.test_request_context():
         assert url_for("login") == "/login"
@@ -43,9 +51,22 @@ def test_logout_clears_session_and_redirects_to_landing(client, app_module, db):
     _create_user(db, app_module.User, "user2", "pass2", role="scout")
     csrf_token = _get_csrf_token(client, "/login")
     client.post("/login", data={"username": "user2", "password": "pass2", "csrf_token": csrf_token})
-    resp = client.get("/logout", follow_redirects=False)
+    resp = client.post("/logout", data={"csrf_token": csrf_token}, follow_redirects=False)
     assert resp.status_code in (301, 302)
     assert resp.headers.get("Location", "").endswith("/")
+
+
+def test_logout_rejects_get_and_missing_csrf(client, app_module, db):
+    _create_user(db, app_module.User, "user_logout", "pass2", role="scout")
+    csrf_token = _get_csrf_token(client, "/login")
+    client.post("/login", data={"username": "user_logout", "password": "pass2", "csrf_token": csrf_token})
+
+    get_resp = client.get("/logout", follow_redirects=False)
+    assert get_resp.status_code == 405
+
+    post_resp = client.post("/logout", data={}, follow_redirects=False)
+    assert post_resp.status_code == 400
+
 
 def test_register_requires_admin_role(client, app_module, db):
     _create_user(db, app_module.User, "user3", "pass3", role="scout")

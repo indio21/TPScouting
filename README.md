@@ -102,6 +102,13 @@ El repositorio incluye `render.yaml` con:
 
 El blueprint actual deja preparado el deploy con dos bases PostgreSQL administradas por Render: una operativa y una de entrenamiento.
 
+Seguridad MVP:
+
+- `APP_SECRET_KEY` es obligatoria en producción/Render.
+- Los formularios POST mutantes usan CSRF.
+- El logout se ejecuta por POST con CSRF.
+- El login tiene rate limiting en memoria por IP + usuario. Es suficiente para MVP académico, pero no es un limitador distribuido para producción multi-instancia.
+
 ## Alcance del MVP
 
 Este proyecto es un MVP academico. La prediccion de potencial se valida con dataset sintetico y se usa como soporte a la toma de decisiones, no como reemplazo del criterio del cuerpo tecnico.

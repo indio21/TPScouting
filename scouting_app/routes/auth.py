@@ -57,8 +57,9 @@ def create_auth_blueprint(
             return render_template("login.html", error="Usuario o contrasena invalidos")
         return render_template("login.html")
 
-    @bp.route("/logout")
+    @bp.route("/logout", methods=["POST"])
     def logout():
+        require_csrf()
         session.clear()
         return redirect(url_for("landing"))
 

@@ -46,6 +46,11 @@ def _login(client, username, password):
     csrf_token = _get_csrf_token(client, "/login")
     return client.post("/login", data={"username": username, "password": password, "csrf_token": csrf_token})
 
+
+def _logout(client):
+    csrf_token = _get_csrf_token(client, "/login")
+    return client.post("/logout", data={"csrf_token": csrf_token})
+
 def test_players_list_ok_after_login(client, app_module, db):
     _create_user(db, app_module.User, "u", "p", role="scout")
     _create_player(app_module, db, name="Juvenil Listado", age=16)
@@ -79,7 +84,7 @@ def test_dashboard_copy_changes_by_role(client, app_module, db):
     assert "16 anos" in admin_body
     assert "Cat. 2010" in admin_body
 
-    client.get("/logout")
+    _logout(client)
     _login(client, "director_dash", "director123")
     director_resp = client.get("/dashboard?period=custom&start=2026-01-01&end=2026-01-31")
     director_body = director_resp.get_data(as_text=True)
