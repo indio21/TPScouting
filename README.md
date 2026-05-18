@@ -81,6 +81,15 @@ Nota: en deploy (Render) la clave de admin se configura por variable de entorno 
 .\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
 ```
 
+Smoke visual opcional con Playwright:
+
+```powershell
+$env:RUN_PLAYWRIGHT = "1"
+.\.venv\Scripts\python.exe -m playwright install chromium
+.\.venv\Scripts\python.exe -m pytest -q tests\test_visual_smoke.py
+Remove-Item Env:\RUN_PLAYWRIGHT
+```
+
 ## Healthcheck
 
 - Endpoint: `GET /health`
@@ -101,6 +110,15 @@ El repositorio incluye `render.yaml` con:
 - variables de seguridad y logging
 
 El blueprint actual deja preparado el deploy con dos bases PostgreSQL administradas por Render: una operativa y una de entrenamiento.
+
+Smoke real de Render:
+
+```powershell
+$env:RENDER_SMOKE_BASE_URL = "https://TU_SERVICIO.onrender.com"
+$env:SMOKE_USERNAME = "admin"
+$env:SMOKE_PASSWORD = "AdminDemo123"
+.\.venv\Scripts\python.exe scripts\smoke_render.py
+```
 
 Seguridad MVP:
 

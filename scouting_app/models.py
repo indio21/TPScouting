@@ -32,7 +32,7 @@ class Player(TimestampMixin, Base):
     """Tabla que representa a un jugador.
 
     Incluye datos personales básicos y una serie de atributos técnicos
-    y mentales valorados en una escala de 0 a 20.
+    y mentales valorados en una escala de 1 a 20.
     """
 
     __tablename__ = "players"
@@ -376,10 +376,10 @@ class ScoutReport(TimestampMixin, Base):
     id = Column(Integer, primary_key=True)
     player_id = Column(Integer, ForeignKey("players.id"), nullable=False)
     report_date = Column(Date, nullable=False)
-    decision_making = Column(Integer, nullable=True)  # escala 0-20
-    tactical_reading = Column(Integer, nullable=True)  # escala 0-20
-    mental_profile = Column(Integer, nullable=True)  # escala 0-20
-    adaptability = Column(Integer, nullable=True)  # escala 0-20
+    decision_making = Column(Integer, nullable=True)  # escala 1-20
+    tactical_reading = Column(Integer, nullable=True)  # escala 1-20
+    mental_profile = Column(Integer, nullable=True)  # escala 1-20
+    adaptability = Column(Integer, nullable=True)  # escala 1-20
     observed_projection_score = Column(Float, nullable=True)  # valoracion 1-10
     notes = Column(Text, nullable=True)
 
@@ -410,8 +410,8 @@ class PhysicalAssessment(TimestampMixin, Base):
     height_cm = Column(Float, nullable=True)
     weight_kg = Column(Float, nullable=True)
     dominant_foot = Column(String, nullable=True)
-    estimated_speed = Column(Float, nullable=True)  # escala 0-20
-    endurance = Column(Float, nullable=True)  # escala 0-20
+    estimated_speed = Column(Float, nullable=True)  # escala 1-20
+    endurance = Column(Float, nullable=True)  # escala 1-20
     in_growth_spurt = Column(Boolean, nullable=False, default=False)
     notes = Column(Text, nullable=True)
 

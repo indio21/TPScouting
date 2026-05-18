@@ -9,7 +9,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session as SQLAlchemySession
 
 from models import Player, PlayerAttributeHistory, PlayerStat
-from player_logic import ATTRIBUTE_FIELDS, default_player_photo_url, is_valid_eval_age
+from player_logic import ATTRIBUTE_FIELDS, ATTRIBUTE_MIN_VALUE, default_player_photo_url, is_valid_eval_age
 
 
 def trim_operational_player_pool(db_session: SQLAlchemySession, max_players: int) -> int:
@@ -147,11 +147,11 @@ def compute_operational_data_quality(db_session: SQLAlchemySession, eval_pool_ma
 
 
 def _attribute_row_from_player(player: Player) -> Dict[str, int]:
-    return {field: int(getattr(player, field) or 0) for field in ATTRIBUTE_FIELDS}
+    return {field: int(getattr(player, field) or ATTRIBUTE_MIN_VALUE) for field in ATTRIBUTE_FIELDS}
 
 
 def _attribute_row_from_entry(entry: PlayerAttributeHistory) -> Dict[str, int]:
-    return {field: int(getattr(entry, field) or 0) for field in ATTRIBUTE_FIELDS}
+    return {field: int(getattr(entry, field) or ATTRIBUTE_MIN_VALUE) for field in ATTRIBUTE_FIELDS}
 
 
 def sync_player_attribute_history(

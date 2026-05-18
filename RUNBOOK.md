@@ -18,6 +18,8 @@ Este runbook cubre operación mínima, backup/restore de SQLite, healthcheck y b
 - `LOGIN_RATE_LIMIT_WINDOW_SECONDS` (opcional; ventana del rate limiting de login, default `300`).
 - `LOGIN_RATE_LIMIT_MAX_ATTEMPTS` (opcional; intentos fallidos por IP + usuario, default `5`).
 - `ALLOW_SQLITE_IN_PRODUCTION` (solo emergencia; mantener apagado en Render para evitar filesystem efimero).
+- `RENDER_SMOKE_BASE_URL` (solo validacion externa; URL publica real del servicio Render).
+- `SMOKE_USERNAME` / `SMOKE_PASSWORD` (opcional para smoke autenticado del deploy).
 
 ## 1.1) Seguridad MVP
 
@@ -36,6 +38,7 @@ Este runbook cubre operación mínima, backup/restore de SQLite, healthcheck y b
 - Los checkpoints del modelo guardan `input_dim` y `seed`, y la carga valida compatibilidad con el preprocesador.
 - El entrenamiento fija seed para `random`, `numpy`, `torch` y el orden de `DataLoader`/sampler.
 - Las metricas y calibradores registran warnings cuando no pueden calcularse o aplicarse, sin ocultar el fallback.
+- Los atributos tecnicos, campos fisicos en escala y reportes scout se validan como escala `1-20`. `ensure_player_columns` normaliza valores heredados fuera de rango.
 
 ## 2) Arranque local
 ```powershell
@@ -52,6 +55,26 @@ La explicacion breve de los cambios agregados para cerrar la revision de codigo 
 Los artefactos de datos y modelo no son fuente principal del repo. Para regenerar una corrida local completa, usar `docs/flujo_reproducible_mvp.md`.
 
 Por defecto la app no reentrena automaticamente al iniciar si faltan `model.pt` o `preprocessor.joblib`. Si se quiere permitir esa conducta en desarrollo, setear `AUTO_TRAIN_ON_STARTUP=true`.
+
+## 2.0.1) Smoke visual y smoke Render
+
+Playwright es una prueba visual opcional: levanta un navegador Chromium real, entra al login, valida dashboard y revisa que no haya overflow horizontal basico en desktop/mobile.
+
+```powershell
+$env:RUN_PLAYWRIGHT = "1"
+.\.venv\Scripts\python.exe -m playwright install chromium
+.\.venv\Scripts\python.exe -m pytest -q tests\test_visual_smoke.py
+Remove-Item Env:\RUN_PLAYWRIGHT
+```
+
+Smoke real de Render significa pegarle a la URL publicada, no al servidor local. El repo no contiene una URL publica fija; usar la URL real del servicio:
+
+```powershell
+$env:RENDER_SMOKE_BASE_URL = "https://TU_SERVICIO.onrender.com"
+$env:SMOKE_USERNAME = "admin"
+$env:SMOKE_PASSWORD = "AdminDemo123"
+.\.venv\Scripts\python.exe scripts\smoke_render.py
+```
 
 ## 2.1) Corrida oficial reproducible
 Desde `scouting_app/`:

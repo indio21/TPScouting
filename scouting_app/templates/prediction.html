@@ -181,7 +181,7 @@
     <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
         <div>
             <span>Progresion de atributos</span>
-            <small class="text-muted d-block">Evolucion tecnica en escala 0-20.</small>
+            <small class="text-muted d-block">Evolucion tecnica en escala 1-20.</small>
         </div>
         {% if can_edit_player_data %}
         <a class="btn btn-outline-success btn-sm d-flex align-items-center gap-2" href="{{ url_for('player_attributes', player_id=player.id) }}">
@@ -328,7 +328,7 @@
                 responsive: true,
                 interaction: { mode: 'index', intersect: false },
                 scales: {
-                    y: { suggestedMin: 0, suggestedMax: 20 }
+                    y: { suggestedMin: 1, suggestedMax: 20 }
                 },
                 plugins: {
                     legend: { position: 'bottom' }
@@ -386,7 +386,7 @@
                         yScores: {
                             type: 'linear',
                             position: 'left',
-                            suggestedMin: 0,
+                            suggestedMin: 1,
                             suggestedMax: 10,
                             title: { display: true, text: 'Puntaje (1-10)' }
                         },

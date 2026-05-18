@@ -204,7 +204,9 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             for column, field in import_attr_columns.items():
                 value = deps.parse_int_field(row.get(column), default=-1)
                 if not deps.is_valid_attribute(value):
-                    errors.append(f"{column} debe estar entre 0 y 20.")
+                    errors.append(
+                        f"{column} debe estar entre {deps.ATTRIBUTE_MIN_VALUE} y {deps.ATTRIBUTE_MAX_VALUE}."
+                    )
                 attr_values[field] = value
 
             if not errors:
@@ -340,7 +342,10 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             raw = form.get(field)
             value = deps.parse_int_field(raw, default=-1) if raw not in (None, "") else None
             if value is not None and not deps.is_valid_attribute(value):
-                errors.append(f"{deps.ATTRIBUTE_LABELS[field]} debe estar entre 0 y 20.")
+                errors.append(
+                    f"{deps.ATTRIBUTE_LABELS[field]} debe estar entre "
+                    f"{deps.ATTRIBUTE_MIN_VALUE} y {deps.ATTRIBUTE_MAX_VALUE}."
+                )
                 value = None
             values[field] = value
             if value is not None:
@@ -435,10 +440,16 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                 form.get("estimated_speed"),
                 "Velocidad estimada",
                 errors,
-                0,
-                20,
+                deps.ATTRIBUTE_MIN_VALUE,
+                deps.ATTRIBUTE_MAX_VALUE,
             ),
-            "endurance": deps.validate_optional_float_range(form.get("endurance"), "Resistencia", errors, 0, 20),
+            "endurance": deps.validate_optional_float_range(
+                form.get("endurance"),
+                "Resistencia",
+                errors,
+                deps.ATTRIBUTE_MIN_VALUE,
+                deps.ATTRIBUTE_MAX_VALUE,
+            ),
             "in_growth_spurt": deps.parse_bool(form.get("in_growth_spurt")),
             "notes": _optional_strip(form.get("notes")),
         }
@@ -477,29 +488,29 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                 form.get("decision_making"),
                 "Toma de decisiones",
                 errors,
-                0,
-                20,
+                deps.ATTRIBUTE_MIN_VALUE,
+                deps.ATTRIBUTE_MAX_VALUE,
             ) if form.get("decision_making") not in (None, "") else None,
             "tactical_reading": _parse_int_range_field(
                 form.get("tactical_reading"),
                 "Lectura tactica",
                 errors,
-                0,
-                20,
+                deps.ATTRIBUTE_MIN_VALUE,
+                deps.ATTRIBUTE_MAX_VALUE,
             ) if form.get("tactical_reading") not in (None, "") else None,
             "mental_profile": _parse_int_range_field(
                 form.get("mental_profile"),
                 "Perfil mental",
                 errors,
-                0,
-                20,
+                deps.ATTRIBUTE_MIN_VALUE,
+                deps.ATTRIBUTE_MAX_VALUE,
             ) if form.get("mental_profile") not in (None, "") else None,
             "adaptability": _parse_int_range_field(
                 form.get("adaptability"),
                 "Adaptabilidad",
                 errors,
-                0,
-                20,
+                deps.ATTRIBUTE_MIN_VALUE,
+                deps.ATTRIBUTE_MAX_VALUE,
             ) if form.get("adaptability") not in (None, "") else None,
             "observed_projection_score": deps.validate_optional_float_range(
                 form.get("observed_projection_score"),
@@ -1358,7 +1369,10 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             for field in deps.ATTRIBUTE_FIELDS:
                 value = deps.parse_int_field(request.form.get(field), getattr(player, field))
                 if not deps.is_valid_attribute(value):
-                    errors.append(f"{deps.ATTRIBUTE_LABELS[field]} debe estar entre 0 y 20.")
+                    errors.append(
+                        f"{deps.ATTRIBUTE_LABELS[field]} debe estar entre "
+                        f"{deps.ATTRIBUTE_MIN_VALUE} y {deps.ATTRIBUTE_MAX_VALUE}."
+                    )
                 attr_values[field] = value
             if errors:
                 for message in errors:
@@ -1539,7 +1553,10 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                     for field in deps.ATTRIBUTE_FIELDS:
                         value = deps.parse_int_field(request.form.get(field), 10)
                         if not deps.is_valid_attribute(value):
-                            errors.append(f"{deps.ATTRIBUTE_LABELS[field]} debe ubicarse entre 0 y 20.")
+                            errors.append(
+                                f"{deps.ATTRIBUTE_LABELS[field]} debe ubicarse entre "
+                                f"{deps.ATTRIBUTE_MIN_VALUE} y {deps.ATTRIBUTE_MAX_VALUE}."
+                            )
                         attr_values[field] = value
                     if not errors:
                         player = Player(

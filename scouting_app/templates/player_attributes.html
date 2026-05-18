@@ -83,7 +83,7 @@
         <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
             <div>
                 <span>Resumen visual</span>
-                <small class="text-muted d-block">Evolucion tecnica en escala 0-20.</small>
+                <small class="text-muted d-block">Evolucion tecnica en escala 1-20.</small>
             </div>
             <div class="page-actions">
                 {% if can_edit_player_data %}
@@ -199,12 +199,12 @@
                     </div>
 
                     <div class="form-section">
-                        <div class="form-section-title">Atributos 0-20</div>
+                        <div class="form-section-title">Atributos 1-20</div>
                         <div class="row g-3">
                             {% for field, label in attribute_labels.items() %}
                             <div class="col-6">
                                 <label class="form-label" for="attributes_{{ field }}">{{ label }}</label>
-                                <input id="attributes_{{ field }}" type="number" class="form-control" name="{{ field }}" min="0" max="20" value="{{ request.form.get(field, '') }}" placeholder="0-20">
+                                <input id="attributes_{{ field }}" type="number" class="form-control" name="{{ field }}" min="1" max="20" value="{{ request.form.get(field, '') }}" placeholder="1-20">
                             </div>
                             {% endfor %}
                         </div>
@@ -249,12 +249,12 @@
                     </div>
 
                     <div class="form-section">
-                        <div class="form-section-title">Atributos 0-20</div>
+                        <div class="form-section-title">Atributos 1-20</div>
                         <div class="row g-3">
                             {% for field, label in attribute_labels.items() %}
                             <div class="col-6">
                                 <label class="form-label" for="edit_attributes_{{ field }}_{{ entry.id }}">{{ label }}</label>
-                                <input id="edit_attributes_{{ field }}_{{ entry.id }}" type="number" class="form-control" name="{{ field }}" min="0" max="20" value="{{ entry|attr(field) if entry|attr(field) is not none else '' }}" placeholder="0-20">
+                                <input id="edit_attributes_{{ field }}_{{ entry.id }}" type="number" class="form-control" name="{{ field }}" min="1" max="20" value="{{ entry|attr(field) if entry|attr(field) is not none else '' }}" placeholder="1-20">
                             </div>
                             {% endfor %}
                         </div>
@@ -365,7 +365,7 @@ if (attributeCtx && window.Chart) {
             responsive: true,
             interaction: { mode: 'index', intersect: false },
             scales: {
-                y: { suggestedMin: 0, suggestedMax: 20 }
+                y: { suggestedMin: 1, suggestedMax: 20 }
             },
             plugins: {
                 legend: { position: 'bottom' }

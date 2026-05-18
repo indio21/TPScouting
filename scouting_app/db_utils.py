@@ -8,6 +8,8 @@ from typing import Optional
 from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.engine import Engine
 
+from player_logic import ATTRIBUTE_FIELDS, ATTRIBUTE_MAX_VALUE, ATTRIBUTE_MIN_VALUE
+
 
 def is_sqlite_url(url: str) -> bool:
     return url.startswith("sqlite:")
@@ -52,6 +54,23 @@ def create_app_engine(db_url: str) -> Engine:
         return engine
 
     return create_engine(db_url, pool_pre_ping=True)
+
+
+def _clamp_scale_columns(conn, table_name: str, columns: set[str], field_names: tuple[str, ...]) -> None:
+    for field_name in field_names:
+        if field_name not in columns:
+            continue
+        conn.execute(
+            text(
+                f"UPDATE {table_name} "
+                f"SET {field_name} = CASE "
+                f"WHEN {field_name} IS NULL THEN NULL "
+                f"WHEN {field_name} < :min_value THEN :min_value "
+                f"WHEN {field_name} > :max_value THEN :max_value "
+                f"ELSE {field_name} END"
+            ),
+            {"min_value": ATTRIBUTE_MIN_VALUE, "max_value": ATTRIBUTE_MAX_VALUE},
+        )
 
 
 def ensure_player_columns(engine: Engine) -> int:
@@ -126,5 +145,16 @@ def ensure_player_columns(engine: Engine) -> int:
                         "updated_at = COALESCE(updated_at, CURRENT_TIMESTAMP)"
                     )
                 )
+            if table_name in {"players", "player_attribute_history"}:
+                _clamp_scale_columns(conn, table_name, existing | set(columns), tuple(ATTRIBUTE_FIELDS))
+            elif table_name == "scout_reports":
+                _clamp_scale_columns(
+                    conn,
+                    table_name,
+                    existing | set(columns),
+                    ("decision_making", "tactical_reading", "mental_profile", "adaptability"),
+                )
+            elif table_name == "physical_assessments":
+                _clamp_scale_columns(conn, table_name, existing | set(columns), ("estimated_speed", "endurance"))
 
     return added_columns

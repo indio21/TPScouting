@@ -141,7 +141,7 @@
             <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
                 <div>
                     <div class="fw-semibold">Atributos actuales</div>
-                    <small class="text-muted">Lectura rapida en escala 0-20.</small>
+                    <small class="text-muted">Lectura rapida en escala 1-20.</small>
                 </div>
                 {% if can_edit_player_data %}
                 <a class="btn btn-outline-success btn-sm d-flex align-items-center gap-2" href="{{ url_for('player_attributes', player_id=player.id) }}">
@@ -671,8 +671,8 @@
                             <div class="col-md-4"><label class="form-label" for="height_cm">Altura cm</label><input id="height_cm" class="form-control" type="number" name="height_cm" min="100" max="230" step="0.1"></div>
                             <div class="col-md-4"><label class="form-label" for="weight_kg">Peso kg</label><input id="weight_kg" class="form-control" type="number" name="weight_kg" min="30" max="130" step="0.1"></div>
                             <div class="col-md-4"><label class="form-label" for="dominant_foot">Pie dominante</label><select id="dominant_foot" class="form-select" name="dominant_foot"><option value="">Sin dato</option><option value="Derecho">Derecho</option><option value="Izquierdo">Izquierdo</option><option value="Ambos">Ambos</option></select></div>
-                            <div class="col-md-4"><label class="form-label" for="estimated_speed">Velocidad 0-20</label><input id="estimated_speed" class="form-control" type="number" name="estimated_speed" min="0" max="20" step="0.1"></div>
-                            <div class="col-md-4"><label class="form-label" for="endurance">Resistencia 0-20</label><input id="endurance" class="form-control" type="number" name="endurance" min="0" max="20" step="0.1"></div>
+                            <div class="col-md-4"><label class="form-label" for="estimated_speed">Velocidad 1-20</label><input id="estimated_speed" class="form-control" type="number" name="estimated_speed" min="1" max="20" step="0.1"></div>
+                            <div class="col-md-4"><label class="form-label" for="endurance">Resistencia 1-20</label><input id="endurance" class="form-control" type="number" name="endurance" min="1" max="20" step="0.1"></div>
                             <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="in_growth_spurt" name="in_growth_spurt" value="1"><label class="form-check-label" for="in_growth_spurt">En pico de crecimiento</label></div></div>
                         </div>
                     </div>
@@ -721,10 +721,10 @@
                         <div class="form-section-title">Evaluacion cualitativa</div>
                         <div class="row g-3">
                             <div class="col-md-4"><label class="form-label" for="report_date">Fecha</label><input id="report_date" class="form-control" type="date" name="report_date" required></div>
-                            <div class="col-md-4"><label class="form-label" for="decision_making">Decision 0-20</label><input id="decision_making" class="form-control" type="number" name="decision_making" min="0" max="20"></div>
-                            <div class="col-md-4"><label class="form-label" for="tactical_reading">Tactica 0-20</label><input id="tactical_reading" class="form-control" type="number" name="tactical_reading" min="0" max="20"></div>
-                            <div class="col-md-4"><label class="form-label" for="mental_profile">Mental 0-20</label><input id="mental_profile" class="form-control" type="number" name="mental_profile" min="0" max="20"></div>
-                            <div class="col-md-4"><label class="form-label" for="adaptability">Adaptabilidad 0-20</label><input id="adaptability" class="form-control" type="number" name="adaptability" min="0" max="20"></div>
+                            <div class="col-md-4"><label class="form-label" for="decision_making">Decision 1-20</label><input id="decision_making" class="form-control" type="number" name="decision_making" min="1" max="20"></div>
+                            <div class="col-md-4"><label class="form-label" for="tactical_reading">Tactica 1-20</label><input id="tactical_reading" class="form-control" type="number" name="tactical_reading" min="1" max="20"></div>
+                            <div class="col-md-4"><label class="form-label" for="mental_profile">Mental 1-20</label><input id="mental_profile" class="form-control" type="number" name="mental_profile" min="1" max="20"></div>
+                            <div class="col-md-4"><label class="form-label" for="adaptability">Adaptabilidad 1-20</label><input id="adaptability" class="form-control" type="number" name="adaptability" min="1" max="20"></div>
                             <div class="col-md-4"><label class="form-label" for="observed_projection_score">Proyeccion 1-10</label><input id="observed_projection_score" class="form-control" type="number" name="observed_projection_score" min="1" max="10" step="0.1"></div>
                         </div>
                     </div>
@@ -782,8 +782,8 @@
         <div class="col-md-4"><label class="form-label" for="edit_height_{{ entry.id }}">Altura cm</label><input id="edit_height_{{ entry.id }}" class="form-control" type="number" name="height_cm" min="100" max="230" step="0.1" value="{{ entry.height_cm if entry.height_cm is not none else '' }}"></div>
         <div class="col-md-4"><label class="form-label" for="edit_weight_{{ entry.id }}">Peso kg</label><input id="edit_weight_{{ entry.id }}" class="form-control" type="number" name="weight_kg" min="30" max="130" step="0.1" value="{{ entry.weight_kg if entry.weight_kg is not none else '' }}"></div>
         <div class="col-md-4"><label class="form-label" for="edit_foot_{{ entry.id }}">Pie dominante</label><select id="edit_foot_{{ entry.id }}" class="form-select" name="dominant_foot"><option value="">Sin dato</option>{% for foot in ['Derecho','Izquierdo','Ambos'] %}<option value="{{ foot }}" {% if entry.dominant_foot == foot %}selected{% endif %}>{{ foot }}</option>{% endfor %}</select></div>
-        <div class="col-md-4"><label class="form-label" for="edit_speed_{{ entry.id }}">Velocidad 0-20</label><input id="edit_speed_{{ entry.id }}" class="form-control" type="number" name="estimated_speed" min="0" max="20" step="0.1" value="{{ entry.estimated_speed if entry.estimated_speed is not none else '' }}"></div>
-        <div class="col-md-4"><label class="form-label" for="edit_endurance_{{ entry.id }}">Resistencia 0-20</label><input id="edit_endurance_{{ entry.id }}" class="form-control" type="number" name="endurance" min="0" max="20" step="0.1" value="{{ entry.endurance if entry.endurance is not none else '' }}"></div>
+        <div class="col-md-4"><label class="form-label" for="edit_speed_{{ entry.id }}">Velocidad 1-20</label><input id="edit_speed_{{ entry.id }}" class="form-control" type="number" name="estimated_speed" min="1" max="20" step="0.1" value="{{ entry.estimated_speed if entry.estimated_speed is not none else '' }}"></div>
+        <div class="col-md-4"><label class="form-label" for="edit_endurance_{{ entry.id }}">Resistencia 1-20</label><input id="edit_endurance_{{ entry.id }}" class="form-control" type="number" name="endurance" min="1" max="20" step="0.1" value="{{ entry.endurance if entry.endurance is not none else '' }}"></div>
         <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="edit_growth_{{ entry.id }}" name="in_growth_spurt" value="1" {% if entry.in_growth_spurt %}checked{% endif %}><label class="form-check-label" for="edit_growth_{{ entry.id }}">En pico de crecimiento</label></div></div>
     </div></div><div class="form-section"><div class="form-section-title">Notas</div><textarea class="form-control" name="notes" rows="3">{{ entry.notes or '' }}</textarea></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Guardar cambios</button></div></form></div></div>
 </div>
@@ -859,10 +859,10 @@
                         <div class="form-section-title">Evaluacion cualitativa</div>
                         <div class="row g-3">
                             <div class="col-md-4"><label class="form-label" for="edit_report_date_{{ entry.id }}">Fecha</label><input id="edit_report_date_{{ entry.id }}" class="form-control" type="date" name="report_date" value="{{ entry.report_date.strftime('%Y-%m-%d') if entry.report_date else '' }}" required></div>
-                            <div class="col-md-4"><label class="form-label" for="edit_decision_{{ entry.id }}">Decision 0-20</label><input id="edit_decision_{{ entry.id }}" class="form-control" type="number" name="decision_making" min="0" max="20" value="{{ entry.decision_making if entry.decision_making is not none else '' }}"></div>
-                            <div class="col-md-4"><label class="form-label" for="edit_tactical_{{ entry.id }}">Tactica 0-20</label><input id="edit_tactical_{{ entry.id }}" class="form-control" type="number" name="tactical_reading" min="0" max="20" value="{{ entry.tactical_reading if entry.tactical_reading is not none else '' }}"></div>
-                            <div class="col-md-4"><label class="form-label" for="edit_mental_{{ entry.id }}">Mental 0-20</label><input id="edit_mental_{{ entry.id }}" class="form-control" type="number" name="mental_profile" min="0" max="20" value="{{ entry.mental_profile if entry.mental_profile is not none else '' }}"></div>
-                            <div class="col-md-4"><label class="form-label" for="edit_adaptability_{{ entry.id }}">Adaptabilidad 0-20</label><input id="edit_adaptability_{{ entry.id }}" class="form-control" type="number" name="adaptability" min="0" max="20" value="{{ entry.adaptability if entry.adaptability is not none else '' }}"></div>
+                            <div class="col-md-4"><label class="form-label" for="edit_decision_{{ entry.id }}">Decision 1-20</label><input id="edit_decision_{{ entry.id }}" class="form-control" type="number" name="decision_making" min="1" max="20" value="{{ entry.decision_making if entry.decision_making is not none else '' }}"></div>
+                            <div class="col-md-4"><label class="form-label" for="edit_tactical_{{ entry.id }}">Tactica 1-20</label><input id="edit_tactical_{{ entry.id }}" class="form-control" type="number" name="tactical_reading" min="1" max="20" value="{{ entry.tactical_reading if entry.tactical_reading is not none else '' }}"></div>
+                            <div class="col-md-4"><label class="form-label" for="edit_mental_{{ entry.id }}">Mental 1-20</label><input id="edit_mental_{{ entry.id }}" class="form-control" type="number" name="mental_profile" min="1" max="20" value="{{ entry.mental_profile if entry.mental_profile is not none else '' }}"></div>
+                            <div class="col-md-4"><label class="form-label" for="edit_adaptability_{{ entry.id }}">Adaptabilidad 1-20</label><input id="edit_adaptability_{{ entry.id }}" class="form-control" type="number" name="adaptability" min="1" max="20" value="{{ entry.adaptability if entry.adaptability is not none else '' }}"></div>
                             <div class="col-md-4"><label class="form-label" for="edit_projection_{{ entry.id }}">Proyeccion 1-10</label><input id="edit_projection_{{ entry.id }}" class="form-control" type="number" name="observed_projection_score" min="1" max="10" step="0.1" value="{{ entry.observed_projection_score if entry.observed_projection_score is not none else '' }}"></div>
                         </div>
                     </div>
@@ -986,7 +986,7 @@ if (radarCtx && window.Chart) {
             responsive: true,
             scales: {
                 r: {
-                    suggestedMin: 0,
+                    suggestedMin: 1,
                     suggestedMax: 20,
                     ticks: { stepSize: 5 }
                 }
@@ -1103,7 +1103,7 @@ if (attributeCtx && window.Chart) {
             responsive: true,
             interaction: { mode: 'index', intersect: false },
             scales: {
-                y: { suggestedMin: 0, suggestedMax: 20 }
+                y: { suggestedMin: 1, suggestedMax: 20 }
             },
             plugins: {
                 legend: { position: 'bottom' }

@@ -18,9 +18,11 @@ networkx==3.6.1
 numpy==2.4.4
 packaging==26.1
 pandas==3.0.2
+playwright==1.59.0
 pluggy==1.6.0
 psycopg==3.3.3
 psycopg-binary==3.3.3
+pyee==13.0.1
 Pygments==2.20.0
 pytest==9.0.3
 pytest-cov==7.1.0

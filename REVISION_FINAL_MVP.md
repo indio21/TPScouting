@@ -153,7 +153,7 @@ Luego, para la demo final, `sync_shortlist.py --replace` reconstruyo los jugador
 
 - validacion de stats para impedir porcentajes fuera de `0-100`
 - validacion de valoracion final para impedir rangos fuera de `1-10`
-- validacion de historial de atributos para impedir rangos fuera de `0-20`
+- validacion de historial de atributos para impedir rangos fuera de `1-20`
 - rechazo de guardado vacio en historial de atributos
 - limpieza de warnings relevantes de SQLAlchemy 2.x
 - dataset de entrenamiento construido con `pandas`

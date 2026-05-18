@@ -487,6 +487,17 @@ Prioridad recomendada para el proximo bloque de codigo:
 
 ## Proximo Paso Probable
 
+Actualizacion de auditoria 2026-05-17:
+
+- Rama de trabajo: `auditoria-correcciones-mvp`.
+- Fase 1/2/3/4 de auditoria quedaron avanzadas y versionadas en commits separados.
+- Escala de atributos alineada a `1-20` en validaciones, UI, generador sintetico, migracion de datos heredados, tests y documentacion.
+- Bases locales de demo normalizadas a `1-20` con backups `*.db.before_attr_scale_1_20_YYYYMMDD_HHMMSS`; los `.db` siguen fuera de Git.
+- Se agrego smoke visual opt-in con Playwright en `tests/test_visual_smoke.py`; se ejecuta con `RUN_PLAYWRIGHT=1`.
+- Se agrego `scripts/smoke_render.py` para validar el deploy real con `RENDER_SMOKE_BASE_URL`; no se encontro URL publica fija en el repo.
+- Documento de auditoria Word actualizado: `docs/evaluacion_codigo_fuente_2026-05-17.docx`.
+- Luego de terminar esta tanda, corresponde pedir aprobacion para seguir con Fase 5.
+
 La rama `training` queda como base estable de las correcciones del MVP. La rama `reformas-finales` queda cerrada como bloque liviano. La arquitectura grande quedo cerrada en `reformas-complejas`; el pulido visual continua en `ux-crud-polish`.
 
 Hay cuatro caminos razonables:

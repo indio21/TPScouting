@@ -79,5 +79,4 @@ La calibracion se conserva como evidencia secundaria porque en la corrida oficia
 
 ## Frase Recomendada Para Presentacion
 
-El puntaje de ficha es la estimacion del modelo a partir de los datos del jugador. La probabilidad combinada ajusta esa estimacion con senales adicionales del MVP, como rendimiento historico y adecuacion a la posicion. El rendimiento en posicion no es una probabilidad, sino un puntaje de 0 a 20 que mide que tan bien encajan sus atributos con el puesto en el que juega.
-
+El puntaje de ficha es la estimacion del modelo a partir de los datos del jugador. La probabilidad combinada ajusta esa estimacion con senales adicionales del MVP, como rendimiento historico y adecuacion a la posicion. El rendimiento en posicion no es una probabilidad, sino un puntaje de 1 a 20 que mide que tan bien encajan sus atributos con el puesto en el que juega.

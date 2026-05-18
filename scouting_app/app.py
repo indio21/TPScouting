@@ -57,6 +57,8 @@ from preprocessing import (
 from player_logic import (
     ATTRIBUTE_FIELDS,
     ATTRIBUTE_LABELS,
+    ATTRIBUTE_MAX_VALUE,
+    ATTRIBUTE_MIN_VALUE,
     POSITION_CHOICES,
     normalized_position,
     position_weights,
@@ -1567,6 +1569,8 @@ players_blueprint = create_players_blueprint(
         ROLE_SCOUT=ROLE_SCOUT,
         ATTRIBUTE_FIELDS=ATTRIBUTE_FIELDS,
         ATTRIBUTE_LABELS=ATTRIBUTE_LABELS,
+        ATTRIBUTE_MIN_VALUE=ATTRIBUTE_MIN_VALUE,
+        ATTRIBUTE_MAX_VALUE=ATTRIBUTE_MAX_VALUE,
         batch_project_players=batch_project_players,
         default_player_photo_url=default_player_photo_url,
         player_attribute_map=player_attribute_map,

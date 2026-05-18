@@ -82,14 +82,40 @@ para atacarlos en pasos controlados sin perder contexto.
 ## Riesgos/decisiones registrados durante Fase 4
 
 1. Rango de atributos.
-   - Estado: documentado para confirmar con el documento academico final.
-   - Evidencia: el codigo actual valida atributos `0-20` en `player_logic.py` y
-     mensajes de `routes/players.py`; la fase de testing refuerza ese contrato.
-   - Accion sugerida: si el documento final afirma `1-20`, alinear documento o
-     cambiar regla funcional en una fase separada porque impacta generacion de
-     datos sinteticos, validaciones y textos de UI.
+   - Estado: corregido en rama `auditoria-correcciones-mvp`.
+   - Evidencia: el codigo valida atributos tecnicos, campos fisicos en escala y
+     reportes scout con rango `1-20`; `ensure_player_columns` normaliza valores
+     heredados por debajo de 1 o por encima de 20.
+   - Accion restante: verificar que el documento academico final editable diga
+     siempre `1-20` para atributos y reportes en escala.
 
 2. Cobertura CI.
    - Estado: mejorado.
    - Accion aplicada Fase 4: GitHub Actions genera `coverage.xml` y lo sube como
      artefacto por version de Python.
+
+## Ajustes posteriores a Fase 4
+
+1. Escala de atributos `1-20`.
+   - Estado: corregido.
+   - Accion aplicada: `player_logic.py` define rango unico `1-20`; formularios,
+     importacion CSV, generador sintetico, reportes scout, campos fisicos en escala,
+     tests y documentacion fueron alineados.
+   - Accion aplicada: `ensure_player_columns` normaliza bases heredadas con valores
+     menores a 1 o mayores a 20 sin tocar `NULL` en campos opcionales.
+   - Accion local: se hicieron backups `*.db.before_attr_scale_1_20_YYYYMMDD_HHMMSS`
+     y se normalizaron `players_updated_v2.db` y `players_training.db` de la demo local.
+
+2. Smoke visual Playwright.
+   - Estado: incorporado como prueba opt-in.
+   - Accion aplicada: `tests/test_visual_smoke.py` abre Chromium real cuando
+     `RUN_PLAYWRIGHT=1` y valida login, dashboard y responsive basico.
+   - Riesgo restante: no queda activo por defecto en CI para evitar peso/tiempo de
+     navegadores en la suite comun.
+
+3. Smoke real de Render.
+   - Estado: incorporado como script ejecutable.
+   - Accion aplicada: `scripts/smoke_render.py` valida `/health`, `/login` y
+     opcionalmente `/dashboard` autenticado usando `RENDER_SMOKE_BASE_URL`.
+   - Riesgo restante: no se encontro una URL publica fija de Render en el repo; se
+     debe ejecutar con la URL real del servicio desplegado.

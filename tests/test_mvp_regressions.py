@@ -907,7 +907,7 @@ def test_manage_players_rejects_duplicate_national_id(client, app_module, db):
     assert db.query(app_module.Player).filter_by(name="Duplicado").count() == 0
 
 
-def test_manage_players_rejects_attribute_below_current_range(client, app_module, db):
+def test_manage_players_rejects_attribute_below_one(client, app_module, db):
     _create_user(db, app_module.User, "scout_attr_low", "scout1234", role="scout")
     _login(client, "scout_attr_low", "scout1234")
     csrf_token = _get_csrf_token(client, "/players/manage")
@@ -916,14 +916,14 @@ def test_manage_players_rejects_attribute_below_current_range(client, app_module
         "/players/manage",
         data=_valid_manage_player_payload(
             national_id="40111224",
-            pace="-1",
+            pace="0",
             csrf_token=csrf_token,
         ),
         follow_redirects=True,
     )
 
     assert response.status_code == 200
-    assert "Ritmo debe ubicarse entre 0 y 20" in response.get_data(as_text=True)
+    assert "Ritmo debe ubicarse entre 1 y 20" in response.get_data(as_text=True)
     assert db.query(app_module.Player).filter_by(national_id="40111224").count() == 0
 
 
@@ -1107,7 +1107,7 @@ def test_player_attributes_reject_values_out_of_range(client, app_module, db):
     )
 
     assert response.status_code == 200
-    assert "Ritmo debe estar entre 0 y 20" in response.get_data(as_text=True)
+    assert "Ritmo debe estar entre 1 y 20" in response.get_data(as_text=True)
     assert db.query(app_module.PlayerAttributeHistory).filter_by(player_id=player.id).count() == 0
 
 
@@ -2175,6 +2175,65 @@ def test_ensure_player_columns_migrates_physical_and_availability_tables(tmp_pat
             ).one()
         assert row.created_at is not None
         assert row.updated_at is not None
+
+
+def test_ensure_player_columns_clamps_attribute_scale_to_one_twenty(tmp_path, scouting_app_dir, monkeypatch):
+    monkeypatch.syspath_prepend(str(scouting_app_dir))
+    monkeypatch.chdir(str(scouting_app_dir))
+
+    db_utils_module = importlib.import_module("db_utils")
+
+    db_path = tmp_path / "legacy_attribute_scale.db"
+    db_url = f"sqlite:///{db_path.as_posix()}"
+    engine = db_utils_module.create_app_engine(db_url)
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "CREATE TABLE players ("
+                "id INTEGER PRIMARY KEY, "
+                "pace INTEGER, shooting INTEGER, passing INTEGER, dribbling INTEGER, defending INTEGER, "
+                "physical INTEGER, vision INTEGER, tackling INTEGER, determination INTEGER, technique INTEGER)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE TABLE scout_reports ("
+                "id INTEGER PRIMARY KEY, decision_making INTEGER, tactical_reading INTEGER, "
+                "mental_profile INTEGER, adaptability INTEGER)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE TABLE physical_assessments ("
+                "id INTEGER PRIMARY KEY, estimated_speed FLOAT, endurance FLOAT)"
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO players "
+                "(id, pace, shooting, passing, dribbling, defending, physical, vision, tackling, determination, technique) "
+                "VALUES (1, 0, 21, 10, 10, 10, 10, 10, 10, 10, 10)"
+            )
+        )
+        conn.execute(text("INSERT INTO scout_reports VALUES (1, 0, 21, NULL, 12)"))
+        conn.execute(text("INSERT INTO physical_assessments VALUES (1, 0.0, 22.5)"))
+
+    db_utils_module.ensure_player_columns(engine)
+
+    with engine.connect() as conn:
+        player = conn.execute(text("SELECT pace, shooting FROM players WHERE id = 1")).one()
+        report = conn.execute(
+            text("SELECT decision_making, tactical_reading, mental_profile FROM scout_reports WHERE id = 1")
+        ).one()
+        physical = conn.execute(text("SELECT estimated_speed, endurance FROM physical_assessments WHERE id = 1")).one()
+
+    assert player.pace == 1
+    assert player.shooting == 20
+    assert report.decision_making == 1
+    assert report.tactical_reading == 20
+    assert report.mental_profile is None
+    assert physical.estimated_speed == 1
+    assert physical.endurance == 20
 
 
 def test_ensure_player_columns_adds_birth_date_to_legacy_players_table(tmp_path, scouting_app_dir, monkeypatch):

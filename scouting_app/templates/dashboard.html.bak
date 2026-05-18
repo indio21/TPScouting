@@ -45,7 +45,7 @@
 </div>
 
 <div class="card mt-4">
-    <div class="card-header">Promedio de atributos (0-20)</div>
+    <div class="card-header">Promedio de atributos (1-20)</div>
     <div class="card-body">
         <canvas id="averageChart"></canvas>
     </div>

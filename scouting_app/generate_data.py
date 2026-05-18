@@ -29,6 +29,8 @@ from models import (
 )
 from player_logic import (
     ATTRIBUTE_FIELDS,
+    ATTRIBUTE_MAX_VALUE,
+    ATTRIBUTE_MIN_VALUE,
     EVAL_MAX_AGE,
     EVAL_MIN_AGE,
     default_player_photo_url,
@@ -97,7 +99,7 @@ def clamp(value: float, lower: float, upper: float) -> float:
 
 
 def player_attr_map(player: Player) -> Dict[str, int]:
-    return {field: int(getattr(player, field) or 0) for field in ATTRIBUTE_FIELDS}
+    return {field: int(getattr(player, field) or ATTRIBUTE_MIN_VALUE) for field in ATTRIBUTE_FIELDS}
 
 
 def age_potential_bonus(age: int) -> float:
@@ -165,7 +167,7 @@ def generate_player(min_age: int = EVAL_MIN_AGE, max_age: int = EVAL_MAX_AGE) ->
     club = random.choice(clubs)
     country = random.choice(countries)
 
-    attrs = {field: random.randint(0, 20) for field in ATTRIBUTE_FIELDS}
+    attrs = {field: random.randint(ATTRIBUTE_MIN_VALUE, ATTRIBUTE_MAX_VALUE) for field in ATTRIBUTE_FIELDS}
     probability, _weighted_score = label_probability(position, age, attrs)
     potential = random.random() < probability
 
@@ -641,7 +643,9 @@ def synthetic_attribute_history(
                 growth_spurt += random.uniform(0.05, 0.18) * (0.20 + weight)
             trajectory_level = trajectory["growth_boost"] * growth_map[field] * (0.08 + weight * 0.10)
             historical_value = current_value - progression_component + curve_component + trajectory_level + noise + slump
-            values[field] = int(round(clamp(historical_value + growth_spurt, 0.0, current_value)))
+            values[field] = int(
+                round(clamp(historical_value + growth_spurt, float(ATTRIBUTE_MIN_VALUE), current_value))
+            )
 
         history.append(
             PlayerAttributeHistory(
@@ -669,7 +673,7 @@ def synthetic_physical_assessments(
     for index, entry in enumerate(attribute_history):
         progress_fraction = (index + 1) / float(total_points)
         curve = physical_growth_curve(progress_fraction, float(profile["body_maturity"]), str(profile["development_archetype"]))
-        attrs = {field: float(getattr(entry, field) or 0) for field in ATTRIBUTE_FIELDS}
+        attrs = {field: float(getattr(entry, field) or ATTRIBUTE_MIN_VALUE) for field in ATTRIBUTE_FIELDS}
         growth_spurt = bool(
             player.age <= 15
             and curve >= 1.08
@@ -746,7 +750,7 @@ def synthetic_availability_history(
     for index, entry in enumerate(attribute_history):
         progress_fraction = (index + 1) / float(total_points)
         trajectory = trajectory_state(progress_fraction, profile)
-        attrs = {field: float(getattr(entry, field) or 0) for field in ATTRIBUTE_FIELDS}
+        attrs = {field: float(getattr(entry, field) or ATTRIBUTE_MIN_VALUE) for field in ATTRIBUTE_FIELDS}
         physical = physical_map.get(entry.record_date)
         growth_spurt = bool(physical.in_growth_spurt) if physical is not None else False
         load_base = 56.0 + attrs["determination"] * 1.1 + float(profile["professionalism"]) * 9.0
@@ -842,7 +846,7 @@ def synthetic_matches_and_stats(
     for entry_index, entry in enumerate(attribute_history):
         progress_fraction = (entry_index + 1) / float(max(1, len(attribute_history)))
         trajectory = trajectory_state(progress_fraction, profile)
-        attrs = {field: float(getattr(entry, field) or 0) for field in ATTRIBUTE_FIELDS}
+        attrs = {field: float(getattr(entry, field) or ATTRIBUTE_MIN_VALUE) for field in ATTRIBUTE_FIELDS}
         weighted_score = weighted_score_from_attrs(attrs, player.position)
         avg_attr_score = sum(attrs.values()) / len(attrs)
         synergy_score = position_synergy_score(player.position, attrs)
@@ -1135,7 +1139,7 @@ def synthetic_scout_reports(
 
         progress_fraction = (idx + 1) / float(max(1, len(attribute_history)))
         trajectory = trajectory_state(progress_fraction, profile)
-        attrs = {field: float(getattr(entry, field) or 0) for field in ATTRIBUTE_FIELDS}
+        attrs = {field: float(getattr(entry, field) or ATTRIBUTE_MIN_VALUE) for field in ATTRIBUTE_FIELDS}
         weighted_score = weighted_score_from_attrs(attrs, player.position)
         recent_stat = stats_by_date.get(entry.record_date)
         physical = physical_by_date.get(entry.record_date)
@@ -1164,12 +1168,20 @@ def synthetic_scout_reports(
                     + attrs["determination"] * 0.22
                     + recent_final_score * 0.45
                     + random.gauss(0.0, 1.0),
-                    0.0,
-                    20.0,
+                    float(ATTRIBUTE_MIN_VALUE),
+                    float(ATTRIBUTE_MAX_VALUE),
                 )
             )
         )
-        tactical_reading = int(round(clamp(tactical_base + recent_final_score * 0.40 + random.gauss(0.0, 1.1), 0.0, 20.0)))
+        tactical_reading = int(
+            round(
+                clamp(
+                    tactical_base + recent_final_score * 0.40 + random.gauss(0.0, 1.1),
+                    float(ATTRIBUTE_MIN_VALUE),
+                    float(ATTRIBUTE_MAX_VALUE),
+                )
+            )
+        )
         mental_profile = int(
             round(
                 clamp(
@@ -1184,8 +1196,8 @@ def synthetic_scout_reports(
                     - profile["plateau_risk"] * 2.0
                     - fatigue_pct * 0.03
                     + random.gauss(0.0, 1.0),
-                    0.0,
-                    20.0,
+                    float(ATTRIBUTE_MIN_VALUE),
+                    float(ATTRIBUTE_MAX_VALUE),
                 )
             )
         )
@@ -1200,8 +1212,8 @@ def synthetic_scout_reports(
                     + profile["coachability"] * 1.5
                     + recent_final_score * 0.28
                     + random.gauss(0.0, 1.1),
-                    0.0,
-                    20.0,
+                    float(ATTRIBUTE_MIN_VALUE),
+                    float(ATTRIBUTE_MAX_VALUE),
                 )
             )
         )

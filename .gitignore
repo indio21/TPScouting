@@ -18,6 +18,7 @@ Thumbs.db
 # Local database sidecars and temp artifacts
 *.sqlite3
 *.db
+*.db.*
 *.db-wal
 *.db-shm
 *.pt

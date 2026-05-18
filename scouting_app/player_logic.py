@@ -36,6 +36,9 @@ ATTRIBUTE_LABELS: Dict[str, str] = {
     "technique": "Tecnica",
 }
 
+ATTRIBUTE_MIN_VALUE = 1
+ATTRIBUTE_MAX_VALUE = 20
+
 POSITION_CHOICES: List[str] = [
     "Portero",
     "Defensa",
@@ -178,7 +181,7 @@ def normalize_age_value(age: float) -> float:
 
 
 def is_valid_attribute(value: int) -> bool:
-    return 0 <= value <= 20
+    return ATTRIBUTE_MIN_VALUE <= value <= ATTRIBUTE_MAX_VALUE
 
 
 def is_valid_eval_age(age: int) -> bool:
