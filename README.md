@@ -154,6 +154,13 @@ $env:SMOKE_PASSWORD = "AdminDemo123"
 .\.venv\Scripts\python.exe scripts\smoke_render.py
 ```
 
+Deploy MVP verificado el 2026-05-19:
+
+- URL: `https://tpscouting-mvp.onrender.com`
+- Rama: `render-free-deploy`
+- `/health`, `/login`, login admin, `/dashboard`, `/players`, comparadores,
+  `/settings` y `/players/import` respondieron correctamente.
+
 Para cerrar la entrega academica, el deploy real debe verificarse contra la URL publicada.
 El Word final debe afirmar el alcance real: MVP academico con dataset sintetico, cache y
 rate limiting in-memory, migraciones manuales y validacion externa pendiente.

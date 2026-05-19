@@ -160,7 +160,7 @@ para atacarlos en pasos controlados sin perder contexto.
    - Efecto: corrige coherencia academica, pero no reemplaza validaciones tecnicas.
 
 2. Deploy real en Render.
-   - Estado: pendiente.
+   - Estado: smoke real ejecutado el 2026-05-19; queda pendiente prueba manual CRUD minima.
    - Accion sugerida: publicar la rama final, crear/validar admin, crear una nueva
      base Free si la anterior expiro y ejecutar `scripts/smoke_render.py` con
      `RENDER_SMOKE_BASE_URL`.
@@ -168,6 +168,9 @@ para atacarlos en pasos controlados sin perder contexto.
      demo idempotente, porque no conviene depender de dos bases gratuitas.
    - Efecto: cierra variables reales, PostgreSQL administrado, Gunicorn, HTTPS,
      healthcheck y rutas protegidas.
+   - Evidencia: `https://tpscouting-mvp.onrender.com`, `/health` con `database=ok`
+     y `players_total=100`; login admin y `/dashboard` OK; rutas principales y
+     comparadores respondieron `200`.
 
 3. Condicion de entrega.
    - Con suite local/CI vigente, Word final alineado y smoke Render documentado,

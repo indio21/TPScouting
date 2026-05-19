@@ -94,6 +94,15 @@ Despues de ejecutar el smoke, documentar fecha, commit, URL, resultado de `/heal
 login, `/dashboard`, `/players`, comparadores y una accion CRUD minima. Esa evidencia
 es la que permite cerrar el punto de despliegue en el documento de tesis.
 
+Evidencia 2026-05-19:
+
+- URL: `https://tpscouting-mvp.onrender.com`
+- Rama: `render-free-deploy`
+- Smoke autenticado: `/health`, `/login`, login admin y `/dashboard` OK.
+- Rutas verificadas: `/dashboard`, `/players`, `/compare`, `/compare/multi`,
+  `/settings`, `/players/import`.
+- `/health`: `players_total=100`, `database=ok`, faltantes criticos en `0`.
+
 ## 2.1) Corrida oficial reproducible
 Desde `scouting_app/`:
 

@@ -500,6 +500,7 @@ Actualizacion de auditoria 2026-05-17:
 - Fase 5 completada en alcance MVP: documentacion principal actualizada, constantes nombradas adicionales en `app.py` y type hint puntual en mantenimiento operativo.
 - Cierre pre-entrega documentado en `docs/cierre_pre_entrega_word_render_2026-05-18.md`: para quedar entregable faltan alinear el Word final/profesor con el MVP real y ejecutar smoke real contra Render.
 - Preparacion Render Free iniciada el 2026-05-19 en rama `render-free-deploy`: una sola base Free `scouting-mvp-db`, seed demo idempotente con `seed_demo_data.py` y artefactos chicos de runtime versionados (`model.pt`, `preprocessor.joblib`, `probability_calibrator.joblib`).
+- Deploy Render verificado el 2026-05-19 en `https://tpscouting-mvp.onrender.com`: `/health`, `/login`, login admin, `/dashboard`, `/players`, `/compare`, `/compare/multi`, `/settings` y `/players/import` respondieron correctamente; `/health` mostro `players_total=100` y faltantes criticos en `0`.
 
 La rama `training` queda como base estable de las correcciones del MVP. La rama `reformas-finales` queda cerrada como bloque liviano. La arquitectura grande quedo cerrada en `reformas-complejas`; el pulido visual y la auditoria mergeada continuan en `ux-crud-polish`.
 
@@ -518,7 +519,7 @@ Recomendacion de arranque para el proximo chat:
 - El codigo versionado evita que futuras sincronizaciones desde origen legacy vuelvan a dejar `birth_date` vacio.
 - Validacion automatizada documentada mas reciente: `83 passed, 1 skipped`, cobertura total `80%`, con warnings conocidos de scikit-learn.
 - Servidor local probado en `http://127.0.0.1:5000`, `/health` respondio `200`.
-- Siguiente bloque recomendado: completar el deploy Render desde la rama `render-free-deploy`, crear una nueva base Free si la anterior expiro, configurar `ADMIN_PASSWORD`, validar URL real con `scripts/smoke_render.py` y despues recibir los Word para corregir narrativa/capturas/afirmaciones.
+- Siguiente bloque recomendado: hacer una prueba manual CRUD minima en Render y despues recibir los Word para corregir narrativa/capturas/afirmaciones.
 - Si se continua tecnico, hacer solo ajustes puntuales derivados de Word o Render; no abrir refactor grande antes de entregar.
 
 Antes de tocar codigo en el proximo chat, revisar:

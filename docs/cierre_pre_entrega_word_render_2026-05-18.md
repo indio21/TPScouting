@@ -129,3 +129,51 @@ sola base nueva:
 
 En este modo, no ejecutar el pipeline de entrenamiento desde la pantalla de
 configuracion. La prediccion usa artefactos pequenos versionados para el deploy.
+
+## Evidencia De Deploy Render
+
+Fecha: 2026-05-19
+
+Rama desplegada:
+
+- `render-free-deploy`
+
+URL publica:
+
+- `https://tpscouting-mvp.onrender.com`
+
+Commit base de deploy:
+
+- `c5735e2 deploy: avoid Render service name collision`
+
+Smoke publico ejecutado:
+
+- `/` respondio `200`.
+- `/health` respondio `200`.
+- `/login` respondio `200`.
+
+Smoke autenticado ejecutado con usuario `admin`:
+
+- `scripts/smoke_render.py` confirmo `/health OK`, `/login OK`, login correcto y `/dashboard OK`.
+- `/dashboard` respondio `200`.
+- `/players` respondio `200`.
+- `/compare` respondio `200`.
+- `/compare/multi` respondio `200`.
+- `/settings` respondio `200`.
+- `/players/import` respondio `200`.
+
+Resumen de `/health`:
+
+- `status`: `ok`
+- `database`: `ok`
+- `players_total`: `100`
+- `missing_birth_date`: `0`
+- `missing_national_id`: `0`
+- `missing_photo_url`: `0`
+- `invalid_age`: `0`
+- `over_limit_players`: `0`
+
+Pendiente antes de cerrar la entrega:
+
+- Prueba manual de una accion CRUD minima en Render.
+- Revisión del Word final y del Word con observaciones del profesor.
