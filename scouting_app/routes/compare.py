@@ -5,7 +5,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Dict, List
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, session
 from sqlalchemy import func
 from sqlalchemy.orm import load_only
 
@@ -196,6 +196,11 @@ def create_compare_blueprint(*, deps: SimpleNamespace) -> Blueprint:
     @bp.route("/compare/multi", methods=["GET", "POST"])
     @deps.login_required
     def compare_multi():
+        cache_key = f"compare:multi:{deps.current_role()}:{request.query_string.decode('utf-8', errors='ignore')}"
+        if request.method == "GET" and not session.get("_flashes"):
+            cached_html = deps.cache_get(cache_key)
+            if cached_html is not None:
+                return cached_html
         db = Session()
 
         rows = (
@@ -426,7 +431,7 @@ def create_compare_blueprint(*, deps: SimpleNamespace) -> Blueprint:
                     }
 
         db.close()
-        return render_template(
+        html = render_template(
             "compare_multi.html",
             players=players,
             selected_ids=selected_ids,
@@ -440,5 +445,8 @@ def create_compare_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             talent_map_avg_probability=avg_probability,
             talent_map_avg_fit_score=avg_fit_score,
         )
+        if request.method == "GET":
+            deps.cache_set(cache_key, html)
+        return html
 
     return bp

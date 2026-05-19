@@ -160,6 +160,8 @@ Deploy MVP verificado el 2026-05-19:
 - Rama: `render-free-deploy`
 - `/health`, `/login`, login admin, `/dashboard`, `/players`, comparadores,
   `/settings` y `/players/import` respondieron correctamente.
+- Ajuste posterior: listado de jugadores y comparador multiple usan cache GET
+  in-memory; Render Free usa 20 jugadores por pagina y cache TTL de 300 segundos.
 
 Para cerrar la entrega academica, el deploy real debe verificarse contra la URL publicada.
 El Word final debe afirmar el alcance real: MVP academico con dataset sintetico, cache y

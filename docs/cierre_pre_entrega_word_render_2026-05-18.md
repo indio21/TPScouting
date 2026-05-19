@@ -177,3 +177,30 @@ Pendiente antes de cerrar la entrega:
 
 - Prueba manual de una accion CRUD minima en Render.
 - Revisión del Word final y del Word con observaciones del profesor.
+
+## Ajustes Posteriores Al Primer Smoke
+
+Observaciones detectadas el 2026-05-19 durante la prueba manual:
+
+- En la carga de rendimiento, el usuario no veia claramente los botones de
+  guardar/cancelar del modal.
+- El panel/listado/comparadores demoraban en abrir sobre Render Free.
+- La cantidad de jugadores de alto potencial era baja con el seed demo actual.
+
+Acciones aplicadas:
+
+- El footer de modales de carga queda sticky y con botones visibles.
+- `/players` y `/compare/multi` usan cache in-memory para respuestas GET pesadas.
+- El cache se invalida junto con dashboard cuando cambia informacion del jugador.
+- Render usa `PLAYER_LIST_PER_PAGE=20`, `CACHE_TTL_SECONDS=300` y
+  `CACHE_MAX_ENTRIES=256` para que la navegacion de demo sea mas agil.
+
+Validacion local del ajuste:
+
+- `/players`: primera carga local `0.287s`, segunda carga cacheada `0.001s`.
+- `/compare/multi`: primera carga local `0.461s`, segunda carga cacheada `0.001s`.
+- `/dashboard`: primera carga local `0.476s`, segunda carga cacheada `0.001s`.
+
+Nota: la cantidad de alto potencial no se maquilla. Se mantiene el umbral definido:
+alto potencial desde `80%`. Si se necesita una demo con mas casos altos, debe
+generarse un seed demo curado y documentarlo como dato sintetico de demostracion.

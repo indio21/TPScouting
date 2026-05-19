@@ -209,6 +209,8 @@ def _cache_invalidate_prefix(prefix: str) -> None:
 
 def invalidate_dashboard_cache() -> None:
     _cache_invalidate_prefix("dashboard:")
+    _cache_invalidate_prefix("players:")
+    _cache_invalidate_prefix("compare:")
 
 
 def client_ip() -> str:
@@ -1446,6 +1448,9 @@ compare_blueprint = create_compare_blueprint(
         PlayerStat=PlayerStat,
         login_required=login_required,
         MAX_COMPARE_PLAYERS=MAX_COMPARE_PLAYERS,
+        current_role=current_role,
+        cache_get=_cache_get,
+        cache_set=_cache_set,
         normalized_position=normalized_position,
         fetch_player_stats=fetch_player_stats,
         summarize_stats=summarize_stats,
@@ -1577,6 +1582,9 @@ players_blueprint = create_players_blueprint(
         roles_required=roles_required,
         require_csrf=_require_csrf,
         can_edit_player_data=can_edit_player_data,
+        current_role=current_role,
+        cache_get=_cache_get,
+        cache_set=_cache_set,
         PLAYER_LIST_PER_PAGE=PLAYER_LIST_PER_PAGE,
         EVAL_POOL_MAX=EVAL_POOL_MAX,
         POSITION_OPTIONS=POSITION_OPTIONS,

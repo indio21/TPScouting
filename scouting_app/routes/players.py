@@ -10,7 +10,7 @@ from datetime import date, datetime
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
 
-from flask import Blueprint, Response, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, flash, redirect, render_template, request, session, url_for
 from sqlalchemy import desc, func
 from sqlalchemy.orm import joinedload, load_only
 
@@ -540,6 +540,12 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
         order_attr = request.args.get("order_attr")
         page = request.args.get("page", 1, type=int)
         per_page = deps.PLAYER_LIST_PER_PAGE
+        cache_key = f"players:{deps.current_role()}:{request.query_string.decode('utf-8', errors='ignore')}"
+        can_cache = not session.get("_flashes")
+        if can_cache:
+            cached_html = deps.cache_get(cache_key)
+            if cached_html is not None:
+                return cached_html
         db = Session()
         player_list_columns = [
             Player.id,
@@ -651,7 +657,7 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             end = start + per_page
             player_rows = player_rows[start:end]
         db.close()
-        return render_template(
+        html = render_template(
             "players.html",
             players=player_rows,
             search_term=search_term,
@@ -667,6 +673,9 @@ def create_players_blueprint(*, deps: SimpleNamespace) -> Blueprint:
             total_pages=total_pages,
             total_results=total,
         )
+        if can_cache:
+            deps.cache_set(cache_key, html)
+        return html
 
     @bp.route("/player/<int:player_id>")
     @deps.login_required

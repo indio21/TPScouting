@@ -33,6 +33,12 @@ services:
         value: "100"
       - key: DEMO_SEED
         value: "42"
+      - key: PLAYER_LIST_PER_PAGE
+        value: "20"
+      - key: CACHE_TTL_SECONDS
+        value: "300"
+      - key: CACHE_MAX_ENTRIES
+        value: "256"
       - key: EVAL_POOL_MAX
         value: "100"
       - key: ENFORCE_EVAL_POOL_LIMIT

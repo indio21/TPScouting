@@ -759,6 +759,16 @@ body {
 
 .record-modal .modal-footer {
   background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  bottom: 0;
+  box-shadow: 0 -12px 28px -26px rgba(15, 23, 42, .75);
+  gap: .75rem;
+  position: sticky;
+  z-index: 3;
+}
+
+.record-modal .modal-footer .btn {
+  min-width: 9rem;
 }
 
 .empty-state-inline {

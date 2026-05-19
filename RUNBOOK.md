@@ -211,6 +211,7 @@ Acciones:
 - El dashboard usa cache in-memory con TTL (`CACHE_TTL_SECONDS`, por default 60s).
 - El cache tiene limite configurable de entradas (`CACHE_MAX_ENTRIES`, por default 128).
 - El cache se invalida cuando se cargan o editan jugadores, atributos, historial o cuando corre el pipeline.
+- En Render Free tambien se cachean vistas GET pesadas como listado de jugadores y comparador multiple para reducir latencia de demo.
 - Si se supera el limite, se descarta la entrada con vencimiento mas cercano.
 - En despliegues con mas de una instancia o proceso, el cache no se comparte entre workers.
 - Para este MVP se recomienda mantener una sola instancia de aplicacion si se quiere consistencia inmediata del dashboard.
