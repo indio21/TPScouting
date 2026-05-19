@@ -28,6 +28,7 @@ Trabajo final orientado al scouting de futbol juvenil, con una app web para:
 - `docs/model_training_evidence.md`: evidencia tecnica del entrenamiento y comparacion con baseline
 - `docs/model_training_plan.md`: plan tecnico vigente del modelo
 - `docs/auditoria_pendientes_2026-05-17.md`: riesgos vivos y cierre por fases de auditoria
+- `docs/cierre_pre_entrega_word_render_2026-05-18.md`: cierre previo a entrega con Word final y deploy Render
 - `scripts/smoke_render.py`: smoke HTTP contra la URL real de Render
 - `render.yaml`: configuracion de deploy en Render
 - `RUNBOOK.md`: guia operativa (healthcheck, backup/restore, admin, incidentes)
@@ -45,6 +46,7 @@ Trabajo final orientado al scouting de futbol juvenil, con una app web para:
 - Potencial bajo: menor a `60%`; medio: `60%` a `79%`; alto: `80%` o mas.
 - La edad y categoria juvenil se derivan de `birth_date`; `Player.age` queda como compatibilidad operativa.
 - Tests al ultimo cierre: `83 passed, 1 skipped`, cobertura total `80%`.
+- Cierre pre-entrega: faltan alinear el Word final de tesis con el MVP real y ejecutar smoke real en Render con URL publica.
 
 ## Bases de datos del MVP
 
@@ -136,6 +138,10 @@ $env:SMOKE_USERNAME = "admin"
 $env:SMOKE_PASSWORD = "AdminDemo123"
 .\.venv\Scripts\python.exe scripts\smoke_render.py
 ```
+
+Para cerrar la entrega academica, el deploy real debe verificarse contra la URL publicada.
+El Word final debe afirmar el alcance real: MVP academico con dataset sintetico, cache y
+rate limiting in-memory, migraciones manuales y validacion externa pendiente.
 
 Seguridad MVP:
 

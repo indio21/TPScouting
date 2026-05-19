@@ -6,6 +6,8 @@ Adenda tecnica: 2026-04-27
 
 Adenda de cierre de auditoria: 2026-05-18
 
+Adenda pre-entrega Word/Render: 2026-05-18
+
 Este archivo resume la revision final del MVP real de `TPScouting`, apoyada en evidencia ejecutada sobre el proyecto y sobre la demo incluida en el repositorio.
 
 ## Alcance Revisado
@@ -175,6 +177,8 @@ Luego, para la demo final, `sync_shortlist.py --replace` reconstruyo los jugador
 Estos puntos siguen siendo reales y no se deben ocultar:
 
 - despliegue final en Render todavia requiere cierre operativo completo
+- el smoke real de Render debe ejecutarse contra URL publica antes de cerrar la evidencia productiva
+- el documento Word final de tesis debe alinearse con el MVP real y con las observaciones del profesor
 - la app sigue siendo un MVP; no esta pensada para alta concurrencia
 - persisten deudas de calidad no criticas: aunque arquitectura fase 2 ya separo `auth`, `staff`, `players`, `compare`, `settings` y `dashboard`, siguen quedando helpers compartidos en `app.py`, convenciones parciales en endpoints Flask y tooling dev opcional
 - la categoria juvenil tipo `cat 2010` ya se deriva de `Player.birth_date`; jugadores legacy sin fecha muestran `Cat. N/D` hasta completar el dato
@@ -183,10 +187,11 @@ Estos puntos siguen siendo reales y no se deben ocultar:
 - los cortes visibles de potencial quedan definidos como bajo menor a `60%`, medio entre `60%` y `79%`, y alto desde `80%`
 - la carga masiva ya tiene vista dedicada CSV; queda pendiente revisarla visualmente en navegador y ajustar detalles de usabilidad si aparecen
 - el documento Word de auditoria tecnica esta actualizado; el documento final de tesis todavia debe alinearse narrativamente con el MVP real
+- con Word final alineado y smoke Render documentado, el proyecto queda defendible como MVP academico entregable, no como producto de produccion
 - la evidencia del modelo sigue basada en datos sinteticos; no hay validacion externa con datos reales
 
 ## Conclusion
 
 Con la evidencia actual, el MVP queda funcional, coherente con su alcance acotado y bastante mas defendible que al inicio de la revision. La rama `training` queda como base estable inicial, `reformas-finales` cerro las reformas livianas, `reformas-complejas` concentro los cambios estructurales y `ux-crud-polish` contiene el pulido visual mas el cierre de auditoria tecnica mergeado. La siguiente etapa real es elegir entre revisar visualmente la demo completa, mejorar rendimiento del dashboard a escala o alinear el documento final de tesis con este estado real.
 
-Para continuar el pulido UX/UI en `ux-crud-polish`, el siguiente bloque chico recomendado es hacer una pasada visual manual en navegador, ajustar detalles responsive si aparece algo concreto y luego elegir entre actualizar el documento Word o trabajar rendimiento del dashboard a escala.
+Para continuar, el siguiente bloque recomendado es recibir los Word del usuario, comparar narrativa contra codigo real, corregir incoherencias y luego hacer deploy/smoke real en Render. Si ambos puntos cierran, la entrega queda preparada como MVP academico verificable.

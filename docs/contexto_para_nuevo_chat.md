@@ -35,6 +35,7 @@ Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting`
 - `9f02b3c refactor: extract dashboard blueprint`
 - Estado de arquitectura verificado: `reformas-complejas` limpia y sincronizada con `origin/reformas-complejas` en `a6d5a36`.
 - Rama `ux-crud-polish` creada desde `a6d5a36` para pulido UX/UI y CRUDs.
+- Cierre pre-entrega 2026-05-18: `ux-crud-polish` debe quedar mergeada a `main` despues de documentar Word/Render.
 - Entorno Python local: `C:\Tesis\TPScouting\.venv`
 
 Usar siempre la `.venv`; no usar el Python global.
@@ -497,6 +498,7 @@ Actualizacion de auditoria 2026-05-17:
 - Se agrego `scripts/smoke_render.py` para validar el deploy real con `RENDER_SMOKE_BASE_URL`; no se encontro URL publica fija en el repo.
 - Documento de auditoria Word actualizado: `docs/evaluacion_codigo_fuente_2026-05-17.docx`.
 - Fase 5 completada en alcance MVP: documentacion principal actualizada, constantes nombradas adicionales en `app.py` y type hint puntual en mantenimiento operativo.
+- Cierre pre-entrega documentado en `docs/cierre_pre_entrega_word_render_2026-05-18.md`: para quedar entregable faltan alinear el Word final/profesor con el MVP real y ejecutar smoke real contra Render.
 
 La rama `training` queda como base estable de las correcciones del MVP. La rama `reformas-finales` queda cerrada como bloque liviano. La arquitectura grande quedo cerrada en `reformas-complejas`; el pulido visual y la auditoria mergeada continuan en `ux-crud-polish`.
 
@@ -513,9 +515,10 @@ Recomendacion de arranque para el proximo chat:
 - Bloque mas reciente cerrado el 2026-05-12: `birth_date` como fuente de verdad, edad derivada, categoria juvenil desde anio de nacimiento, backfill demo local autorizado y umbrales de potencial `60/80`.
 - La base local `players_updated_v2.db` quedo corregida con `missing_birth_date=0`; los `.db` no estan versionados por git.
 - El codigo versionado evita que futuras sincronizaciones desde origen legacy vuelvan a dejar `birth_date` vacio.
-- Validacion automatizada mas reciente: `67 passed`, cobertura total `79%`, con `4 warnings` conocidos de scikit-learn.
+- Validacion automatizada documentada mas reciente: `83 passed, 1 skipped`, cobertura total `80%`, con warnings conocidos de scikit-learn.
 - Servidor local probado en `http://127.0.0.1:5000`, `/health` respondio `200`.
-- Siguiente bloque recomendado: pasada visual manual de `/players/manage`, `/players/import`, `/dashboard`, `/compare/multi` y una ficha de jugador. Si esta todo ok, pasar al documento Word de tesis.
+- Siguiente bloque recomendado: recibir el Word de primera entrega y el Word con puntos del profesor, comparar contra codigo actual y corregir narrativa/capturas/afirmaciones. Luego publicar/validar Render, ejecutar `scripts/smoke_render.py` con URL real y documentar evidencia.
+- Si se continua tecnico, hacer solo ajustes puntuales derivados de Word o Render; no abrir refactor grande antes de entregar.
 
 Antes de tocar codigo en el proximo chat, revisar:
 

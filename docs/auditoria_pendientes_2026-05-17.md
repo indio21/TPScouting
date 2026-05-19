@@ -18,6 +18,7 @@ para atacarlos en pasos controlados sin perder contexto.
 - Tests al cierre de Fase 4: `82 passed`, cobertura total `80%`.
 - Tests al cierre del bloque escala/smoke: `83 passed, 1 skipped`, cobertura total `80%`.
 - Fase 5 completada en alcance MVP: documentacion actualizada, constantes nombradas adicionales y type hint puntual sin refactor grande.
+- Cierre pre-entrega 2026-05-18: queda explicitado que Word final alineado y smoke Render real son los dos cierres necesarios para entrega academica.
 
 ## Riesgos restantes despues de Fase 1
 
@@ -25,7 +26,7 @@ para atacarlos en pasos controlados sin perder contexto.
    - Estado: pendiente.
    - Motivo: la app usa PostgreSQL en `render.yaml`, pero falta evidencia de una
      prueba completa en cloud con base operativa poblada.
-   - Accion sugerida: documentar URL, fecha, `/health`, login y dashboard con datos.
+   - Accion sugerida: desplegar en Render, documentar URL, fecha, commit, `/health`, login, dashboard, jugadores, comparadores y una accion CRUD minima.
 
 2. Lock de pipeline apto para MVP, no distribuido.
    - Estado: mitigado para MVP.
@@ -147,3 +148,25 @@ para atacarlos en pasos controlados sin perder contexto.
      externa con datos reales.
    - El documento final de tesis debe revisar narrativa, capturas y afirmaciones
      para que coincidan con el MVP real.
+
+## Cierre pre-entrega Word/Render - 2026-05-18
+
+1. Documento Word final.
+   - Estado: pendiente hasta que el usuario entregue el Word de primera entrega y
+     el Word con observaciones del profesor.
+   - Accion sugerida: comparar cada afirmacion contra codigo, tests, docs y
+     evidencia real. Corregir especialmente modelo ML, dataset sintetico,
+     arquitectura parcial, seguridad MVP, despliegue y limitaciones.
+   - Efecto: corrige coherencia academica, pero no reemplaza validaciones tecnicas.
+
+2. Deploy real en Render.
+   - Estado: pendiente.
+   - Accion sugerida: publicar la rama final, crear/validar admin, poblar base si
+     corresponde y ejecutar `scripts/smoke_render.py` con `RENDER_SMOKE_BASE_URL`.
+   - Efecto: cierra variables reales, PostgreSQL administrado, Gunicorn, HTTPS,
+     healthcheck y rutas protegidas.
+
+3. Condicion de entrega.
+   - Con suite local/CI vigente, Word final alineado y smoke Render documentado,
+     el proyecto queda defendible como MVP academico entregable.
+   - No se debe presentar como producto listo para produccion.

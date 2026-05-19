@@ -423,10 +423,11 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Correccion de arranque local con `ADMIN_PASSWORD` configurado
 - Auditoria tecnica por fases mergeada en `ux-crud-polish`: seguridad, datos/ML, testing/CI, escala de atributos `1-20`, smoke visual Playwright y smoke Render preparado
 - Fase 5 iniciada/cerrada en bloque chico: constantes nombradas adicionales en `app.py`, type hint puntual en mantenimiento operativo y documentacion actualizada
+- Cierre pre-entrega 2026-05-18: para quedar entregable faltan dos validaciones grandes, alinear el Word final/profesor con el MVP real y ejecutar deploy/smoke real en Render.
 
 ## Puntos Que Siguen Parciales O Pendientes
 
-- Persistencia/despliegue final en Render
+- Persistencia/despliegue final en Render con smoke real contra URL publicada
 - Categoria juvenil (`cat 2010`) implementada desde `birth_date`; jugadores viejos sin fecha quedan en `Cat. N/D`.
 - Jugadores legacy sin `birth_date`: no se inventa fecha de nacimiento; deben completarse manualmente si se quiere categoria real.
 - Para la base demo actual, el usuario autorizo fechas aleatorias controladas de MVP; se creo backup antes de completar `birth_date`.
@@ -436,6 +437,7 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Herramientas dev opcionales todavia parciales (`ruff`, `black`, `mypy`)
 - Rutas Flask parcialmente separadas en blueprints; quedan en `app.py` landing, health, error handlers y helpers compartidos
 - Documento Word de auditoria tecnica actualizado; sigue pendiente alinear el documento final de tesis con el MVP real
+- El Word final puede corregir coherencia academica, alcance, limitaciones y narrativa; no reemplaza el smoke real de Render.
 
 ## Siguiente Decision Recomendada
 
@@ -451,8 +453,8 @@ Nota: las etapas numeradas conservan evidencia historica de cada corrida. El est
 - Sexto/septimo/octavo bloque aplicados: historiales complementarios en modales, settings/register/login alineados y dashboard convertido en panel de control por rol.
 - Noveno bloque aplicado: edad visible en seguimiento/ranking/panel; categoria juvenil sale de `birth_date.year`; altas, ediciones e importacion calculan edad desde fecha de nacimiento.
 - Decimo ajuste aplicado: backfill demo local de `birth_date` y umbrales de potencial bajo/medio/alto en `60/80`.
-- Siguiente bloque sugerido: revisar visualmente `/players/import`, `/players/manage`, `/dashboard`, `/compare/multi` y ficha de jugador; luego pasar al documento final de tesis si no aparece nada visual.
-- Si la prioridad es academica: conviene pasar a alinear el Word con el MVP real.
+- Siguiente bloque sugerido: recibir el Word de primera entrega y el Word con puntos del profesor, alinear narrativa/capturas/afirmaciones con el MVP real y despues ejecutar deploy/smoke Render.
+- Si la prioridad es academica: este es el bloque principal antes de entregar.
 - Si la prioridad vuelve a ser tecnica: el siguiente frente fuerte es rendimiento del dashboard a escala.
 
 ## Bloques Restantes
@@ -463,6 +465,7 @@ Tomando como base la checklist operativa del MVP:
 
 - Luego queda 1 bloque grande aparte:
 - correccion del documento final de tesis para alinearlo con el MVP ya corregido
+- deploy real en Render y evidencia de smoke externo
 
 ## Regla De Trabajo
 

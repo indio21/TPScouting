@@ -48,6 +48,7 @@ Este runbook cubre operación mínima, backup/restore de SQLite, healthcheck y b
 - Ultima suite completa documentada: `83 passed, 1 skipped`, cobertura total `80%`.
 - Smoke Playwright opt-in: `1 passed` con `RUN_PLAYWRIGHT=1`.
 - Smoke Render: script disponible, pero requiere URL real en `RENDER_SMOKE_BASE_URL`.
+- Cierre pre-entrega: para quedar entregable faltan Word final alineado con el MVP real y smoke Render ejecutado contra la URL publicada.
 
 ## 2) Arranque local
 ```powershell
@@ -84,6 +85,10 @@ $env:SMOKE_USERNAME = "admin"
 $env:SMOKE_PASSWORD = "AdminDemo123"
 .\.venv\Scripts\python.exe scripts\smoke_render.py
 ```
+
+Despues de ejecutar el smoke, documentar fecha, commit, URL, resultado de `/health`,
+login, `/dashboard`, `/players`, comparadores y una accion CRUD minima. Esa evidencia
+es la que permite cerrar el punto de despliegue en el documento de tesis.
 
 ## 2.1) Corrida oficial reproducible
 Desde `scouting_app/`:
@@ -158,6 +163,10 @@ cp scouting_app/players_updated_v2.db-shm backups/  || true
   - `/players`
   - `/dashboard`
   - escritura (stats/attributes) con 2 sesiones
+
+Este punto no se considera cerrado solo con tests locales. Para entrega academica,
+validar contra la URL real de Render, porque alli se prueban variables reales,
+PostgreSQL administrado, Gunicorn, HTTPS/cookies y build con Torch CPU.
 
 ## 8) Incidentes comunes
 
