@@ -57,7 +57,16 @@ El proyecto usa dos bases separadas. En local pueden ser SQLite y en despliegue 
 
 En PostgreSQL, la app acepta URLs `postgresql://...` y `postgres://...`; internamente las normaliza para SQLAlchemy con `psycopg`.
 
-Las bases, el modelo entrenado y los artefactos de preprocesamiento son generados localmente. No son la fuente principal del repo. Para regenerarlos, seguir `docs/flujo_reproducible_mvp.md`.
+Las bases son generadas localmente y no son la fuente principal del repo. Para regenerarlas, seguir `docs/flujo_reproducible_mvp.md`.
+
+Para que Render pueda ejecutar inferencia sin entrenar en produccion, el repo incluye
+solo los artefactos chicos de runtime:
+
+- `scouting_app/model.pt`
+- `scouting_app/preprocessor.joblib`
+- `scouting_app/probability_calibrator.joblib`
+
+Las bases SQLite, metadata de entrenamiento y splits siguen fuera de Git.
 
 ## Ejecucion local
 
@@ -128,7 +137,13 @@ El repositorio incluye `render.yaml` con:
 - `EVAL_POOL_MAX=100`
 - variables de seguridad y logging
 
-El blueprint actual deja preparado el deploy con dos bases PostgreSQL administradas por Render: una operativa y una de entrenamiento.
+El blueprint actual deja preparado el deploy en Render con PostgreSQL administrado.
+En modalidad gratuita se usa una sola base PostgreSQL Free (`scouting-mvp-db`),
+porque Render limita las bases Free activas por workspace. En ese modo,
+`APP_DB_URL` y `TRAINING_DB_URL` apuntan a la misma base, `AUTO_TRAIN_ON_STARTUP`
+queda desactivado y el deploy ejecuta `seed_demo_data.py` para cargar 100 jugadores
+demo solo si la base esta vacia. No ejecutar el pipeline de entrenamiento desde la
+web en este modo gratuito.
 
 Smoke real de Render:
 

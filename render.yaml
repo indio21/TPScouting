@@ -1,7 +1,5 @@
 databases:
-  - name: scouting-mvp-app-db
-    plan: free
-  - name: scouting-mvp-training-db
+  - name: scouting-mvp-db
     plan: free
 
 services:
@@ -15,18 +13,26 @@ services:
       pip install --upgrade pip
       pip install --extra-index-url https://download.pytorch.org/whl/cpu torch==2.9.1+cpu
       pip install -r requirements.txt
-    startCommand: gunicorn app:app --chdir scouting_app --workers 1 --threads 2 --timeout 120 --bind 0.0.0.0:$PORT
+    startCommand: python scouting_app/seed_demo_data.py && gunicorn app:app --chdir scouting_app --workers 1 --threads 2 --timeout 120 --bind 0.0.0.0:$PORT
     envVars:
       - key: APP_SECRET_KEY
         generateValue: true
       - key: APP_DB_URL
         fromDatabase:
-          name: scouting-mvp-app-db
+          name: scouting-mvp-db
           property: connectionString
       - key: TRAINING_DB_URL
         fromDatabase:
-          name: scouting-mvp-training-db
+          name: scouting-mvp-db
           property: connectionString
+      - key: AUTO_TRAIN_ON_STARTUP
+        value: "0"
+      - key: DEMO_SEED_ON_STARTUP
+        value: "1"
+      - key: DEMO_SEED_PLAYERS
+        value: "100"
+      - key: DEMO_SEED
+        value: "42"
       - key: EVAL_POOL_MAX
         value: "100"
       - key: ENFORCE_EVAL_POOL_LIMIT

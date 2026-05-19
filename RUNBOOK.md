@@ -62,7 +62,11 @@ Para reproducibilidad exacta de dependencias existe `requirements-lock.txt`. Usa
 
 La explicacion breve de los cambios agregados para cerrar la revision de codigo fuente esta en `docs/explicacion_cambios_revision_codigo_2026-04-27.md`.
 
-Los artefactos de datos y modelo no son fuente principal del repo. Para regenerar una corrida local completa, usar `docs/flujo_reproducible_mvp.md`.
+Las bases de datos no son fuente principal del repo. Para regenerar una corrida local completa, usar `docs/flujo_reproducible_mvp.md`.
+
+Para el deploy de MVP en Render se versionan solo tres artefactos chicos de runtime:
+`model.pt`, `preprocessor.joblib` y `probability_calibrator.joblib`. Las bases SQLite,
+metadata y splits siguen fuera de Git.
 
 Por defecto la app no reentrena automaticamente al iniciar si faltan `model.pt` o `preprocessor.joblib`. Si se quiere permitir esa conducta en desarrollo, setear `AUTO_TRAIN_ON_STARTUP=true`.
 
@@ -157,6 +161,9 @@ cp scouting_app/players_updated_v2.db-shm backups/  || true
 
 ## 7) Deploy (Render)
 - `render.yaml` define build/start.
+- En plan Free se usa una sola base PostgreSQL (`scouting-mvp-db`) por la limitacion vigente de Render.
+- `APP_DB_URL` y `TRAINING_DB_URL` apuntan a esa misma base solo para cumplir la configuracion de produccion; no ejecutar el pipeline de entrenamiento web en este modo.
+- `seed_demo_data.py` corre antes de Gunicorn y genera 100 jugadores demo solo si la base esta vacia.
 - Validación post-deploy:
   - `/health`
   - login

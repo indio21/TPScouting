@@ -112,3 +112,20 @@ Siguiente paso recomendado:
 4. Hacer deploy en Render.
 5. Ejecutar smoke real y documentar evidencia.
 6. Si Render falla, corregir puntualmente y volver a probar.
+
+## Ajuste Para Render Free
+
+Render Free permite probar la app, pero las bases PostgreSQL Free expiran y hay
+limites de cantidad por workspace. Para no pagar, el despliegue de MVP usa una
+sola base nueva:
+
+- `scouting-mvp-db`
+- `APP_DB_URL` apunta a esa base.
+- `TRAINING_DB_URL` apunta a esa misma base solo para evitar SQLite en produccion.
+- `AUTO_TRAIN_ON_STARTUP=0`.
+- `SYNC_SHORTLIST_ENABLED=0`.
+- `DEMO_SEED_ON_STARTUP=1`.
+- `seed_demo_data.py` carga 100 jugadores sinteticos si la base esta vacia.
+
+En este modo, no ejecutar el pipeline de entrenamiento desde la pantalla de
+configuracion. La prediccion usa artefactos pequenos versionados para el deploy.

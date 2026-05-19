@@ -161,8 +161,11 @@ para atacarlos en pasos controlados sin perder contexto.
 
 2. Deploy real en Render.
    - Estado: pendiente.
-   - Accion sugerida: publicar la rama final, crear/validar admin, poblar base si
-     corresponde y ejecutar `scripts/smoke_render.py` con `RENDER_SMOKE_BASE_URL`.
+   - Accion sugerida: publicar la rama final, crear/validar admin, crear una nueva
+     base Free si la anterior expiro y ejecutar `scripts/smoke_render.py` con
+     `RENDER_SMOKE_BASE_URL`.
+   - Ajuste aplicado: para Render Free se prepara una sola base PostgreSQL y seed
+     demo idempotente, porque no conviene depender de dos bases gratuitas.
    - Efecto: cierra variables reales, PostgreSQL administrado, Gunicorn, HTTPS,
      healthcheck y rutas protegidas.
 
