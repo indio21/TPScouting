@@ -102,6 +102,9 @@ Evidencia 2026-05-19:
 - Rutas verificadas: `/dashboard`, `/players`, `/compare`, `/compare/multi`,
   `/settings`, `/players/import`.
 - `/health`: `players_total=100`, `database=ok`, faltantes criticos en `0`.
+- Ajuste posterior en Render: `/players` queda en ~78 KB con 20 jugadores por
+  pagina; `/players` y `/compare/multi` cachean segundas aperturas en ~0.35s;
+  `/dashboard` cachea segundas aperturas en ~0.32s.
 
 ## 2.1) Corrida oficial reproducible
 Desde `scouting_app/`:

@@ -201,6 +201,15 @@ Validacion local del ajuste:
 - `/compare/multi`: primera carga local `0.461s`, segunda carga cacheada `0.001s`.
 - `/dashboard`: primera carga local `0.476s`, segunda carga cacheada `0.001s`.
 
+Validacion en Render despues del redeploy:
+
+- `/players`: bajo de ~171 KB a ~78 KB; segunda apertura cacheada `0.36s`.
+- `/compare/multi`: segunda apertura cacheada `0.35s`.
+- `/dashboard`: primera apertura medida `7.35s`; segunda apertura cacheada `0.32s`.
+- `/player/<id>/stats`: `0.44s`; el modal incluye `Guardar registro`,
+  `Cancelar`, `modal-footer` y CSS sticky servido desde `/static/styles.css`.
+- `Alto potencial`: `2` jugadores (`2.0%`) con el seed demo actual y umbral `>=80%`.
+
 Nota: la cantidad de alto potencial no se maquilla. Se mantiene el umbral definido:
 alto potencial desde `80%`. Si se necesita una demo con mas casos altos, debe
 generarse un seed demo curado y documentarlo como dato sintetico de demostracion.
