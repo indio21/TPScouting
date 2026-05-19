@@ -161,7 +161,7 @@ cp scouting_app/players_updated_v2.db-shm backups/  || true
 
 ## 7) Deploy (Render)
 - `render.yaml` define build/start.
-- En plan Free se usa una sola base PostgreSQL (`scouting-mvp-db`) por la limitacion vigente de Render.
+- En plan Free se usa una sola base PostgreSQL (`tpscouting-mvp-db`) por la limitacion vigente de Render.
 - `APP_DB_URL` y `TRAINING_DB_URL` apuntan a esa misma base solo para cumplir la configuracion de produccion; no ejecutar el pipeline de entrenamiento web en este modo.
 - `seed_demo_data.py` corre antes de Gunicorn y genera 100 jugadores demo solo si la base esta vacia.
 - Validación post-deploy:

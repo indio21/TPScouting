@@ -138,7 +138,7 @@ El repositorio incluye `render.yaml` con:
 - variables de seguridad y logging
 
 El blueprint actual deja preparado el deploy en Render con PostgreSQL administrado.
-En modalidad gratuita se usa una sola base PostgreSQL Free (`scouting-mvp-db`),
+En modalidad gratuita se usa una sola base PostgreSQL Free (`tpscouting-mvp-db`),
 porque Render limita las bases Free activas por workspace. En ese modo,
 `APP_DB_URL` y `TRAINING_DB_URL` apuntan a la misma base, `AUTO_TRAIN_ON_STARTUP`
 queda desactivado y el deploy ejecuta `seed_demo_data.py` para cargar 100 jugadores

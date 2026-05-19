@@ -119,7 +119,7 @@ Render Free permite probar la app, pero las bases PostgreSQL Free expiran y hay
 limites de cantidad por workspace. Para no pagar, el despliegue de MVP usa una
 sola base nueva:
 
-- `scouting-mvp-db`
+- `tpscouting-mvp-db`
 - `APP_DB_URL` apunta a esa base.
 - `TRAINING_DB_URL` apunta a esa misma base solo para evitar SQLite en produccion.
 - `AUTO_TRAIN_ON_STARTUP=0`.
