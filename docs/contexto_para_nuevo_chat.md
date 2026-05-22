@@ -529,3 +529,167 @@ cd C:\Tesis\TPScouting
 git status -sb
 git log --oneline --decorate -5
 ```
+
+## Cierre Word corregido - 2026-05-19
+
+Estado al cierre:
+
+- Rama actual: `main`.
+- Ultimo commit versionado antes de esta fase: `75c743d docs: record Render performance follow-up`.
+- No se modifico codigo de la app durante la correccion del Word.
+- Se genero el Word corregido principal en:
+  - `C:\Users\Usuario\Desktop\TRABAJO_FINAL - Version corregida TPScouting.docx`
+  - `docs/TRABAJO_FINAL_corregido_TPScouting.docx`
+- Se generaron capturas reales desde Render en `docs/evidencia_word_render/`.
+- Se agrego script reproducible de actualizacion: `scripts/update_final_word.py`.
+- Se agrego resumen tecnico de cierre: `docs/cierre_word_corregido_2026-05-19.md`.
+
+Correcciones aplicadas al Word:
+
+- Indice regenerado en Word.
+- Eliminados placeholders: `pendiente de capturas`, `[Insertar captura]`, `ejemplo ilustrativo`.
+- Eliminadas incoherencias viejas: `/logs`, `BCELoss`, escala `0-20`, `9. REFERENCIAS`, `3.6 Cronograma`, `Utilizamos PyTorch...`.
+- Metodologia reordenada con ciclo de vida y cronograma consolidado.
+- Anexos internos B-K movidos a anexos tecnicos del MVP.
+- Arquitectura alineada con app actual: Flask + blueprints por familia + servicios parciales + runtime ML.
+- Persistencia alineada: SQLite local y PostgreSQL administrado en Render.
+- Seguridad alineada: CSRF, logout POST, secret obligatoria, roles y rate limiting in-memory.
+- ML alineado: `PlayerNet`, logits, `BCEWithLogitsLoss`, checkpoint con `input_dim=68`, metricas reales y baseline honesto.
+- Escala alineada: atributos `1-20`; potencial bajo `<60%`, medio `60-79%`, alto `>=80%`.
+- Capturas reales insertadas: login, dashboard, listado, ficha, prediccion y comparador multiple.
+
+Validacion posterior:
+
+- Revision automatica del Word corregido: sin placeholders ni terminos viejos criticos.
+- El Word corregido contiene `21` tablas y `6` imagenes de evidencia.
+- Suite local ejecutada: `83 passed, 1 skipped, 4 warnings`.
+- Warnings conocidos: `RuntimeWarning: All-NaN slice encountered` en pruebas de preprocesamiento con scikit-learn.
+
+Archivos nuevos sin commit al cierre:
+
+- `docs/TRABAJO_FINAL_corregido_TPScouting.docx`
+- `docs/evidencia_word_render/`
+- `docs/cierre_word_corregido_2026-05-19.md`
+- `scripts/update_final_word.py`
+- `docs/contexto_para_nuevo_chat.md`
+
+Proximo paso recomendado para manana:
+
+1. Auditar `TRABAJO_FINAL - Version corregida TPScouting.docx` contra `Correccion TP Escrito.docx`, punto por punto.
+2. Verificar visualmente el Word en Microsoft Word: indice, saltos, tablas e imagenes.
+3. Si la auditoria queda OK, hacer `git add`, commit y push de los archivos nuevos.
+4. Luego pasar a una auditoria final de coherencia entre Word corregido y app actual.
+
+## Checklist final Word aplicado - 2026-05-20
+
+Se continuo desde el informe de auditoria del Word corregido y se aplicaron los IDs priorizados:
+
+- `A1`: curva real de entrenamiento insertada en el capitulo 6.
+  - Imagen generada: `docs/evidencia_word_render/07_training_curve_real.png`.
+  - Fuente real: `scouting_app/training_metadata.json`, campo `pytorch.history`.
+- `A2`: se agregaron `RESUMEN`, `ABSTRACT`, `Palabras clave` y `Keywords`.
+- `A3`: se agregaron `LISTA DE FIGURAS` y `LISTA DE TABLAS`.
+- `B1`: se elimino la frase con primera persona residual `Entonces, utilizamos SQLAlchemy...`.
+- `B2`: se agregaron captions numerados para las tablas principales.
+- `B3`: se amplio el capitulo 5 con detalle de:
+  - integracion Flask + PyTorch;
+  - carga de `model.pt`, `preprocessor.joblib` y `probability_calibrator.joblib`;
+  - metadata de entrenamiento;
+  - comparacion honesta con baseline;
+  - despliegue Render con PostgreSQL.
+- `C1`: glosario ampliado a `24` filas.
+- `C2`: se agrego tabla de smoke real Render con status codes y tiempos medidos el 20/05/2026.
+
+Estado del Word luego del checklist:
+
+- Archivo vigente: `C:\Users\Usuario\Desktop\TRABAJO_FINAL - Version corregida TPScouting.docx`.
+- Copia repo: `docs/TRABAJO_FINAL_corregido_TPScouting.docx`.
+- Backup previo: `C:\Users\Usuario\Desktop\TRABAJO_FINAL - Version corregida TPScouting.backup_20260520.docx`.
+- `22` tablas.
+- `7` imagenes.
+- `29` captions (`22` tablas + `7` figuras).
+- Sin encabezados vacios.
+- Sin placeholders viejos ni terminos criticos detectados: `pendiente de capturas`, `[Insertar]`, `ejemplo ilustrativo`, `BCELoss`, `0-20`, `/logs`, `3.6 Cronograma`, `9. REFERENCIAS`.
+
+Archivos nuevos/modificados pendientes de versionar:
+
+- `docs/contexto_para_nuevo_chat.md`
+- `docs/TRABAJO_FINAL_corregido_TPScouting.docx`
+- `docs/cierre_word_corregido_2026-05-19.md`
+- `docs/evidencia_word_render/`
+- `scripts/update_final_word.py`
+- `scripts/finalize_word_checklist.py`
+
+Proximo paso recomendado:
+
+1. Ejecutar tests finales si no se hizo en la sesion actual.
+2. Auditar visualmente el Word en Microsoft Word.
+3. Hacer una ultima auditoria contra `Correccion TP Escrito.docx`.
+4. Si todo queda OK, hacer `git add`, commit y push.
+
+## Ajuste final de formato Word - 2026-05-20
+
+Se aplico una etapa adicional solicitada por el usuario sobre `TRABAJO_FINAL - Version corregida TPScouting.docx`:
+
+- Portada en primera hoja.
+- Indice inmediatamente despues de la portada.
+- Salto de pagina/seccion despues del indice.
+- Listas, resumen/abstract, capitulos, bibliografia y anexos iniciando en hoja nueva.
+- Bibliografia y anexos separados en hojas propias.
+- Eliminada la numeracion duplicada: se quito `Pagina X de Y` centrado y se dejo numeracion simple en el pie derecho.
+- Portada e indice quedaron sin numeracion visible.
+- Fechas de recuperacion bibliografica distribuidas entre el 15/05/2026 y el 20/05/2026.
+- Indice recreado con Microsoft Word usando solo estilos de titulo reales.
+
+Archivos actualizados:
+
+- `C:\Users\Usuario\Desktop\TRABAJO_FINAL - Version corregida TPScouting.docx`
+- `docs/TRABAJO_FINAL_corregido_TPScouting.docx`
+- `scripts/finalize_word_layout.py`
+- `docs/cierre_word_corregido_2026-05-19.md`
+- `docs/contexto_para_nuevo_chat.md`
+
+Backup previo:
+
+- `C:\Users\Usuario\Desktop\TRABAJO_FINAL - Version corregida TPScouting.backup_layout_20260520.docx`
+
+Chequeos posteriores:
+
+- Documento con `14` secciones, `22` tablas y `7` imagenes inline.
+- Sin `__TOC_PLACEHOLDER__`.
+- Sin `TOC \o`.
+- Sin `Error! Marcador no definido`.
+- Sin `Pagina X de Y`.
+- Suite local posterior: `83 passed, 1 skipped, 4 warnings`.
+
+Proximo paso recomendado:
+
+1. Revisar visualmente el documento en Word.
+2. Si esta conforme, hacer `git add`, commit y push de Word, documentacion, evidencias y scripts pendientes.
+
+## Version Word aceptada por usuario - 2026-05-22
+
+El usuario modifico manualmente `C:\Users\Usuario\Desktop\TRABAJO_FINAL - Version corregida TPScouting.docx` y pidio dejar esa version como final.
+
+Estado aplicado:
+
+- Se sincronizo la version manual del Escritorio hacia `docs/TRABAJO_FINAL_corregido_TPScouting.docx`.
+- La version final queda sin `ABSTRACT`.
+- El indice fue actualizado para quitar la entrada `ABSTRACT`.
+- Se conserva `RESUMEN` y `Palabras clave`.
+- Se conserva el orden visual manual del usuario.
+- `scripts/finalize_word_checklist.py` fue ajustado para no volver a insertar abstract si se reutiliza.
+
+Chequeos:
+
+- Sin `ABSTRACT`.
+- Sin `Keywords:`.
+- Sin `Marcador no definido`.
+- Sin `__TOC_PLACEHOLDER__`.
+- Sin `TOC \o`.
+- Documento con `13` secciones, `22` tablas y evidencias visuales insertadas.
+- Suite local ejecutada el 22/05/2026: `83 passed, 1 skipped, 4 warnings`.
+
+Estado git esperado:
+
+- Versionar y pushear los archivos pendientes en `main` si los tests pasan.
