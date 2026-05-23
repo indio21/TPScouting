@@ -693,3 +693,111 @@ Chequeos:
 Estado git esperado:
 
 - Versionar y pushear los archivos pendientes en `main` si los tests pasan.
+
+## Diagramas PlantUML preparados - 2026-05-22
+
+Se auditaron y generaron diagramas alineados con el Word final y la app real:
+
+- Secuencia de prediccion: `/player/<int:player_id>/predict`, `prediction.html`, SQLAlchemy, preprocesador, `PlayerNet` y calibrador.
+- Secuencia de dashboard: `/dashboard`, `dashboard.html`, cache in-memory, consultas SQLAlchemy y metricas por rol.
+- Componentes: frontend Bootstrap/Chart.js, Flask, blueprints, servicios, SQLAlchemy, SQLite local, PostgreSQL Render y modulo ML.
+- Despliegue: navegador, Render, Gunicorn, Flask, PostgreSQL y artefactos `model.pt`, `preprocessor.joblib`, `probability_calibrator.joblib`.
+- Clases: entidades reales de `scouting_app/models.py`.
+
+Archivos:
+
+- `docs/diagramas/plantuml/*.puml`
+- `docs/diagramas/export/*.png`
+- `docs/diagramas/export/*.svg`
+- `docs/diagramas/README.md`
+- `scripts/render_plantuml_diagrams.py`
+
+Notas:
+
+- No se incluyo SQL Server como componente implementado porque no aparece en la app actual; la persistencia real es SQLite local y PostgreSQL en Render.
+- Java/PlantUML local no estaban instalados, por eso se renderizo con el servidor publico PlantUML desde un script sin dependencias.
+- Los diagramas fueron insertados en `C:\Users\Usuario\Desktop\TRABAJO_FINAL - Version corregida TPScouting.docx` y sincronizados con `docs/TRABAJO_FINAL_corregido_TPScouting.docx`.
+- Backup previo a la insercion: `C:\Users\Usuario\Desktop\TRABAJO_FINAL - Version corregida TPScouting.backup_diagramas_20260522.docx`.
+- Se agrego `scripts/insert_word_diagrams.py`.
+- El Word quedo sin `ABSTRACT`, sin `Keywords:`, sin `Marcador no definido`, sin `__TOC_PLACEHOLDER__` y sin `TOC \o`.
+- Figuras insertadas:
+  - `Figura 4-1. Diagrama de componentes de TPScouting.`
+  - `Figura 4-2. Diagrama de clases del modelo de dominio.`
+  - `Figura 5-1. Secuencia de prediccion de potencial de jugador.`
+  - `Figura 5-2. Secuencia de carga del panel general.`
+  - `Figura 5-3. Diagrama de despliegue en Render.`
+- Documento verificado con `13` secciones, `22` tablas, `12` imagenes inline y `1` shape.
+- Proximo paso propuesto por el usuario: realizar varios casos de uso posibles utilizando la app.
+
+## Casos de uso preparados - 2026-05-22
+
+Se prepararon 8 casos de uso reales contra rutas/templates de la app:
+
+- `CU-01`: iniciar sesion y acceder segun rol.
+- `CU-02`: registrar o editar jugador individual.
+- `CU-03`: cargar jugadores masivamente desde CSV.
+- `CU-04`: consultar ficha integral del jugador.
+- `CU-05`: registrar historiales del jugador.
+- `CU-06`: registrar atributos y rendimiento.
+- `CU-07`: calcular y consultar prediccion de potencial.
+- `CU-08`: analizar panel general y comparar jugadores.
+
+Se decidio no hacer solo un diagrama muy cargado. Se generaron tres PlantUML:
+
+- `docs/diagramas/plantuml/06_casos_uso_general.puml`
+- `docs/diagramas/plantuml/07_casos_uso_gestion_jugadores.puml`
+- `docs/diagramas/plantuml/08_casos_uso_analisis_decision.puml`
+
+Exportados a:
+
+- `docs/diagramas/export/06_casos_uso_general.png|svg`
+- `docs/diagramas/export/07_casos_uso_gestion_jugadores.png|svg`
+- `docs/diagramas/export/08_casos_uso_analisis_decision.png|svg`
+
+Validacion visual:
+
+- General: aceptable como vista resumen.
+- Gestion de jugadores: simplificado con actores agrupados para evitar cruces excesivos.
+- Analisis/decision: simplificado con un actor de analisis y sistema ML.
+- No se detectaron errores de sintaxis PlantUML.
+
+Pendiente:
+
+- Insertar los diagramas de casos de uso en el Word si el usuario los aprueba.
+
+## Casos de uso insertados en Word - 2026-05-22
+
+El usuario aprobo insertar los diagramas de casos de uso y sus versiones ampliadas.
+
+Estado aplicado:
+
+- Word actualizado:
+  - `C:\Users\Usuario\Desktop\TRABAJO_FINAL - Version corregida TPScouting.docx`
+  - `docs/TRABAJO_FINAL_corregido_TPScouting.docx`
+- Backup previo:
+  - `C:\Users\Usuario\Desktop\TRABAJO_FINAL - Version corregida TPScouting.backup_casos_uso_20260522.docx`
+- Script agregado:
+  - `scripts/insert_word_use_case_diagrams.py`
+
+Figuras insertadas en `4.7 Casos de uso`:
+
+- `Figura 4-3. Diagrama de casos de uso general.`
+- `Figura 4-4. Diagrama de casos de uso de gestión de jugadores.`
+- `Figura 4-5. Diagrama de casos de uso de análisis y decisión scout.`
+
+Figuras ampliadas insertadas al final:
+
+- Nueva seccion `10.5 Casos de uso ampliados`.
+- `Figura 10-6. Diagrama de casos de uso general ampliado.`
+- `Figura 10-7. Diagrama de casos de uso de gestión de jugadores ampliado.`
+- `Figura 10-8. Diagrama de casos de uso de análisis y decisión scout ampliado.`
+
+Chequeo posterior:
+
+- Sin `ABSTRACT`.
+- Sin `Keywords:`.
+- Sin `Marcador no definido`.
+- Sin `__TOC_PLACEHOLDER__`.
+- Sin `TOC \o`.
+- Word con `23` imagenes inline, `1` shape, `22` tablas y unas `98` paginas.
+- Suite local ejecutada despues de insertar diagramas/casos de uso: `83 passed, 1 skipped, 4 warnings`.
