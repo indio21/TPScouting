@@ -801,3 +801,81 @@ Chequeo posterior:
 - Sin `TOC \o`.
 - Word con `23` imagenes inline, `1` shape, `22` tablas y unas `98` paginas.
 - Suite local ejecutada despues de insertar diagramas/casos de uso: `83 passed, 1 skipped, 4 warnings`.
+
+## Retome y repo publico de entrega - 2026-07-02
+
+Se creo un repositorio separado para que el profesor revise el codigo sin ver
+archivos internos del repo completo.
+
+Repositorios:
+
+- Repo completo de trabajo: `C:\Tesis\TPScouting`
+- Repo publico de entrega local: `C:\Tesis\TPScouting-entrega`
+- Repo publico GitHub: `https://github.com/indio21/TPScouting-entrega`
+- Rama publica: `main`
+- Commit inicial publico: `a6f8b74 Initial clean delivery repository`
+
+Estado del repo publico al crearlo:
+
+- Contiene codigo de app, tests, requirements, CI, `render.yaml`, diagramas
+  tecnicos, documentacion limpia y artefactos chicos de runtime para inferencia.
+- No contiene Word, notas internas, contexto de chat, auditorias internas,
+  capturas del Word, bases `.db`, backups, `.env`, `.vscode` ni scripts que
+  editan el documento Word.
+- Suite ejecutada en `TPScouting-entrega`: `83 passed, 1 skipped, 4 warnings`.
+- Auditoria final sin resultados para `.docx`, `.db`, `.zip`, `.bak`, `.csv`,
+  `.env`, `training_metadata.json`, `training_splits.json` ni textos internos
+  peligrosos.
+
+Regla operativa guardada:
+
+- Todo cambio se hace primero en `C:\Tesis\TPScouting`.
+- Despues se replica a `TPScouting-entrega` solo lo que pueda ver el profesor.
+- No copiar nunca el repo completo al repo de entrega.
+- No pushear a `TPScouting-entrega` sin revisar diff, correr tests y auditar
+  archivos sensibles.
+
+Documentos y herramientas internas agregadas:
+
+- `docs/politica_sincronizacion_entrega_profesor.md`
+- `scripts/sync_entrega_repo.ps1`
+
+Uso recomendado despues de modificar codigo en `TPScouting`:
+
+```powershell
+cd C:\Tesis\TPScouting
+.\scripts\sync_entrega_repo.ps1
+cd C:\Tesis\TPScouting-entrega
+git status --short
+C:\Tesis\TPScouting\.venv\Scripts\python.exe -m pytest -q
+```
+
+Luego ejecutar auditoria de archivos sensibles en `TPScouting-entrega`:
+
+```powershell
+rg --files -g '*.docx' -g '*.db' -g '*.zip' -g '*.bak' -g '*.csv' -g 'experiments.csv' -g 'training_metadata.json' -g 'training_splits.json' -g '.env'
+rg -n --hidden --glob '!.git/**' --glob '!*.png' --glob '!*.jpg' --glob '!*.jpeg' --glob '!*.pt' --glob '!*.joblib' --glob '!*.svg' "(contexto_para_nuevo_chat|ChatGPT|profesor|Correccion TP|TRABAJO_FINAL|Desktop|C:\\Users|observaciones del profesor|auditoria|cierre_|Version corregida|backup_|AdminDemo123|tpscouting-mvp\.onrender\.com|render-free-deploy|ux-crud-polish|reformas-finales|reformas-complejas|auditoria-correcciones-mvp|CodeGPT|Gemini CLI|registro_mejoras|dashboard\.html\.bak)"
+```
+
+Si ambos repos estan OK:
+
+```powershell
+git add .
+git commit -m "..."
+git push
+```
+
+Importante:
+
+- El script `sync_entrega_repo.ps1` no hace commit ni push.
+- El script copia solo codigo/tests/configuracion claramente segura.
+- Docs limpias, diagramas, `render.yaml` y `requirements-dev.txt` se revisan
+  manualmente si cambiaron, porque en el repo completo pueden arrastrar texto
+  interno.
+
+Punto exacto para manana:
+
+1. Revisar `git status -sb` en ambos repos.
+2. Continuar el trabajo real en `TPScouting`.
+3. Al terminar un cambio, sincronizar con lista blanca hacia `TPScouting-entrega`.
+4. Auditar, testear, commitear y pushear el repo publico solo si esta limpio.

@@ -1347,7 +1347,7 @@ def main(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Genera jugadores aleatorios")
     parser.add_argument("--num-players", type=int, default=1000, help="Numero de jugadores a crear")
-    parser.add_argument("--db-url", type=str, default="sqlite:///players.db", help="URL de la base de datos")
+    parser.add_argument("--db-url", type=str, default="sqlite:///players_training.db", help="URL de la base de datos")
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED, help="Semilla para reproduccion de datos")
     parser.add_argument("--min-age", type=int, default=EVAL_MIN_AGE, help="Edad minima de generacion")
     parser.add_argument("--max-age", type=int, default=EVAL_MAX_AGE, help="Edad maxima de generacion")

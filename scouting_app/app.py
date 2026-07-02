@@ -283,7 +283,7 @@ APP_DB_URL = normalize_db_url(
     base_dir=BASE_DIR,
 )
 if APP_DB_URL.rsplit("/", 1)[-1] == "players.db":
-    app.logger.warning("APP_DB_URL apunta a players.db (legacy). Se recomienda players_updated_v2.db. Evidencia: scouting_app/players.db")
+    app.logger.warning("APP_DB_URL apunta a players.db (legacy). Se recomienda players_updated_v2.db.")
 
 TRAINING_DB_URL = normalize_db_url(
     os.environ.get("TRAINING_DB_URL", "sqlite:///players_training.db"),
