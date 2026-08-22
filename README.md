@@ -1,5 +1,7 @@
 # TPScouting - Scouting Inteligente con IA (MVP)
 
+[![CI](https://github.com/indio21/TPScouting/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/indio21/TPScouting/actions/workflows/ci.yml)
+
 Trabajo final orientado al scouting de futbol juvenil, con una app web para:
 
 - registrar jugadores y sus atributos
@@ -41,12 +43,12 @@ Trabajo final orientado al scouting de futbol juvenil, con una app web para:
 
 ## Estado actual
 
-- Fecha de referencia: 2026-05-18.
+- Fecha de referencia: 2026-08-21.
 - Escala de atributos tecnicos, fisicos en escala y reportes scout: `1-20`.
 - Potencial bajo: menor a `60%`; medio: `60%` a `79%`; alto: `80%` o mas.
 - La edad y categoria juvenil se derivan de `birth_date`; `Player.age` queda como compatibilidad operativa.
-- Tests al ultimo cierre: `83 passed, 1 skipped`, cobertura total `80%`.
-- Cierre pre-entrega: faltan alinear el Word final de tesis con el MVP real y ejecutar smoke real en Render con URL publica.
+- Tests al ultimo cierre: `84 passed, 1 skipped, 4 warnings`, cobertura total `80%` (`5.083` sentencias; `1.032` no cubiertas).
+- La app, los artefactos ML y los diagramas auditados estan alineados con la entrega escrita. La evidencia de Render es historica; la disponibilidad actual del servicio no es un requisito para ejecutar y revisar el MVP localmente.
 
 ## Bases de datos del MVP
 
@@ -163,9 +165,9 @@ Deploy MVP verificado el 2026-05-19:
 - Ajuste posterior: listado de jugadores y comparador multiple usan cache GET
   in-memory; Render Free usa 20 jugadores por pagina y cache TTL de 300 segundos.
 
-Para cerrar la entrega academica, el deploy real debe verificarse contra la URL publicada.
-El Word final debe afirmar el alcance real: MVP academico con dataset sintetico, cache y
-rate limiting in-memory, migraciones manuales y validacion externa pendiente.
+El documento final presenta el alcance real: MVP academico con dataset sintetico, cache y
+rate limiting in-memory, migraciones manuales y validacion externa pendiente. La URL de
+Render se conserva como evidencia historica y no como garantia de disponibilidad actual.
 
 Seguridad MVP:
 
