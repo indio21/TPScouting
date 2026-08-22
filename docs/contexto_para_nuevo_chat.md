@@ -879,3 +879,161 @@ Punto exacto para manana:
 2. Continuar el trabajo real en `TPScouting`.
 3. Al terminar un cambio, sincronizar con lista blanca hacia `TPScouting-entrega`.
 4. Auditar, testear, commitear y pushear el repo publico solo si esta limpio.
+
+## Auditoria tecnica final de tesis - 2026-07-13
+
+Se audito en profundidad el documento final contra codigo, configuracion,
+pruebas, artefactos ML, documentacion, CI y deploy:
+
+- Word del repo:
+  `docs/tesis_final/TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_AUDITADA.docx`
+- Copia del Escritorio:
+  `C:\Users\Usuario\Desktop\TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_AUDITADA - copia.docx`
+- Ambos archivos son identicos, SHA-256:
+  `1DFFBC7AA6BD7EE480C5D34E6AD09A856F543311D0A58422F89984C4A181C7BA`.
+- No se modifico ninguno de los Word.
+- No se modificaron codigo, configuracion, modelos, datasets ni bases.
+- No se reentreno PlayerNet.
+
+Dictamen:
+
+- `APTO CON CORRECCIONES MENORES antes del envio`.
+- Se auditaron `104` afirmaciones tecnicas.
+- `82` COINCIDE.
+- `6` COINCIDE PARCIALMENTE.
+- `10` NO COINCIDE.
+- `1` NO VERIFICABLE dentro de la matriz.
+- `5` AFIRMACION DESACTUALIZADA.
+- El inventario separado registra `15` vacios de evidencia/no verificables.
+
+Entregables internos creados:
+
+- `docs/auditoria_final_tesis/matriz_trazabilidad_final.md`
+- `docs/auditoria_final_tesis/contradicciones_criticas.md`
+- `docs/auditoria_final_tesis/afirmaciones_no_verificables.md`
+- `docs/auditoria_final_tesis/correcciones_word_propuestas.md`
+- `docs/auditoria_final_tesis/resumen_auditoria_final.md`
+- `docs/auditoria_final_tesis/comandos_auditoria_final.txt`
+
+Principales correcciones necesarias en el Word:
+
+1. Actualizar indice general, lista de figuras, lista de tablas y captions.
+   `5. DESARROLLO 24` esta desactualizado; Tabla 4-4 aparece antes de 4-3 y
+   Figura 10-9 antes de 10-1 a 10-8.
+2. Corregir Tabla 4-2/P371: la app no usa Flask-Migrate/Alembic; implementa
+   creacion de esquema y migraciones manuales con `db_utils.py`.
+3. Corregir Tabla 4-5: no existen `stamina`, `strength`, `agility`, `marking`,
+   `work_rate` ni `composure` como campos persistidos.
+4. Redibujar Figura 5-1: la salida principal es `combined_prob`, que combina
+   PlayerNet crudo, historial y ajuste posicional. La calibrada es secundaria.
+   Modelo no disponible devuelve HTTP 500, no una vista 200.
+5. Corregir Anexo B: tres comandos de datos/entrenamiento/evaluacion estan
+   incompletos. Usar los comandos exactos de `RUNBOOK.md:109-117`.
+6. Corregir Figura 5-3: la rama actual de Render no es verificable y el lock
+   del pipeline no es solo in-memory.
+7. Reemplazar/ajustar Figura 6-6: el chip de edad aparece vacio y "Ajuste
+   historial" tambien incorpora ajuste posicional.
+8. Describir SQLite como almacenamiento local liviano, no como solucion para
+   grandes volumenes.
+9. Cambiar "generacion de informes" por visualizaciones, vistas imprimibles y
+   registro de reportes scout; PDF/export formal sigue como trabajo futuro.
+
+Hechos centrales que ya estan correctos en el Word:
+
+- `input_dim=68`: 11 features base + 52 historicas + 5 de posicion.
+- Target oficial `temporal_target_label`: 1.597 positivos/18.403 negativos.
+- Dataset sintetico de 20.000; split 14.000/3.000/3.000; seed 42.
+- 45 epocas solicitadas, 15 ejecutadas, mejor epoca 5, patience 10.
+- Metricas crudas, calibradas y baselines estan separadas correctamente.
+- `combined_prob` visible no se presenta como evaluado en test.
+- Se reconoce contaminacion metodologica por construir target antes del split.
+- No se afirma validacion con jugadores reales ni infraestructura Big Data.
+- Conclusiones y objetivos tienen limitaciones realistas.
+
+Validacion ejecutada el 13/07/2026:
+
+- Suite: `83 passed, 1 skipped, 4 warnings in 49.16s`.
+- Cobertura: `79%`, 5.082 sentencias, 1.062 no cubiertas.
+- Tests ejecutados en `TPScouting-entrega`, cuyo codigo/tests estaba
+  sincronizado con el repo fuente.
+- CI publica mas reciente: run #71 `success`, commit
+  `fa8a50d1173f2760329a45f11fbf93a709721235`; no certifica HEAD local.
+- Smoke Render del 13/07/2026: timeout; no permite afirmar disponibilidad
+  actual ni caida permanente.
+- Temporales de render, coverage y `experiments.csv` fueron eliminados.
+
+Estado Git al cierre:
+
+- `C:\Tesis\TPScouting`: `main...origin/main [ahead 1]`.
+- HEAD fuente: `7d7680e04dd15b4c4f01d9e0aee8711aeea06f0d`.
+- Hay contenido interno sin trackear en `docs/auditoria_final_tesis/`,
+  `docs/auditoria_tesis/` y `docs/tesis_final/`. No borrar ni revertir.
+- `C:\Tesis\TPScouting-entrega`: `main...origin/main`, limpio.
+- HEAD entrega: `a6f8b740894504bbb7e43cf38abeebfbf89eae24`.
+- No se hizo commit, push ni sincronizacion del material de auditoria.
+- Los documentos de auditoria y el Word son internos: no copiarlos al repo
+  publico del profesor salvo decision explicita del usuario.
+
+Punto exacto para retomar manana:
+
+1. Ejecutar `git status -sb` en ambos repos y confirmar que el repo de entrega
+   continua limpio.
+2. Abrir primero `docs/auditoria_final_tesis/resumen_auditoria_final.md` y
+   `docs/auditoria_final_tesis/contradicciones_criticas.md`.
+3. Decidir con el usuario si se aplican las correcciones propuestas al Word.
+4. Si se autoriza, crear backup del Word y corregir solo el documento, siguiendo
+   `correcciones_word_propuestas.md`; no cambiar codigo para hacerlo coincidir.
+5. Actualizar campos/indices al final, exportar PDF y repetir auditoria visual.
+6. Mantener `TPScouting-entrega` sin Word, auditorias ni documentacion interna.
+
+## Actualizacion de cierre - 21/08/2026
+
+Documento final generado en el Escritorio:
+
+- `C:\Users\Usuario\Desktop\TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_COMPLETA_AUDITADA_21-08-2026.docx`
+- SHA-256: `CBF906423A5EF5CC1CB2B2047A018490CDC118D5F6E1C5C6B3B437EB92BE95AC`.
+- 97 paginas fisicas. La portada usa numero logico 0 oculto; la segunda pagina
+  comienza en 1. Los pies estan centrados y la numeracion es continua.
+- Indice general, lista de figuras y lista de tablas actualizados en Word.
+- 25 captions de figuras verificados, sin imagen faltante. El documento contiene
+  27 imagenes inline porque la Figura 6-5 se compone de tres capturas.
+- Se agregaron la curva real de entrenamiento, las siete evidencias de
+  aplicacion/CI y la evidencia CI ampliada del Anexo 10.
+- La captura defectuosa de prediccion con edad vacia fue eliminada del paquete
+  DOCX y reemplazada por una captura real en navegador contra SQLite temporal.
+
+Correccion tecnica asociada a la evidencia de prediccion:
+
+- `scouting_app/routes/players.py`: la vista ahora expone
+  `player_view.current_age = player.current_age`.
+- `scouting_app/templates/prediction.html`: la etiqueta visible dice
+  `Ajuste combinado` y aclara historial mas ajuste posicional.
+- `tests/test_mvp_regressions.py`: se agrego una regresion para edad visible y
+  etiqueta combinada.
+- Suite local final: `84 passed, 1 skipped, 4 warnings in 34.79s`.
+
+Auditoria final de los nueve pendientes:
+
+- Indices, captions y numeracion: corregidos y verificados.
+- Flask-Migrate/Alembic: presentados solo como herramientas no incorporadas;
+  el proyecto documenta `Base.metadata.create_all` y migraciones manuales.
+- Tabla 4-5: corregida para usar dimensiones soportadas por el modelo.
+- Inferencia: `combined_prob` es principal y la calibracion es secundaria.
+- Anexo B: comandos completos; el smoke usa la URL historica documentada.
+- Render/locks/cache: rama actual no verificada, memoria local y lock de thread
+  mas archivo atomico documentados.
+- Prediccion: edad visible y ajuste combinado corregidos.
+- SQLite: almacenamiento local liviano; PostgreSQL para Render; no se afirma
+  escalabilidad Big Data.
+- Informes/PDF: exportacion formal declarada como trabajo futuro.
+
+Limitaciones que deben conservarse en cualquier entrega posterior:
+
+- La ejecucion CI #71 es evidencia historica del commit `fa8a50d...`; no
+  certifica el HEAD local actual.
+- El control de Render del 21/08/2026 termino por timeout; la disponibilidad
+  vigente sigue sin verificarse y el documento no afirma lo contrario.
+- No se reentreno PlayerNet y no se genero un PDF final en esta etapa.
+- No se hizo commit, push ni se modifico `TPScouting-entrega`.
+
+Dictamen del cierre documental: `LISTO PARA REVISIÓN FINAL HUMANA`.
