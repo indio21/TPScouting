@@ -43,6 +43,22 @@ Este runbook cubre operación mínima, backup/restore de SQLite, healthcheck y b
 - Los atributos tecnicos, campos fisicos en escala y reportes scout se validan como escala `1-20`. `ensure_player_columns` normaliza valores heredados fuera de rango.
 - Las categorias juveniles se derivan del anio de `birth_date`. La edad operativa tambien se recalcula desde esa fecha en altas, ediciones e importacion CSV.
 
+## 1.3) Demo local portable
+
+La evaluacion local recomendada genera 60 jugadores sinteticos, comprueba edad/nacimiento/categoria, crea el acceso demo e inicia Flask:
+
+```powershell
+.\.venv\Scripts\python.exe .\scripts\iniciar_demo.py
+```
+
+La base `scouting_app/demo_profesor.db` queda ignorada por Git y conserva las modificaciones realizadas desde la interfaz. Para regenerar exclusivamente esa base:
+
+```powershell
+.\.venv\Scripts\python.exe .\scripts\iniciar_demo.py --recrear
+```
+
+Las credenciales publicas `profesor_demo` / `DemoProfesor123` son solo para evaluacion local y no deben utilizarse en produccion.
+
 ## 1.3) Estado de validacion
 
 - Ultima suite completa documentada: `83 passed, 1 skipped`, cobertura total `80%`.

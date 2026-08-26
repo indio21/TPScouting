@@ -1,8 +1,65 @@
 # Contexto Para Nuevo Chat
 
-Fecha: 2026-05-11
+Fecha de ultima actualizacion: 2026-08-26
 
 Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting` en un chat nuevo sin arrastrar toda la conversacion anterior.
+
+## Cierre Vigente Al 2026-08-26
+
+Esta seccion tiene prioridad sobre estados historicos anteriores de este archivo.
+
+### Edad, fecha de nacimiento y categoria: corregido y verificado
+
+- El usuario observo `Cat. N/D` al ejecutar la aplicacion con una copia historica anterior al backfill.
+- Causa comprobada: esa copia tenia 100 jugadores sinteticos con edad legacy `12`, no tenia la columna original `birth_date` y, al migrar el esquema, los 100 valores quedaron `NULL`.
+- La regla funcional del codigo es correcta: `Player.category_year` devuelve `birth_date.year` y `Player.current_age` calcula la edad desde `birth_date`.
+- No fue necesario modificar esa regla ni los templates. Se reconstruyo `scouting_app/players_updated_v2.db` mediante `sync_shortlist.py` desde una copia temporal de la base sintetica historica. El flujo existente genera fechas demo deterministicas coherentes con la edad cuando el origen sintetico no tiene nacimiento.
+- La copia historica original no se modifico. El backfill deterministico se aplico solamente a datos sinteticos/demo; no debe aplicarse como si produjera fechas reales para jugadores reales.
+- Resultado de datos: 100 jugadores, 0 fechas faltantes, 0 discrepancias entre edad y fecha, categorias 2013/2014 derivadas de los nacimientos y todos los historiales deportivos conservados.
+- Verificacion HTTP autenticada: listado, ficha `/player/30201` y prediccion `/player/30201/predict` respondieron `200`; muestran fecha `2013-12-17` y `Cat. 2013`, sin `Cat. N/D`.
+- Healthcheck: `status=ok`, base `ok`, 100 jugadores y todos los contadores de calidad en cero.
+- Suite completa posterior a la demo portable: `87 passed, 1 skipped, 4 warnings`. Los cuatro warnings conocidos de scikit-learn son por columnas auxiliares completamente `NaN` en dos pruebas y no representan fallos.
+
+### Demo portable para el profesor
+
+- Se decidio no versionar una SQLite mutable. El repositorio limpio genera su propia base local reproducible.
+- `scripts/iniciar_demo.py` prepara por defecto 60 jugadores sinteticos con semilla `42`, crea el usuario local y levanta Flask con un unico comando Python.
+- Credenciales locales documentadas: `profesor_demo` / `DemoProfesor123`. Son publicas solo para evaluacion local y no deben usarse en produccion.
+- La base generada es `scouting_app/demo_profesor.db`, permanece ignorada por Git y conserva las modificaciones del evaluador. `--recrear` permite regenerar exclusivamente esa base.
+- El script verifica jugadores, nacimiento, edad, categoria, credenciales y presencia de estadisticas, atributos historicos, participaciones, informes scout, evaluaciones fisicas y disponibilidad antes de iniciar.
+- La documentacion publica esta en `GUIA_DEMO_PROFESOR.md`, README y RUNBOOK. El repo del profesor no contiene Word, auditorias, evidencias ni contexto interno.
+- Validacion real desde base vacia: 60 jugadores, controles de calidad en cero, login correcto y respuestas `200` en health, listado, dashboard, ficha y prediccion. No aparecio `Cat. N/D`.
+- Render conserva su configuracion independiente de 100 jugadores; el cambio de 60 corresponde a la evaluacion local del profesor.
+
+### Estado actual de la imagen de jugador
+
+- Se abandono la generacion masiva por API (fal.ai/Pollinations); no quedaron generadores ni imagenes parciales en el arbol final.
+- La solucion vigente es una silueta local negra: `scouting_app/static/img/player-silhouette.svg`.
+- `default_player_photo_url()` devuelve esa silueta y el backfill reemplaza URLs DiceBear y rutas generadas antiguas, conservando fotos manuales validas.
+- La imagen se usa en listado, ficha, prediccion y comparadores.
+- Suite local verificada despues de este cambio: `86 passed, 1 skipped, 4 warnings`.
+
+### GitHub vigente
+
+- Repo principal `https://github.com/indio21/TPScouting.git`: `main` en `1803d88406e14c1f9948ca82c0e39d5c85bec0ff` (`feat: use local player silhouette fallback`). CI #74 correcta.
+- Repo limpio para el profesor `https://github.com/indio21/TPScouting-entrega.git`: `main` en `b3b7cf87fefec49aa5b72aa7e9cf862de88c28b5` (`feat: use local player silhouette fallback`). CI #6 correcta.
+- Ambos repos remotos quedaron sincronizados con esos commits.
+- En el repo principal hay archivos locales no trackeados de auditoria, evidencias Word y scripts auxiliares. Son trabajo del usuario/proyecto; no borrarlos ni agregarlos masivamente sin revisar.
+
+### Documento Word final vigente
+
+- Archivo para inspeccion final: `C:\Users\Usuario\Desktop\TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_REVISADA_21-08-2026.docx`.
+- SHA256: `CE9908DE0C26E1EB7E27E8ABE3281123EC0E9F3AA60A8E78C21E5EC1B64328E5`.
+- Tiene 96 paginas fisicas; la portada no muestra numero y la segunda pagina comienza como pagina logica 1.
+- Contiene 3 indices/listas actualizados, 25 figuras y 22 tablas. El ABSTRACT en ingles se omitio por decision expresa del usuario.
+- La silueta agregada despues no requiere modificar el Word salvo que el usuario lo solicite expresamente.
+
+### Ultima ejecucion local
+
+- El 2026-08-26 se levanto la app corregida en `http://127.0.0.1:5000/` y el healthcheck respondio `200`.
+- Acceso comprobado: usuario `admin`, contrasenia `admin` (credencial heredada solo para revision local).
+- La base activa local es `scouting_app/players_updated_v2.db`; es un artefacto generado e ignorado por Git.
+- La aplicacion completo las 100 rutas de foto con la silueta local durante el arranque.
 
 ## Instrucciones Clave Del Usuario
 

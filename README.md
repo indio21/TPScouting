@@ -10,6 +10,16 @@ Trabajo final orientado al scouting de futbol juvenil, con una app web para:
 - estimar potencial con un modelo MLP (PyTorch)
 - visualizar datos en dashboard y fichas
 
+## Demo local portable
+
+Despues de instalar `requirements.txt`, este comando genera y verifica `60` jugadores sinteticos, crea un administrador local e inicia la aplicacion:
+
+```powershell
+.\.venv\Scripts\python.exe .\scripts\iniciar_demo.py
+```
+
+Abrir `http://127.0.0.1:5000/` con usuario `profesor_demo` y contrasena `DemoProfesor123`. Los datos son ficticios y reproducibles con semilla `42`; no representan futbolistas reales. La guia completa para Windows y Linux/macOS esta en [GUIA_DEMO_PROFESOR.md](GUIA_DEMO_PROFESOR.md).
+
 ## Stack
 
 - Python + Flask
@@ -32,6 +42,8 @@ Trabajo final orientado al scouting de futbol juvenil, con una app web para:
 - `docs/auditoria_pendientes_2026-05-17.md`: riesgos vivos y cierre por fases de auditoria
 - `docs/cierre_pre_entrega_word_render_2026-05-18.md`: cierre previo a entrega con Word final y deploy Render
 - `scripts/smoke_render.py`: smoke HTTP contra la URL real de Render
+- `scripts/iniciar_demo.py`: genera y ejecuta una demo local portable con 60 jugadores
+- `GUIA_DEMO_PROFESOR.md`: instrucciones de evaluacion, reinicio y alcance de los datos demo
 - `render.yaml`: configuracion de deploy en Render
 - `RUNBOOK.md`: guia operativa (healthcheck, backup/restore, admin, incidentes)
 
@@ -43,11 +55,11 @@ Trabajo final orientado al scouting de futbol juvenil, con una app web para:
 
 ## Estado actual
 
-- Fecha de referencia: 2026-08-21.
+- Fecha de referencia: 2026-08-26.
 - Escala de atributos tecnicos, fisicos en escala y reportes scout: `1-20`.
 - Potencial bajo: menor a `60%`; medio: `60%` a `79%`; alto: `80%` o mas.
 - La edad y categoria juvenil se derivan de `birth_date`; `Player.age` queda como compatibilidad operativa.
-- Tests al ultimo cierre: `84 passed, 1 skipped, 4 warnings`, cobertura total `80%` (`5.083` sentencias; `1.032` no cubiertas).
+- Tests al ultimo cierre: `87 passed, 1 skipped, 4 warnings`.
 - La app, los artefactos ML y los diagramas auditados estan alineados con la entrega escrita. La evidencia de Render es historica; la disponibilidad actual del servicio no es un requisito para ejecutar y revisar el MVP localmente.
 
 ## Bases de datos del MVP
@@ -71,6 +83,8 @@ solo los artefactos chicos de runtime:
 Las bases SQLite, metadata de entrenamiento y splits siguen fuera de Git.
 
 ## Ejecucion local
+
+Para una demo autocontenida con datos, usar el comando portable indicado arriba. La ejecucion manual basica es:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
