@@ -41,9 +41,9 @@ Esta seccion tiene prioridad sobre estados historicos anteriores de este archivo
 
 ### GitHub vigente
 
-- Repo principal `https://github.com/indio21/TPScouting.git`: `main` en `1803d88406e14c1f9948ca82c0e39d5c85bec0ff` (`feat: use local player silhouette fallback`). CI #74 correcta.
-- Repo limpio para el profesor `https://github.com/indio21/TPScouting-entrega.git`: `main` en `b3b7cf87fefec49aa5b72aa7e9cf862de88c28b5` (`feat: use local player silhouette fallback`). CI #6 correcta.
-- Ambos repos remotos quedaron sincronizados con esos commits.
+- Demo portable publicada en el repo principal `https://github.com/indio21/TPScouting.git` mediante el commit funcional `495fee9e33d5d9f72d4145bee6e36ba71092b337` (`feat: add portable professor demo`). CI correcta: `https://github.com/indio21/TPScouting/actions/runs/33017040223`.
+- Repo limpio para el profesor `https://github.com/indio21/TPScouting-entrega.git`: `main` en `ae146469feffd1ecdc022d7dbabdd59f3882bc88` (`feat: add portable professor demo`). CI correcta: `https://github.com/indio21/TPScouting-entrega/actions/runs/33017041115`.
+- El repositorio principal puede tener un commit documental posterior para guardar este contexto; `495fee9` identifica el cambio funcional verificado.
 - En el repo principal hay archivos locales no trackeados de auditoria, evidencias Word y scripts auxiliares. Son trabajo del usuario/proyecto; no borrarlos ni agregarlos masivamente sin revisar.
 
 ### Documento Word final vigente
