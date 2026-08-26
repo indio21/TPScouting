@@ -235,10 +235,10 @@ Acciones:
 - En despliegues con mas de una instancia o proceso, el cache no se comparte entre workers.
 - Para este MVP se recomienda mantener una sola instancia de aplicacion si se quiere consistencia inmediata del dashboard.
 
-### 8.6 Dependencia externa DiceBear
-- Si un jugador no tiene `photo_url`, la app genera una URL publica de DiceBear (`api.dicebear.com`) para que el navegador cargue un avatar.
-- El servidor no descarga esa imagen, por lo que no hay timeout server-side asociado.
-- Si DiceBear no responde o el usuario no tiene acceso externo, la ficha sigue funcionando pero el avatar puede no mostrarse.
+### 8.6 Fallback local de imagen
+- Si un jugador no tiene una foto manual, la app usa `scouting_app/static/img/player-silhouette.svg`.
+- El backfill reemplaza URLs heredadas de DiceBear y rutas antiguas por ese recurso local.
+- No existe una dependencia externa ni una llamada HTTP para cargar el avatar por defecto.
 
 ### 8.7 Limite de arquitectura del MVP
 - `scouting_app/app.py` sigue concentrando configuracion, rutas, seguridad, cache, pipeline e inferencia.
