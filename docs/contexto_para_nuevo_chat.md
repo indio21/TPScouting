@@ -41,10 +41,19 @@ Esta seccion tiene prioridad sobre estados historicos anteriores de este archivo
 
 ### GitHub vigente
 
-- Demo portable publicada en el repo principal `https://github.com/indio21/TPScouting.git` mediante el commit funcional `495fee9e33d5d9f72d4145bee6e36ba71092b337` (`feat: add portable professor demo`). CI correcta: `https://github.com/indio21/TPScouting/actions/runs/33017040223`.
-- Repo limpio para el profesor `https://github.com/indio21/TPScouting-entrega.git`: `main` en `ae146469feffd1ecdc022d7dbabdd59f3882bc88` (`feat: add portable professor demo`). CI correcta: `https://github.com/indio21/TPScouting-entrega/actions/runs/33017041115`.
-- El repositorio principal puede tener un commit documental posterior para guardar este contexto; `495fee9` identifica el cambio funcional verificado.
+- Correccion funcional vigente en el repo principal `https://github.com/indio21/TPScouting.git`: `cb7e24e2a8a192720f5366de2a46269ea15ee4a4` (`fix: disable debug by default`). CI correcta: `https://github.com/indio21/TPScouting/actions/runs/33018574790`.
+- Repo limpio para el profesor `https://github.com/indio21/TPScouting-entrega.git`: `main` en `a5b1e6960c86a98aa9c8270842ac705f5fce004d` (`fix: disable debug by default`). CI correcta: `https://github.com/indio21/TPScouting-entrega/actions/runs/33018574675`.
+- El repositorio principal puede tener un commit documental posterior para guardar este contexto; `cb7e24e` identifica el ultimo cambio funcional verificado.
 - En el repo principal hay archivos locales no trackeados de auditoria, evidencias Word y scripts auxiliares. Son trabajo del usuario/proyecto; no borrarlos ni agregarlos masivamente sin revisar.
+
+### Correcciones menores finales del 26/08/2026
+
+- El arranque directo de `scouting_app/app.py` ya no habilita debug de forma fija: usa `FLASK_DEBUG` y queda desactivado por defecto. La comprobacion controlada devolvio `DEBUG_DEFAULT=False`.
+- El RUNBOOK interno ya no presenta DiceBear como dependencia externa vigente. Documenta la silueta local y el reemplazo de URLs heredadas.
+- Suite local completa: `87 passed, 1 skipped, 4 warnings`; los warnings conocidos de scikit-learn no son fallos.
+- Demo del repo del profesor recreada y verificada: 60 jugadores, 0 fechas faltantes, 0 edades inconsistentes y 0 categorias faltantes; estadisticas, historiales, partidos, informes y evaluaciones presentes.
+- Prueba HTTP real de la demo: login GET `200`, login POST `302`, listado `200` y dashboard `200`; no aparece `Cat. N/D` y se carga `player-silhouette.svg`.
+- Auditoria del repo de entrega: 102 archivos versionados y 0 bases `.db`, documentos Word, auditorias internas, contexto interno o archivos `.env` trackeados.
 
 ### Documento Word final vigente
 
