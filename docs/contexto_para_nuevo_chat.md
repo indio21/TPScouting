@@ -8,6 +8,16 @@ Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting`
 
 Esta seccion tiene prioridad sobre estados historicos anteriores de este archivo.
 
+### Estado de la revisión escrita al cierre del 26/08/2026
+
+- El archivo que el usuario identificó como vigente es `C:\Users\Usuario\Desktop\TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_REVISADA_26-08-2026_v2.docx`.
+- SHA-256 verificado del archivo vigente: `77261990098B6FD0761C7E1D27FCAF8CB91BEF8FE13346C39836075E6049955D`.
+- El usuario indicó expresamente que no se modifique el Word ni se altere la correlación ya existente con la aplicación. El archivo v2 original permanece intacto.
+- Se redactaron únicamente en el chat un nuevo resumen, una versión ampliada de `7.1 Conclusiones` y estas palabras clave: `scouting juvenil; fútbol formativo; inteligencia artificial; aprendizaje automático; análisis de datos; PyTorch`.
+- Esos párrafos todavía no deben insertarse ni reemplazar el contenido del Word sin autorización expresa del usuario.
+- Durante una prueba previa se generaron copias internas de trabajo (`docs/tesis_final/*_audit_source.docx`, `*_v3.docx` y diagnósticos) y una copia en el Escritorio `TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_REVISADA_26-08-2026_v3.docx`. No son la versión aprobada; no deben presentarse como final ni sobrescribir v2.
+- La próxima sesión debe revisar el Word completo para mejorar el texto, manteniendo gráficos e imágenes sin auditoría visual exhaustiva y sin modificar el archivo hasta que el usuario lo autorice.
+
 ### Edad, fecha de nacimiento y categoria: corregido y verificado
 
 - El usuario observo `Cat. N/D` al ejecutar la aplicacion con una copia historica anterior al backfill.
@@ -57,10 +67,11 @@ Esta seccion tiene prioridad sobre estados historicos anteriores de este archivo
 
 ### Documento Word final vigente
 
-- Archivo para inspeccion final: `C:\Users\Usuario\Desktop\TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_REVISADA_21-08-2026.docx`.
-- SHA256: `CE9908DE0C26E1EB7E27E8ABE3281123EC0E9F3AA60A8E78C21E5EC1B64328E5`.
-- Tiene 96 paginas fisicas; la portada no muestra numero y la segunda pagina comienza como pagina logica 1.
-- Contiene 3 indices/listas actualizados, 25 figuras y 22 tablas. El ABSTRACT en ingles se omitio por decision expresa del usuario.
+- Archivo para inspeccion final: `C:\Users\Usuario\Desktop\TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_REVISADA_26-08-2026_v2.docx`.
+- SHA256: `77261990098B6FD0761C7E1D27FCAF8CB91BEF8FE13346C39836075E6049955D`.
+- Tiene 94 paginas fisicas en la copia auditada; la portada no muestra numero y la segunda pagina comienza como pagina logica 1.
+- Contiene 3 indices/listas, 27 imagenes inline y 22 tablas. El ABSTRACT en ingles se omitio por decision expresa del usuario.
+- No modificar este archivo ni actualizar campos/indices automaticamente hasta recibir autorizacion expresa; las listas de figuras y tablas no se regeneran correctamente con Word.
 - La silueta agregada despues no requiere modificar el Word salvo que el usuario lo solicite expresamente.
 
 ### Ultima ejecucion local
