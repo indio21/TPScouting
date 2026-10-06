@@ -1,12 +1,12 @@
 # TPScouting — contexto completo para reanudar
 
-Fecha de corte: 2026-10-05 (America/Buenos_Aires).
+Fecha de corte: 2026-10-06 (America/Buenos_Aires).
 
 ## Instrucción de reanudación
 
-Continuar con el **Bloque 7 — Redacción, fuentes y estructura** del plan de
-`C:\Users\Usuario\Desktop\correccion-octubre.md`. No repetir los bloques 0–6 y
-no comenzar el Bloque 8 hasta que el usuario lo indique o autorice continuar.
+Continuar con el **Bloque 8 — Cierre y entrega verificable** del plan de
+`C:\Users\Usuario\Desktop\correccion-octubre.md`. No repetir los bloques 0–7.
+No sincronizar el repositorio de entrega sin autorización específica.
 
 Antes de editar, leer este archivo, el registro acumulado
 `docs/revision_octubre_2026/registro_bloques.md`, la corrección de octubre y el
@@ -41,7 +41,7 @@ años, datos sintéticos y ninguna validación con jugadores reales.
 | 4 | Completado y probado | Calidad puntual y pruebas; 116 passed, 1 skipped, 4 warnings; cobertura 83,74 % |
 | 5 | Completado con D-16 parcial | Auditoría ML reproducible; no hubo reentrenamiento |
 | 6 | Completado como borrador | Copia documental corregida; original aprobado intacto |
-| 7 | Pendiente | Redacción, fuentes y estructura completas |
+| 7 | Completado el 2026-10-06 | Redacción, fuentes y estructura corregidas en una nueva copia |
 | 8 | Pendiente | Verificación final, índices, PDF, CI y eventual sincronización autorizada |
 
 El detalle individual de IDs, evidencia, límites y pendientes está en
@@ -90,9 +90,13 @@ Backup exacto:
 
 `docs/revision_octubre_2026/word/ORIGINAL_APROBADO_26-08-2026_v2_BACKUP_SHA77261990.docx`
 
-Borrador sobre el cual continuar en los bloques 7 y 8:
+Borrador del Bloque 6, conservado como punto de recuperación:
 
 `docs/revision_octubre_2026/word/TRABAJO_FINAL_TPScouting_CORREGIDO_OCTUBRE_2026_BORRADOR.docx`
+
+Documento vigente para continuar con el Bloque 8:
+
+`docs/revision_octubre_2026/word/TRABAJO_FINAL_TPScouting_CORREGIDO_BLOQUE7_2026-10-06.docx`
 
 Script reproducible que genera el borrador del Bloque 6:
 
@@ -108,30 +112,26 @@ El abstract en inglés fue incorporado porque la autorización actual incluyó e
 Bloque 6, aunque anteriormente había sido omitido por decisión del usuario. El
 legajo no fue suministrado y figura como `[PENDIENTE DE INFORMAR]`.
 
+## Bloque 7 completado
+
+La redacción, las fuentes y la estructura fueron revisadas el 2026-10-06. El
+detalle y la evidencia se encuentran en `registro_bloques.md` y
+`auditoria_fuentes_bloque7.md`. El DOCX conserva 10 secciones, 27 objetos
+gráficos y los mismos 20 archivos multimedia; contiene 19 tablas después de
+eliminar tres comparativas de tecnologías no utilizadas.
+
 ## Alcance exacto del próximo bloque
 
-En el Bloque 7 se deben resolver todas las observaciones de redacción, fuentes y
-estructura de la sección F:
+El próximo paso es el **Bloque 8 — Cierre y entrega verificable**. Debe ejecutarse
+sólo cuando el usuario lo indique. Incluye:
 
-1. Corregir artefactos de edición, enumeraciones, puntuación, voz y lenguaje
-   promocional.
-2. Unificar términos, tiempos verbales y nombres de secciones y pantallas.
-3. Revisar numeración de subtítulos, “Conclusión/Conclusiones”, Discusión y
-   duplicación de diagramas.
-4. Conservar anexos ampliados solamente cuando mejoren la legibilidad y explicar
-   su función.
-5. No inventar fechas para la Tabla 3-1; si la evidencia no existe, mantenerla
-   como secuencia de actividades con nombre correcto.
-6. Auditar cada referencia y cita: autores, título, año, DOI/URL y pertinencia.
-7. Aplicar APA 7 sin inventar fechas de consulta ni eliminar bibliografía válida
-   sólo por su antigüedad.
-8. Mantener Scrum/Sprint alineado con lo realmente aplicado: trabajo incremental
-   con algunas prácticas, no Scrum formal completo.
-
-Trabajar sobre una nueva copia derivada del borrador del Bloque 6 o ampliar el
-script de transformación de forma reproducible. Conservar el borrador del Bloque
-6 como punto de recuperación. No regenerar todavía índices ni campos: esa acción
-queda para el Bloque 8 y requiere verificación visual posterior.
+1. Ejecutar suite y cobertura finales con fecha, commit, versiones y límites.
+2. Probar la demo desde entorno y base vacíos.
+3. Actualizar de forma controlada índices, lista de figuras y lista de tablas.
+4. Exportar y revisar visualmente el PDF completo.
+5. Preparar el diff selectivo para la entrega; sincronizar sólo con autorización.
+6. Usar CI del commit efectivamente entregado o mantener el punto abierto.
+7. Cerrar la matriz sólo cuando cada hallazgo tenga evidencia.
 
 ## Pendientes que no deben perderse
 
@@ -163,8 +163,8 @@ matriz completa en el Bloque 8; no se cambia antes sólo por avance parcial.
 
 ## Comando inicial recomendado para la próxima sesión
 
-Solicitar: **“Continuá desde `docs/revision_octubre_2026/CONTINUAR_AQUI_2026-10-05.md` y ejecutá únicamente el Bloque 7.”**
+Solicitar: **“Continuá desde `docs/revision_octubre_2026/CONTINUAR_AQUI_2026-10-05.md` y ejecutá únicamente el Bloque 8.”**
 
-Al terminar el Bloque 7, informar IDs resueltos, archivos afectados, pruebas o
+Al terminar el Bloque 8, informar IDs resueltos, archivos afectados, pruebas o
 evidencia, límites, pendientes y próximo bloque. Actualizar el registro interno y
 detenerse.

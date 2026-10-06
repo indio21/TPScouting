@@ -374,3 +374,67 @@ Por autorización posterior del usuario, el estado completo de los bloques 1–6
 se guardó en el proyecto principal mediante el commit de respaldo `1782dc9`
 (`checkpoint: complete October review blocks 1-6`). No se hizo push y el
 repositorio `TPScouting-entrega` no fue modificado.
+
+## Bloque 7 — Redacción, fuentes y estructura
+
+Estado: cerrado localmente el 2026-10-06. No se actualizaron campos, índices ni
+listas de Word y no se exportó PDF; esas verificaciones corresponden al Bloque 8.
+
+| ID interno | Observación de F | Cambio | Estado |
+|---|---|---|---|
+| F-01 | Artefactos de edición y enumeraciones | Se eliminaron `Esta versi{on`, fragmentos y pseudoencabezados; se condensaron las secciones 2.1.1–2.1.5 | Resuelta en borrador |
+| F-02 | Estructura, numeración, Discusión y diagramas repetidos | Tabla 3-1 renombrada como secuencia; comparativas no usadas eliminadas; Discusión 6.4 incorporada; capítulo 7 en plural; anexos ampliados justificados | Resuelta; índices pendientes del Bloque 8 |
+| F-03 | Voz inconsistente | Segunda y primera persona reemplazadas por redacción impersonal | Resuelta en los hallazgos auditados |
+| F-04 | Lenguaje promocional | Se retiraron afirmaciones de superioridad, facilidad, escalabilidad y rendimiento sin evidencia | Resuelta en los hallazgos auditados |
+| F-05 | Puntuación | Se corrigieron comas entre sujeto y verbo y frases señaladas de resumen, introducción y conclusiones | Resuelta en los hallazgos auditados |
+| F-06 | Terminología y tiempos verbales | Se normalizó “panel general”; probabilidad, calibración y score permanecen diferenciados; pasado/presente/futuro se usan según evidencia | Resuelta; rutas y archivos conservan nombres técnicos como `/dashboard` |
+| F-07 | Referencias sin cita y APA 7 | 21 referencias ordenadas, citadas y con sangría francesa; se eliminaron recuperaciones mensuales no demostrables | Resuelta en borrador |
+| F-08 | Fuentes faltantes | Se incorporaron PyTorch, scikit-learn, Scrum y fuga de datos; las fuentes de calibración, PR-AUC, edad relativa y ley ya añadidas se conservaron | Resuelta en borrador |
+| F-09 | Marco teórico desconectado | Se condensó y alineó con calibración, desbalance, fuga, datos sintéticos y sesgos realmente usados | Resuelta en borrador |
+| F-10 | Criterios e hipótesis a priori | Se mantuvo la declaración de evaluación retrospectiva sin inventar hipótesis | Resuelta desde Bloque 6 y verificada |
+| F-11 | Ética y datos de menores | Se citó la Ley 25.326 y se conservaron límites sobre consentimiento, retención, baja y etiquetado | Resuelta desde Bloque 6 y revisada |
+| F-12 | Scrum/Sprint en metodología y glosario | Se aclaró que sólo fue referencia; se eliminaron ambos términos del glosario como prácticas aplicadas | Resuelta en borrador |
+
+Cambios documentales principales:
+
+- Se creó `scripts/correct_word_block7_october_2026.py`, ligado al SHA-256 del
+  borrador verificado del Bloque 6.
+- Se generó
+  `docs/revision_octubre_2026/word/TRABAJO_FINAL_TPScouting_CORREGIDO_BLOQUE7_2026-10-06.docx`.
+- Se eliminaron tres tablas comparativas sobre tecnologías no implementadas y
+  se renumeraron las siete tablas restantes del capítulo 4 en el contenido.
+- Se agregó `6.4 Discusión` y la sección ética pasó a `6.5`.
+- La bibliografía contiene 21 entradas, todas citadas al menos una vez en el
+  cuerpo. La evidencia de contraste quedó en
+  `docs/revision_octubre_2026/auditoria_fuentes_bloque7.md`.
+- Se completaron la URL del repositorio, las variables de `create_admin.py` y el
+  comando `Set-Location ..` que faltaba en la guía reproducible.
+- El texto identifica el checkpoint `6e29b45…`; los cambios del Bloque 7 aún no
+  se han sincronizado con la entrega.
+
+Evidencia:
+
+- DOCX válido: 10 secciones, 19 tablas, 27 objetos gráficos y los mismos 20
+  archivos multimedia; `ZipFile.testzip()` sin errores.
+- Auditoría automática: artefactos señalados ausentes, encabezados nuevos
+  presentes, 21/21 referencias con cita en el cuerpo.
+- Ruff y `py_compile` del script: correctos.
+- Suite completa de aplicación: `116 passed, 1 skipped, 4 warnings`.
+- Cobertura: `83,74 %`; umbral de 80 % satisfecho.
+- Las cuatro advertencias All-NaN conocidas no cambiaron.
+
+Pendientes:
+
+- El legajo continúa sin informarse y no se inventó.
+- La lista de tablas aún contiene las tres comparativas eliminadas y la
+  numeración anterior porque no se actualizaron campos. El índice tampoco
+  refleja Discusión, 6.5 ni el plural de Conclusiones. Debe resolverse mediante
+  actualización controlada y revisión visual en el Bloque 8.
+- La versión no fue exportada a PDF ni inspeccionada página por página.
+- La CI del árbol corregido, el commit finalmente entregado y la sincronización
+  selectiva permanecen pendientes.
+- D-16, la evaluación del score combinado y las decisiones opcionales de
+  infraestructura conservan el estado registrado anteriormente.
+
+No se modificaron código funcional, bases, modelos, artefactos ML ni el
+repositorio de entrega durante este bloque.
