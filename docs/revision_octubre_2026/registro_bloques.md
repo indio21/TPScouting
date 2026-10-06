@@ -369,3 +369,8 @@ Se consolidó el estado completo, las restricciones, la evidencia y el próximo
 paso en `docs/revision_octubre_2026/CONTINUAR_AQUI_2026-10-05.md`. La próxima
 acción es ejecutar únicamente el Bloque 7 sobre una copia del borrador del
 Bloque 6. El repositorio de entrega continúa limpio y sin sincronizar.
+
+Por autorización posterior del usuario, el estado completo de los bloques 1–6
+se guardó en el proyecto principal mediante el commit de respaldo `1782dc9`
+(`checkpoint: complete October review blocks 1-6`). No se hizo push y el
+repositorio `TPScouting-entrega` no fue modificado.

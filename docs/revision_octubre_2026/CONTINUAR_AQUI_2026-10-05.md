@@ -19,8 +19,9 @@ contexto histórico `docs/contexto_para_nuevo_chat.md`.
 - Entrega del profesor: `C:\Tesis\TPScouting-entrega`.
 - Python: `C:\Tesis\TPScouting\.venv\Scripts\python.exe`.
 - Rama principal: `main`.
-- HEAD del proyecto: `49aa51c0167fdb24c5f2f3a6ab6e3f397830b462`,
-  con cambios locales intencionales de los bloques 1–6.
+- Commit base previo: `49aa51c0167fdb24c5f2f3a6ab6e3f397830b462`.
+- Commit de respaldo completo de los bloques 1–6: `1782dc9`
+  (`checkpoint: complete October review blocks 1-6`).
 - HEAD de entrega: `ffdefdf8035c994ae285a270de0a4ff4e9f336a8`.
 - El repositorio de entrega está limpio y no fue sincronizado.
 
