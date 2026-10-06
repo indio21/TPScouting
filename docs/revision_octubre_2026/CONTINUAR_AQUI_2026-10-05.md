@@ -2,6 +2,11 @@
 
 Fecha de corte: 2026-10-06 (America/Buenos_Aires).
 
+> **Pausa más reciente:** antes de continuar, leer
+> `docs/revision_octubre_2026/PAUSA_BLOQUE8_2026-10-06.md`. Allí están el
+> candidato v4, sus hashes, lo verificado, lo pendiente y la estrategia indicada
+> por el usuario: revisar primero una copia sin imágenes y regenerarlas al final.
+
 ## Instrucción de reanudación
 
 Continuar con el **Bloque 8 — Cierre y entrega verificable** del plan de
