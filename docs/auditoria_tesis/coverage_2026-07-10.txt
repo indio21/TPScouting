@@ -1,0 +1,49 @@
+........................................................................ [ 85%]
+...........s                                                             [100%]
+============================== warnings summary ===============================
+tests/test_mvp_regressions.py::test_prepare_input_matches_batch_transformation
+tests/test_mvp_regressions.py::test_prepare_input_includes_historical_features
+  C:\Tesis\TPScouting\.venv\Lib\site-packages\sklearn\utils\_array_api.py:794: RuntimeWarning: All-NaN slice encountered
+    return xp.asarray(numpy.nanmin(X, axis=axis))
+
+tests/test_mvp_regressions.py::test_prepare_input_matches_batch_transformation
+tests/test_mvp_regressions.py::test_prepare_input_includes_historical_features
+  C:\Tesis\TPScouting\.venv\Lib\site-packages\sklearn\utils\_array_api.py:814: RuntimeWarning: All-NaN slice encountered
+    return xp.asarray(numpy.nanmax(X, axis=axis))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.11.9-final-0 _______________
+
+Name                                        Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------------
+scouting_app\app.py                           799    178    78%   108-109, 156-157, 160-161, 164-165, 168-169, 184-185, 197, 221, 225, 248-250, 286, 301-302, 333, 338-339, 346-347, 350-354, 361-378, 383-406, 411-490, 503-504, 512, 515-516, 523-531, 557-558, 581-583, 766-770, 777-784, 804-806, 837, 851, 876, 910, 939, 966, 994, 1029, 1130, 1138, 1146-1147, 1153, 1198-1199, 1205, 1239-1240, 1265-1269, 1365, 1394, 1503, 1511-1512, 1517, 1520-1522, 1534-1535, 1538-1540, 1542, 1557-1559, 1712-1713, 1724-1725, 1729-1730, 1732
+scouting_app\create_admin.py                   49     49     0%   16-89
+scouting_app\db_utils.py                       63      6    90%   22, 25, 28, 31, 37, 56
+scouting_app\evaluate_saved_model.py           97     32    67%   36-41, 108, 113-117, 153-183, 187
+scouting_app\generate_data.py                 561     15    97%   429, 666, 742, 829, 1070, 1127, 1348-1356
+scouting_app\ml\__init__.py                     0      0   100%
+scouting_app\ml\runtime.py                     63     27    57%   33, 36-38, 44, 47, 49-51, 62-71, 76, 78, 84-92
+scouting_app\models.py                        199     11    94%   103, 150, 177, 206, 235, 276, 315, 352, 389, 421, 453
+scouting_app\player_logic.py                   61      8    87%   132, 137-139, 144-145, 179-180
+scouting_app\preprocessing.py                 724     53    93%   297, 299-300, 302, 309, 315, 327-328, 336, 344-345, 348, 350, 358, 366, 491, 605, 621-628, 669, 672, 683-689, 698, 701, 833, 939, 975, 979, 985, 1020, 1121, 1165, 1188, 1204, 1246, 1274, 1404, 1406, 1411, 1691, 1818-1861, 1913, 1953
+scouting_app\routes\__init__.py                 7      0   100%
+scouting_app\routes\auth.py                    58      4    93%   76, 83, 86-87
+scouting_app\routes\compare.py                175    110    37%   21, 40, 53-146, 203, 214, 270-284, 305, 308-312, 321-413
+scouting_app\routes\dashboard.py              204     48    76%   36-40, 45-46, 50-57, 70, 80-81, 88-89, 99, 169, 193, 229, 274-280, 336-339, 369-383, 387-392
+scouting_app\routes\players.py                982    231    76%   83-85, 87-88, 103, 126-127, 133, 136-137, 144-145, 149, 179, 181, 183, 185, 187, 189, 207, 216, 247, 260-261, 322, 548, 577, 579, 581, 583, 585, 590, 625-628, 645-658, 686-687, 845-846, 849-852, 869-870, 873-876, 894-895, 916-917, 920-923, 938-939, 942-945, 961-962, 976-977, 980-983, 998-999, 1002-1005, 1021-1022, 1036-1037, 1040-1043, 1058-1059, 1062-1065, 1081-1082, 1100-1101, 1106-1111, 1131-1140, 1166-1167, 1171-1174, 1193-1194, 1211, 1216-1217, 1222-1227, 1250-1263, 1293-1294, 1298-1301, 1322-1323, 1344-1345, 1362, 1364, 1372, 1374, 1376, 1381, 1387-1390, 1430-1431, 1445-1491, 1528, 1593-1597, 1619-1645, 1664, 1674-1676, 1680-1681, 1683, 1727-1731
+scouting_app\routes\settings.py                62     24    61%   29-30, 38, 47-48, 52-56, 59-94
+scouting_app\routes\staff.py                  114     55    52%   57-72, 82-83, 92-95, 103-116, 124-139, 146-154
+scouting_app\seed_demo_data.py                 34     34     0%   8-62
+scouting_app\services\__init__.py               0      0   100%
+scouting_app\services\cache.py                 35      5    86%   27-28, 35, 41, 50
+scouting_app\services\locks.py                 49     10    80%   23, 36-37, 49-53, 64-65
+scouting_app\services\operational_data.py      87     21    76%   21-69, 154, 171
+scouting_app\services\security.py              52      2    96%   35, 37
+scouting_app\sync_shortlist.py                154     40    74%   38-39, 57, 63-78, 94-95, 119, 121, 185, 280-281, 288-290, 293-294, 342-353, 357
+scouting_app\train_model.py                   453     99    78%   70, 115, 137-138, 146-149, 153, 169-171, 174-184, 201, 205, 268, 280-284, 332, 371-375, 424, 437-448, 464-502, 508-514, 559-564, 582-583, 809, 852, 876-877, 904, 909-945
+-------------------------------------------------------------------------
+TOTAL                                        5082   1062    79%
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_visual_smoke.py:73: Playwright visual smoke is opt-in. Set RUN_PLAYWRIGHT=1 to run it.
+83 passed, 1 skipped, 4 warnings in 55.79s

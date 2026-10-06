@@ -1,0 +1,123 @@
+{
+  "generated_at": "2026-07-10",
+  "repository_commit": "7d7680e04dd15b4c4f01d9e0aee8711aeea06f0d",
+  "entry_count": 23,
+  "entries": [
+    {
+      "file": "artefactos_sha256.csv",
+      "bytes": 553,
+      "sha256": "25CC0B3437980CA8AF8D3C4BB315189F4099C6FBB270AF776090F4DF05BF72EB"
+    },
+    {
+      "file": "ci_workflow_snapshot_2026-07-10.yml",
+      "bytes": 929,
+      "sha256": "BF13397B39CA0F5E019CB1CA45A6A3463499EC10FB7762B87703DB041F8C30C2"
+    },
+    {
+      "file": "comandos_ejecutados.txt",
+      "bytes": 8891,
+      "sha256": "F9CC6D2964176C4C35166B7A200A0B384AE9C15F9C45434120E00295788B7DDE"
+    },
+    {
+      "file": "coverage_2026-07-10.txt",
+      "bytes": 5498,
+      "sha256": "8189D2A5B9D58D3118D02DE1881C2C006166EFD6AA2F1F9BCB5CEA49351EC073"
+    },
+    {
+      "file": "evidencia_bloque2.json",
+      "bytes": 12653,
+      "sha256": "D03792A0077CD7497D8123984A0190A506A217F7A2EE4E939328F6928519F44E"
+    },
+    {
+      "file": "evidencia_bloque2.md",
+      "bytes": 23069,
+      "sha256": "CCD6CBD00A024BAD5869913F207E0EB9C48C9786903254610A924AEAAA04ECA8"
+    },
+    {
+      "file": "features_68.csv",
+      "bytes": 10013,
+      "sha256": "52DFC07F5699ED3380589037584B7C097D3210ABC9321EBC148740161BA5C8BC"
+    },
+    {
+      "file": "features_68.json",
+      "bytes": 18998,
+      "sha256": "78DE5481E8BEB9A04FE8B1D1D1F7AFBCF287CEC90CCD44DA99B05FD0503BF365"
+    },
+    {
+      "file": "github_actions_2026-07-10.png",
+      "bytes": 863774,
+      "sha256": "B8366208643C54B5A3E75E7A3CDB33D1CE65A33BE5E1803DBB524C79654801C6"
+    },
+    {
+      "file": "github_actions_evidencia.md",
+      "bytes": 2863,
+      "sha256": "CF8E3A27E85AC3757B869CA9F672CB3B74D61FCCBBD805D677400282FC25A467"
+    },
+    {
+      "file": "github_actions_run71_2026-07-10.png",
+      "bytes": 247355,
+      "sha256": "812AC583A775813924AF90A246EEAFEE9547B32F53ABAAFD0F0677A3B5908043"
+    },
+    {
+      "file": "github_actions_run71_jobs_2026-07-10.json",
+      "bytes": 4606,
+      "sha256": "D2947D409516EC7C615FFC2C80652205F45781BDF1E7876C031A75CFC474F02C"
+    },
+    {
+      "file": "github_actions_runs_2026-07-10.json",
+      "bytes": 118424,
+      "sha256": "72C88B7483B788E3CE08ABD0DBBA5E0B9EE4A82075DF73A40C5CE3FB1B158E07"
+    },
+    {
+      "file": "indice_evidencias_word.md",
+      "bytes": 4877,
+      "sha256": "210F24555C6467CFA27872AD377EFC4E584001323EEC9B5118AE5F5E6B019337"
+    },
+    {
+      "file": "metricas_test.csv",
+      "bytes": 751,
+      "sha256": "0499157014AE039E5192A8B3F7E36F1AD4A962E42178B86B1141E5854D3F0C4A"
+    },
+    {
+      "file": "pytest_2026-07-10.txt",
+      "bytes": 1222,
+      "sha256": "3A9B34AA78F5A1F8C81F8CA83F31CBC31D5D4A0683506A7C7DF22A11CDD51DE0"
+    },
+    {
+      "file": "tablas_para_tesis.md",
+      "bytes": 16391,
+      "sha256": "F3FFFC41AF91BECB5DB195723B5D3CBF6AE0DF6FEA7A7CDA043B51740E956F2E"
+    },
+    {
+      "file": "target_distribution.csv",
+      "bytes": 290,
+      "sha256": "109E0C5883072EACC8D7CBB48B4FAE488E1C18E4B817D918B7DFE5C814346B7D"
+    },
+    {
+      "file": "training_curve_snapshot_2026-07-10.png",
+      "bytes": 9279,
+      "sha256": "7A3F2A8786A32A8B898F4494475E84811FF4EC8A414C6E78C933382DB6FF6153"
+    },
+    {
+      "file": "training_history.csv",
+      "bytes": 1329,
+      "sha256": "87B7DA2660D2B375860447E65B3531725154E54A8460CE48C2B38C984D815636"
+    },
+    {
+      "file": "training_metadata_snapshot_2026-07-10.json",
+      "bytes": 11267,
+      "sha256": "043AC307E433DF717B62045FB05BB63E560A2E029D18F809DBF067C7EA5F05B0"
+    },
+    {
+      "file": "trazabilidad_entrenamiento.md",
+      "bytes": 2369,
+      "sha256": "853B2F1E7B1C5673FA634EB7E161CF809FA27F83D13ACF7A392109D4D8F6E940"
+    },
+    {
+      "file": "vacios_no_verificables.md",
+      "bytes": 5786,
+      "sha256": "093EFC5EC8B39866BFF0EB6DAE3C286FE02F1755CE16988C69D77383665941CA"
+    }
+  ],
+  "note": "The manifest does not include its own hash."
+}

@@ -1,0 +1,17 @@
+........................................................................ [ 85%]
+...........s                                                             [100%]
+============================== warnings summary ===============================
+tests/test_mvp_regressions.py::test_prepare_input_matches_batch_transformation
+tests/test_mvp_regressions.py::test_prepare_input_includes_historical_features
+  C:\Tesis\TPScouting\.venv\Lib\site-packages\sklearn\utils\_array_api.py:794: RuntimeWarning: All-NaN slice encountered
+    return xp.asarray(numpy.nanmin(X, axis=axis))
+
+tests/test_mvp_regressions.py::test_prepare_input_matches_batch_transformation
+tests/test_mvp_regressions.py::test_prepare_input_includes_historical_features
+  C:\Tesis\TPScouting\.venv\Lib\site-packages\sklearn\utils\_array_api.py:814: RuntimeWarning: All-NaN slice encountered
+    return xp.asarray(numpy.nanmax(X, axis=axis))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_visual_smoke.py:73: Playwright visual smoke is opt-in. Set RUN_PLAYWRIGHT=1 to run it.
+83 passed, 1 skipped, 4 warnings in 38.88s

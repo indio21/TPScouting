@@ -1,0 +1,77 @@
+AUDITORIA TECNICA FINAL - COMANDOS SEGUROS
+Fecha: 2026-07-13 (America/Buenos_Aires)
+Repositorio fuente: C:\Tesis\TPScouting
+Commit fuente: 7d7680e04dd15b4c4f01d9e0aee8711aeea06f0d
+
+REGLAS APLICADAS
+- Solo inspeccion y pruebas; no se entreno el modelo.
+- No se leyeron ni expusieron secretos de .env.
+- No se modificaron Word, codigo, configuracion, bases, datasets ni checkpoints.
+- Las pruebas se ejecutaron en TPScouting-entrega, cuyo codigo/tests relevante estaba sincronizado.
+
+1. Estado Git
+   git status -sb
+   git rev-parse HEAD
+   Resultado TPScouting: main...origin/main [ahead 1]; HEAD 7d7680e04dd15b4c4f01d9e0aee8711aeea06f0d.
+   Resultado TPScouting-entrega: limpio; HEAD a6f8b740894504bbb7e43cf38abeebfbf89eae24.
+
+2. Identidad de los DOCX
+   Get-FileHash -Algorithm SHA256 <Word del repositorio>
+   Get-FileHash -Algorithm SHA256 <copia del escritorio>
+   Resultado: ambos 1DFFBC7AA6BD7EE480C5D34E6AD09A856F543311D0A58422F89984C4A181C7BA; 3.994.942 bytes.
+
+3. Inventario y busqueda
+   rg --files
+   rg -n <patrones tecnicos> scouting_app tests docs README.md RUNBOOK.md render.yaml .github/workflows/ci.yml
+   Get-ChildItem -Recurse -File (directorios acotados)
+   Resultado: rutas, modelos, funciones, configuracion, tests y evidencias localizados; no se imprimieron secretos.
+
+4. Extraccion DOCX read-only
+   Lectura ZIP/XML de word/document.xml, relaciones, tablas, parrafos y media.
+   Resultado: 680 parrafos, 22 tablas, 27 inline shapes, 21 imagenes unicas, 10 secciones.
+
+5. Render de control
+   Microsoft Word COM: Open(..., ReadOnly=$true) y ExportAsFixedFormat a PDF temporal.
+   Resultado: 90 paginas fisicas; PDF usado solo para comprobar TOC, captions, figuras y paginas.
+   Nota: no existia PDF junto al DOCX original.
+
+6. Pruebas locales (TPScouting-entrega)
+   Variables temporales: PYTHONDONTWRITEBYTECODE=1; cacheprovider desactivado.
+   C:\Tesis\TPScouting\.venv\Scripts\python.exe -m pytest -q -rs -p no:cacheprovider
+   Resultado: 83 passed, 1 skipped, 4 warnings in 49.16s.
+   Skip: tests/test_visual_smoke.py:73; requiere RUN_PLAYWRIGHT=1.
+   Warnings: cuatro RuntimeWarning All-NaN slice encountered de scikit-learn en dos tests de preprocessing.
+
+7. Cobertura local (TPScouting-entrega)
+   C:\Tesis\TPScouting\.venv\Scripts\python.exe -m pytest -q -rs -p no:cacheprovider --cov=scouting_app --cov-report=term
+   Resultado: 83 passed, 1 skipped, 4 warnings in 53.41s.
+   Cobertura: TOTAL 5082 statements, 1062 missed, 79%.
+
+8. GitHub Actions (consulta publica, sin credenciales)
+   Consulta API de runs y jobs de indio21/TPScouting.
+   Resultado al 2026-07-13: 71 runs; ultima CI #71 completed/success.
+   SHA: fa8a50d1173f2760329a45f11fbf93a709721235.
+   URL: https://github.com/indio21/TPScouting/actions/runs/26317958817
+   Ventana: 2026-05-23T00:09:59Z a 2026-05-23T00:12:10Z.
+   Alcance: esta run no certifica el HEAD local 7d7680e.
+
+9. Smoke Render publico
+   .\.venv\Scripts\python.exe scripts\smoke_render.py --base-url https://tpscouting-mvp.onrender.com
+   Resultado 2026-07-13: FAIL: The read operation timed out.
+   Interpretacion: no verifica disponibilidad actual; tampoco demuestra caida permanente.
+
+10. Comparacion TPScouting / TPScouting-entrega
+    Comparacion hash/contenido de 74 archivos versionados relevantes.
+    Resultado: codigo y tests sincronizados; diferencias esperadas solo en README.md, README_TESTS.md, RUNBOOK.md, render.yaml y requirements-dev.txt; ocho archivos internos/Word/helper solo en fuente.
+
+11. Conteo de estados y validacion de entregables
+    Select-String/expresiones regulares sobre matriz_trazabilidad_final.md.
+    Test-Path, Get-Item, Get-FileHash y git status -sb.
+    Resultado: 6 archivos; 104 afirmaciones; 82 COINCIDE; 6 COINCIDE PARCIALMENTE;
+    10 NO COINCIDE; 1 NO VERIFICABLE; 5 AFIRMACIÓN DESACTUALIZADA.
+
+ARTEFACTOS TEMPORALES
+- C:\Tesis\_audit_final_20260713: extraccion y PDF de control.
+- C:\Tesis\coverage_final_audit_20260713: archivo temporal de coverage.
+- scouting_app\experiments.csv en TPScouting-entrega: generado por tests.
+Estos artefactos temporales se eliminan al cerrar la auditoria; no forman parte de los seis entregables.

@@ -1,0 +1,98 @@
+{
+  "scope": {
+    "historical_run_timestamp": "2026-05-19T22:51:17.072099",
+    "audit_does_not_retrain_or_overwrite_artifacts": true
+  },
+  "model_counts": {
+    "trainable_parameters": 17608,
+    "all_parameters": 17608,
+    "buffers": 386,
+    "state_dict_elements": 17994
+  },
+  "features_and_labels": {
+    "target_column": "temporal_target_label",
+    "model_feature_count_before_encoding": 64,
+    "transformed_input_dimension": 68,
+    "forbidden_columns_present_in_dataframe": [
+      "potential_label",
+      "temporal_target_label"
+    ],
+    "forbidden_columns_used_as_model_features": [],
+    "potential_label_is_persisted_but_not_a_model_feature": true
+  },
+  "splits": {
+    "seed": 42,
+    "counts": {
+      "train": 14000,
+      "validation": 3000,
+      "test": 3000
+    },
+    "overlap": {
+      "train_validation": 0,
+      "train_test": 0,
+      "validation_test": 0
+    }
+  },
+  "probability_semantics": {
+    "raw": "sigmoid output from PlayerNet",
+    "calibrated": "isotonic transform of the raw probability",
+    "combined": "application score that mixes raw probability, history and position fit; no saved test predictions",
+    "visual_bands": {
+      "medium": 0.6,
+      "high": 0.8
+    },
+    "validation_thresholds": {
+      "raw": 0.8250000000000001,
+      "calibrated": 0.25,
+      "logistic": 0.85
+    }
+  },
+  "test_metrics_recomputed": {
+    "pytorch_raw": {
+      "roc_auc": 0.9203411835748792,
+      "pr_auc": 0.5461266749785595
+    },
+    "pytorch_calibrated": {
+      "roc_auc": 0.9174305555555556,
+      "pr_auc": 0.5241160514965395
+    },
+    "logistic_regression": {
+      "roc_auc": 0.9205057367149759,
+      "pr_auc": 0.537776438791726
+    }
+  },
+  "paired_bootstrap": {
+    "comparison": "pytorch_raw_minus_logistic_regression",
+    "iterations_requested": 2000,
+    "iterations_used": 2000,
+    "seed": 20261005,
+    "roc_auc": {
+      "mean_difference": -0.00015070968987504518,
+      "ci_95_percentile": [
+        -0.0026930533937596065,
+        0.0024706944575056283
+      ]
+    },
+    "pr_auc": {
+      "mean_difference": 0.00819354485101789,
+      "ci_95_percentile": [
+        -0.0025080939430001557,
+        0.01954282572162858
+      ]
+    },
+    "method": "paired nonparametric bootstrap over the persisted test split"
+  },
+  "artifact_sha256": {
+    "model.pt": "d9fac23bdfc294c91cb8e7a10aaaa3e4bf90f4e6a3cda14c022880b2ab12bb19",
+    "preprocessor.joblib": "9d5286c52a16a7e004c76a39dca0a970d6746098866feeb15f22f503b8e61576",
+    "probability_calibrator.joblib": "d9ee7893d62034200be5402254757a0b9790020f558a4e7ced1a8ac12299325d",
+    "training_metadata.json": "043ac307e433df717b62045fb05bb63e560a2e029d18f809dbf067c7ea5f05b0",
+    "training_splits.json": "af6ec6b5e9222ab7847e52f303cf7e0eefd84003f2601c7ab0e91092a5e26f82",
+    "temporal_training_dataframe.joblib": "ab8a94bda729e91bd5a2522468f43a61640c6d9159a2cdade196a00d2ef36df4"
+  },
+  "known_historical_gaps": {
+    "training_duration": null,
+    "library_versions_at_training_time": null,
+    "validation_loss_history": null
+  }
+}

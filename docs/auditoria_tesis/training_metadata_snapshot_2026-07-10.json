@@ -1,0 +1,415 @@
+{
+  "timestamp": "2026-05-19T22:51:17.072099",
+  "seed": 42,
+  "config": {
+    "epochs_requested": 45,
+    "epochs_trained": 15,
+    "learning_rate": 0.0005,
+    "patience": 10,
+    "batch_size": 256,
+    "optimizer": "AdamW",
+    "weight_decay": 0.0005,
+    "dropout": 0.15,
+    "age_min": 12,
+    "age_max": 18,
+    "loss": "BCEWithLogitsLoss",
+    "target_type": "temporal_progression",
+    "pos_weight": 11.522361359570661,
+    "pos_weight_strategy": "full_ratio",
+    "sampler_strategy": "shuffle",
+    "linear_bootstrap": true,
+    "linear_prior_strength": 0.0001,
+    "test_size": 0.15,
+    "validation_size_on_train_pool": 0.17647058823529413
+  },
+  "model": {
+    "checkpoint_version": 1,
+    "input_dim": 68,
+    "class": "PlayerNet"
+  },
+  "dataset": {
+    "train_size": 14000,
+    "validation_size": 3000,
+    "test_size": 3000,
+    "train_positive_rate": 0.0799,
+    "validation_positive_rate": 0.0797,
+    "test_positive_rate": 0.08
+  },
+  "pytorch": {
+    "best_epoch": 5,
+    "selected_threshold": 0.25,
+    "calibration_method": "isotonic",
+    "validation": {
+      "threshold": 0.25,
+      "accuracy": 0.924,
+      "roc_auc": 0.913175748887296,
+      "pr_auc": 0.4653660309073965,
+      "f1": 0.5128205128205128,
+      "precision": 0.5240174672489083,
+      "recall": 0.502092050209205,
+      "confusion_matrix": [
+        [
+          2652,
+          109
+        ],
+        [
+          119,
+          120
+        ]
+      ],
+      "warnings": []
+    },
+    "test": {
+      "threshold": 0.25,
+      "accuracy": 0.9303333333333333,
+      "roc_auc": 0.9174305555555556,
+      "pr_auc": 0.5241160514965395,
+      "f1": 0.5282167042889391,
+      "precision": 0.5763546798029556,
+      "recall": 0.4875,
+      "confusion_matrix": [
+        [
+          2674,
+          86
+        ],
+        [
+          123,
+          117
+        ]
+      ],
+      "warnings": []
+    },
+    "raw_validation": {
+      "threshold": 0.8250000000000001,
+      "accuracy": 0.923,
+      "roc_auc": 0.9080437474142987,
+      "pr_auc": 0.46129226680902,
+      "f1": 0.5095541401273885,
+      "precision": 0.5172413793103449,
+      "recall": 0.502092050209205,
+      "confusion_matrix": [
+        [
+          2649,
+          112
+        ],
+        [
+          119,
+          120
+        ]
+      ],
+      "warnings": []
+    },
+    "raw_validation_threshold": 0.8250000000000001,
+    "raw_test": {
+      "threshold": 0.8250000000000001,
+      "accuracy": 0.93,
+      "roc_auc": 0.9203411835748792,
+      "pr_auc": 0.5461266749785595,
+      "f1": 0.5291479820627802,
+      "precision": 0.5728155339805825,
+      "recall": 0.49166666666666664,
+      "confusion_matrix": [
+        [
+          2672,
+          88
+        ],
+        [
+          122,
+          118
+        ]
+      ],
+      "warnings": []
+    },
+    "history": [
+      {
+        "epoch": 1,
+        "loss": 0.6680894000963731,
+        "val_pr_auc": 0.4615658549570044,
+        "val_f1": 0.519916142557652,
+        "threshold": 0.25,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 2,
+        "loss": 0.6647081380540675,
+        "val_pr_auc": 0.4627359606385074,
+        "val_f1": 0.521551724137931,
+        "threshold": 0.275,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 3,
+        "loss": 0.6635923250155016,
+        "val_pr_auc": 0.4626719735099266,
+        "val_f1": 0.5211864406779662,
+        "threshold": 0.25,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 4,
+        "loss": 0.6536709633740512,
+        "val_pr_auc": 0.4639420240262261,
+        "val_f1": 0.5173913043478261,
+        "threshold": 0.275,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 5,
+        "loss": 0.6431135204705325,
+        "val_pr_auc": 0.4653660309073965,
+        "val_f1": 0.5128205128205128,
+        "threshold": 0.25,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 6,
+        "loss": 0.6225031240419908,
+        "val_pr_auc": 0.4631980695577212,
+        "val_f1": 0.5099601593625498,
+        "threshold": 0.25,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 7,
+        "loss": 0.6009269345890392,
+        "val_pr_auc": 0.4499987805854607,
+        "val_f1": 0.5058823529411764,
+        "threshold": 0.225,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 8,
+        "loss": 0.5880105078220368,
+        "val_pr_auc": 0.45671248565840383,
+        "val_f1": 0.5108910891089109,
+        "threshold": 0.225,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 9,
+        "loss": 0.576851236820221,
+        "val_pr_auc": 0.45255465954627483,
+        "val_f1": 0.501628664495114,
+        "threshold": 0.17500000000000002,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.00025
+      },
+      {
+        "epoch": 10,
+        "loss": 0.5531754287806424,
+        "val_pr_auc": 0.444611874583635,
+        "val_f1": 0.49517684887459806,
+        "threshold": 0.2,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.00025
+      },
+      {
+        "epoch": 11,
+        "loss": 0.5491682047193701,
+        "val_pr_auc": 0.44935786210624207,
+        "val_f1": 0.48863636363636365,
+        "threshold": 0.25,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.00025
+      },
+      {
+        "epoch": 12,
+        "loss": 0.538945445689288,
+        "val_pr_auc": 0.44046580908261956,
+        "val_f1": 0.4918032786885246,
+        "threshold": 0.225,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.00025
+      },
+      {
+        "epoch": 13,
+        "loss": 0.5277850622480565,
+        "val_pr_auc": 0.4414243766856336,
+        "val_f1": 0.4826325411334552,
+        "threshold": 0.25,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.000125
+      },
+      {
+        "epoch": 14,
+        "loss": 0.5184998458082025,
+        "val_pr_auc": 0.4438313962841982,
+        "val_f1": 0.48727272727272725,
+        "threshold": 0.225,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.000125
+      },
+      {
+        "epoch": 15,
+        "loss": 0.5179418206214905,
+        "val_pr_auc": 0.43620486166708833,
+        "val_f1": 0.4876190476190476,
+        "threshold": 0.25,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.000125
+      }
+    ]
+  },
+  "calibration": {
+    "method": "isotonic",
+    "brier_validation": 0.05161168426275253,
+    "brier_test": 0.04955218359827995
+  },
+  "scoring_policy": {
+    "primary_model_probability": "raw_pytorch_sigmoid",
+    "primary_app_score": "combined_score_from_raw_pytorch_plus_history_and_position_fit",
+    "secondary_probability": "calibrated_pytorch_probability",
+    "raw_validation_threshold": 0.8250000000000001,
+    "calibrated_validation_threshold": 0.25,
+    "reason": "La salida cruda queda como score principal porque en la evidencia actual prioriza mejor candidatos por PR-AUC; la calibrada se conserva como referencia secundaria."
+  },
+  "splits": {
+    "version": 1,
+    "train_count": 14000,
+    "validation_count": 3000,
+    "test_count": 3000
+  },
+  "baselines": {
+    "logistic_regression_balanced": {
+      "method": "logistic_regression_balanced",
+      "selected_threshold": 0.85,
+      "validation": {
+        "threshold": 0.85,
+        "accuracy": 0.923,
+        "roc_auc": 0.9075057699972268,
+        "pr_auc": 0.4562282814272031,
+        "f1": 0.5157232704402516,
+        "precision": 0.5168067226890757,
+        "recall": 0.5146443514644351,
+        "confusion_matrix": [
+          [
+            2646,
+            115
+          ],
+          [
+            116,
+            123
+          ]
+        ],
+        "warnings": []
+      },
+      "test": {
+        "threshold": 0.85,
+        "accuracy": 0.931,
+        "roc_auc": 0.9205057367149759,
+        "pr_auc": 0.537776438791726,
+        "f1": 0.5327313769751693,
+        "precision": 0.5812807881773399,
+        "recall": 0.49166666666666664,
+        "confusion_matrix": [
+          [
+            2675,
+            85
+          ],
+          [
+            122,
+            118
+          ]
+        ],
+        "warnings": []
+      }
+    },
+    "avg_skill_score": {
+      "selected_threshold": 0.625,
+      "validation": {
+        "threshold": 0.625,
+        "accuracy": 0.881,
+        "roc_auc": 0.8250459553948526,
+        "pr_auc": 0.3205662934028283,
+        "f1": 0.37037037037037035,
+        "precision": 0.3201219512195122,
+        "recall": 0.4393305439330544,
+        "confusion_matrix": [
+          [
+            2538,
+            223
+          ],
+          [
+            134,
+            105
+          ]
+        ],
+        "warnings": []
+      },
+      "test": {
+        "threshold": 0.625,
+        "accuracy": 0.896,
+        "roc_auc": 0.8390285326086956,
+        "pr_auc": 0.35131811088268605,
+        "f1": 0.4200743494423792,
+        "precision": 0.37919463087248323,
+        "recall": 0.4708333333333333,
+        "confusion_matrix": [
+          [
+            2575,
+            185
+          ],
+          [
+            127,
+            113
+          ]
+        ],
+        "warnings": []
+      }
+    }
+  },
+  "dataset_summary": {
+    "raw_rows": 20000,
+    "filtered_rows": 20000,
+    "age_range_raw": {
+      "min": 12,
+      "max": 17
+    },
+    "age_range_filtered": {
+      "min": 12,
+      "max": 17
+    },
+    "class_distribution": {
+      "positive": 1597,
+      "negative": 18403,
+      "positive_rate": 0.0799
+    },
+    "position_distribution": {
+      "Defensa": 3991,
+      "Delantero": 3945,
+      "Lateral": 3977,
+      "Mediocampista": 4073,
+      "Portero": 4014
+    },
+    "target_column": "temporal_target_label",
+    "temporal_target_threshold": 0.3007025717910199,
+    "temporal_future_score_threshold": 6.192933333333336,
+    "progression_score_quantiles": {
+      "q50": 0.1793,
+      "q75": 0.2527,
+      "q84": 0.2921,
+      "q88": 0.3141,
+      "q90": 0.3278,
+      "q92": 0.3447
+    },
+    "temporal_consolidation_count": 1342,
+    "temporal_breakout_count": 255,
+    "temporal_quality_gate_count": 7111,
+    "temporal_target_candidate_count": 4803
+  },
+  "artifacts": {
+    "model_path": "C:\\Tesis\\TPScouting\\scouting_app\\model.pt",
+    "preprocessor_path": "C:\\Tesis\\TPScouting\\scouting_app\\preprocessor.joblib",
+    "calibrator_path": "C:\\Tesis\\TPScouting\\scouting_app\\probability_calibrator.joblib",
+    "metadata_path": "C:\\Tesis\\TPScouting\\scouting_app\\training_metadata.json",
+    "splits_path": "C:\\Tesis\\TPScouting\\scouting_app\\training_splits.json"
+  }
+}

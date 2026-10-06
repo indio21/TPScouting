@@ -86,13 +86,24 @@ Las bases SQLite, metadata de entrenamiento y splits siguen fuera de Git.
 
 Para una demo autocontenida con datos, usar el comando portable indicado arriba. La ejecucion manual basica es:
 
+Windows y Linux CPU usan el mismo snapshot que CI y Render:
+
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-torch-cpu.txt
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .\.venv\Scripts\python.exe scouting_app\app.py
 ```
 
-Para reproducibilidad exacta de versiones existe `requirements-lock.txt`.
+En macOS se instala `requirements.txt` en lugar de los dos primeros archivos,
+porque PyTorch publica allí el wheel estándar sin sufijo `+cpu`. Esta rama fue
+probada localmente en Windows 11 con Python 3.11.9; el workflow de CI configura
+Linux con Python 3.11 y 3.12. Este cambio local aún no tiene una corrida remota y
+no se afirma una ejecución probada en macOS.
+
+`requirements.txt` contiene dependencias directas, `requirements-lock.txt` fija
+el runtime transitivo CPU, `requirements-dev.txt` contiene pruebas/auditoría/lint
+y `requirements-docs.txt` separa `python-docx` de la aplicación.
 
 Abrir en navegador:
 
@@ -113,6 +124,17 @@ $env:ADMIN_PASSWORD = "AdminDemo123"
 
 Nota: en deploy (Render) la clave de admin se configura por variable de entorno (`ADMIN_PASSWORD`).
 
+## Política de autenticación
+
+- El límite de intentos fallidos se aplica por nombre de usuario normalizado.
+  No usa `X-Forwarded-For`, porque el proyecto no tiene documentada una cadena
+  fija de proxies confiables y ese header puede ser controlado por el cliente.
+- Las solicitudes protegidas vuelven a consultar el usuario y su rol en la base.
+  Si el usuario fue eliminado o su rol dejó de ser válido, la sesión se invalida.
+- La aplicación no define actualmente un campo de usuario activo/inactivo. La
+  disponibilidad comprobable en este MVP es la existencia del usuario y un rol
+  reconocido en la base.
+
 ## Tests
 
 ```powershell
@@ -125,6 +147,16 @@ Con reporte XML de cobertura:
 .\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing --cov-report=xml
 ```
 
+Los controles graduales usados por CI son:
+
+```powershell
+.\.venv\Scripts\ruff.exe check scouting_app tests scripts --select E9,F63,F7,F82
+.\.venv\Scripts\python.exe -m pip_audit --local --progress-spinner off
+```
+
+CI exige cobertura total mínima de `80%`, igual a la cobertura medida el
+2026-10-05; el umbral no reemplaza la revisión de cobertura por módulo.
+
 Smoke visual opcional con Playwright:
 
 ```powershell
@@ -136,12 +168,29 @@ Remove-Item Env:\RUN_PLAYWRIGHT
 
 ## Imagen de jugador
 
-Los jugadores sin una foto manual utilizan la silueta local `scouting_app/static/img/player-silhouette.svg`. La aplicación también reemplaza los avatares DiceBear heredados por este recurso local, por lo que no depende de un servicio externo para mostrar el listado, la ficha o la proyección.
+Los jugadores sin una foto manual utilizan la silueta local `scouting_app/static/img/player-silhouette.svg`. La aplicación también reemplaza los avatares DiceBear heredados por este recurso local. Las cargas manuales pueden usar una ruta propia bajo `/static/` o una imagen externa mediante HTTPS; por eso una foto personalizada sí puede depender de su servidor externo.
 
 ## Healthcheck
 
 - Endpoint: `GET /health`
-- Esperado: `200` con JSON `status=ok`, conectividad DB y bloque `data_quality`
+- Esperado públicamente: `200` con JSON `status=ok`. Los contadores de calidad
+  se consultan con autenticación administrativa desde `Configuracion`.
+
+## Artefactos de inferencia
+
+`model.pt`, `preprocessor.joblib` y `probability_calibrator.joblib` son artefactos
+generados y controlados por el proyecto. No existe una función para cargarlos
+desde la interfaz. Los formatos PyTorch y joblib usan mecanismos de
+deserialización que requieren confiar en el origen: no se deben sustituir por
+archivos recibidos de terceros. PyTorch recomienda cargar `state_dict` y usar
+`weights_only=True`; TPScouting aplica ambas medidas para `model.pt`. Referencias
+oficiales: [persistencia de modelos de scikit-learn](https://scikit-learn.org/stable/model_persistence.html)
+y [`torch.load`](https://docs.pytorch.org/docs/stable/generated/torch.load.html).
+
+El 2026-10-05 se comprobó que los tres artefactos existentes cargan con
+PyTorch `2.9.1+cpu`, scikit-learn `1.8.0` y joblib `1.5.3`. Esa es una prueba de
+compatibilidad actual, no evidencia de las versiones usadas para crearlos: el
+metadata histórico no registró las versiones de las bibliotecas.
 
 ## Mantenimiento operativo
 
@@ -164,6 +213,12 @@ porque Render limita las bases Free activas por workspace. En ese modo,
 queda desactivado y el deploy ejecuta `seed_demo_data.py` para cargar 100 jugadores
 demo solo si la base esta vacia. No ejecutar el pipeline de entrenamiento desde la
 web en este modo gratuito.
+
+La política vigente de Render indica que PostgreSQL Free expira 30 días después
+de su creación, admite 1 GB, no incluye backups y permite una sola instancia Free
+activa por workspace. Por eso sirve para demostración temporal y no debe tratarse
+como almacenamiento durable. No se cambió ni contrató ningún plan. Fuente:
+[Render, Deploy for Free](https://render.com/docs/free).
 
 Smoke real de Render:
 
@@ -192,7 +247,7 @@ Seguridad MVP:
 - `APP_SECRET_KEY` es obligatoria en producción/Render.
 - Los formularios POST mutantes usan CSRF.
 - El logout se ejecuta por POST con CSRF.
-- El login tiene rate limiting en memoria por IP + usuario. Es suficiente para MVP académico, pero no es un limitador distribuido para producción multi-instancia.
+- El login tiene rate limiting en memoria por usuario normalizado. Es suficiente para el MVP académico, pero no es un limitador distribuido para producción multi-instancia.
 
 ## Alcance del MVP
 

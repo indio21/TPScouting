@@ -1,0 +1,485 @@
+{
+  "generated_at": "2026-07-10",
+  "source_artifact": "scouting_app/preprocessor.joblib",
+  "source_sha256": "9D5286C52A16A7E004C76A39DCA0A970D6746098866FEEB15F22F503B8E61576",
+  "input_dim": 68,
+  "feature_count": 68,
+  "features": [
+    {
+      "index": 1,
+      "group": "base_numeric",
+      "feature_name": "base_numeric__age",
+      "source_feature": "age",
+      "transformation": "SimpleImputer(median) + MinMaxScaler"
+    },
+    {
+      "index": 2,
+      "group": "base_numeric",
+      "feature_name": "base_numeric__pace",
+      "source_feature": "pace",
+      "transformation": "SimpleImputer(median) + MinMaxScaler"
+    },
+    {
+      "index": 3,
+      "group": "base_numeric",
+      "feature_name": "base_numeric__shooting",
+      "source_feature": "shooting",
+      "transformation": "SimpleImputer(median) + MinMaxScaler"
+    },
+    {
+      "index": 4,
+      "group": "base_numeric",
+      "feature_name": "base_numeric__passing",
+      "source_feature": "passing",
+      "transformation": "SimpleImputer(median) + MinMaxScaler"
+    },
+    {
+      "index": 5,
+      "group": "base_numeric",
+      "feature_name": "base_numeric__dribbling",
+      "source_feature": "dribbling",
+      "transformation": "SimpleImputer(median) + MinMaxScaler"
+    },
+    {
+      "index": 6,
+      "group": "base_numeric",
+      "feature_name": "base_numeric__defending",
+      "source_feature": "defending",
+      "transformation": "SimpleImputer(median) + MinMaxScaler"
+    },
+    {
+      "index": 7,
+      "group": "base_numeric",
+      "feature_name": "base_numeric__physical",
+      "source_feature": "physical",
+      "transformation": "SimpleImputer(median) + MinMaxScaler"
+    },
+    {
+      "index": 8,
+      "group": "base_numeric",
+      "feature_name": "base_numeric__vision",
+      "source_feature": "vision",
+      "transformation": "SimpleImputer(median) + MinMaxScaler"
+    },
+    {
+      "index": 9,
+      "group": "base_numeric",
+      "feature_name": "base_numeric__tackling",
+      "source_feature": "tackling",
+      "transformation": "SimpleImputer(median) + MinMaxScaler"
+    },
+    {
+      "index": 10,
+      "group": "base_numeric",
+      "feature_name": "base_numeric__determination",
+      "source_feature": "determination",
+      "transformation": "SimpleImputer(median) + MinMaxScaler"
+    },
+    {
+      "index": 11,
+      "group": "base_numeric",
+      "feature_name": "base_numeric__technique",
+      "source_feature": "technique",
+      "transformation": "SimpleImputer(median) + MinMaxScaler"
+    },
+    {
+      "index": 12,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__stats_entry_count",
+      "source_feature": "stats_entry_count",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 13,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__avg_final_score_hist",
+      "source_feature": "avg_final_score_hist",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 14,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__avg_pass_accuracy_hist",
+      "source_feature": "avg_pass_accuracy_hist",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 15,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__latest_final_score_hist",
+      "source_feature": "latest_final_score_hist",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 16,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__attr_history_entry_count",
+      "source_feature": "attr_history_entry_count",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 17,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__attr_avg_improvement_90d",
+      "source_feature": "attr_avg_improvement_90d",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 18,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__attr_avg_improvement_180d",
+      "source_feature": "attr_avg_improvement_180d",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 19,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__attr_avg_improvement_365d",
+      "source_feature": "attr_avg_improvement_365d",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 20,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__attr_avg_trend_per_day",
+      "source_feature": "attr_avg_trend_per_day",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 21,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__attr_weighted_improvement_90d",
+      "source_feature": "attr_weighted_improvement_90d",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 22,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__attr_weighted_improvement_180d",
+      "source_feature": "attr_weighted_improvement_180d",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 23,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__attr_weighted_improvement_365d",
+      "source_feature": "attr_weighted_improvement_365d",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 24,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__attr_weighted_trend_per_day",
+      "source_feature": "attr_weighted_trend_per_day",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 25,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__attr_weighted_volatility",
+      "source_feature": "attr_weighted_volatility",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 26,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__attr_current_vs_recent_gap",
+      "source_feature": "attr_current_vs_recent_gap",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 27,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__match_entry_count",
+      "source_feature": "match_entry_count",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 28,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__match_avg_final_score",
+      "source_feature": "match_avg_final_score",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 29,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__match_recent_final_score",
+      "source_feature": "match_recent_final_score",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 30,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__match_avg_minutes",
+      "source_feature": "match_avg_minutes",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 31,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__match_minutes_volatility",
+      "source_feature": "match_minutes_volatility",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 32,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__match_start_rate",
+      "source_feature": "match_start_rate",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 33,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__match_avg_opponent_level",
+      "source_feature": "match_avg_opponent_level",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 34,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__match_high_difficulty_rate",
+      "source_feature": "match_high_difficulty_rate",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 35,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__match_high_difficulty_score",
+      "source_feature": "match_high_difficulty_score",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 36,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__match_natural_position_rate",
+      "source_feature": "match_natural_position_rate",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 37,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__scout_report_count",
+      "source_feature": "scout_report_count",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 38,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__scout_avg_decision_making",
+      "source_feature": "scout_avg_decision_making",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 39,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__scout_avg_tactical_reading",
+      "source_feature": "scout_avg_tactical_reading",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 40,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__scout_avg_mental_profile",
+      "source_feature": "scout_avg_mental_profile",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 41,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__scout_avg_adaptability",
+      "source_feature": "scout_avg_adaptability",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 42,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__scout_latest_projection_score",
+      "source_feature": "scout_latest_projection_score",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 43,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__scout_projection_trend",
+      "source_feature": "scout_projection_trend",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 44,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__phys_assessment_count",
+      "source_feature": "phys_assessment_count",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 45,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__phys_recent_height_cm",
+      "source_feature": "phys_recent_height_cm",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 46,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__phys_recent_weight_kg",
+      "source_feature": "phys_recent_weight_kg",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 47,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__phys_recent_speed_score",
+      "source_feature": "phys_recent_speed_score",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 48,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__phys_recent_endurance_score",
+      "source_feature": "phys_recent_endurance_score",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 49,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__phys_recent_bmi",
+      "source_feature": "phys_recent_bmi",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 50,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__phys_height_growth_365d",
+      "source_feature": "phys_height_growth_365d",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 51,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__phys_weight_change_180d",
+      "source_feature": "phys_weight_change_180d",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 52,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__phys_growth_spurt_rate",
+      "source_feature": "phys_growth_spurt_rate",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 53,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__phys_left_footed_rate",
+      "source_feature": "phys_left_footed_rate",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 54,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__phys_two_footed_rate",
+      "source_feature": "phys_two_footed_rate",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 55,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__avail_record_count",
+      "source_feature": "avail_record_count",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 56,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__avail_avg_pct",
+      "source_feature": "avail_avg_pct",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 57,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__avail_recent_pct",
+      "source_feature": "avail_recent_pct",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 58,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__avail_avg_fatigue",
+      "source_feature": "avail_avg_fatigue",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 59,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__avail_recent_fatigue",
+      "source_feature": "avail_recent_fatigue",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 60,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__avail_avg_training_load",
+      "source_feature": "avail_avg_training_load",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 61,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__avail_injury_rate",
+      "source_feature": "avail_injury_rate",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 62,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__avail_missed_days_avg",
+      "source_feature": "avail_missed_days_avg",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 63,
+      "group": "historical_numeric",
+      "feature_name": "historical_numeric__avail_availability_trend",
+      "source_feature": "avail_availability_trend",
+      "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler"
+    },
+    {
+      "index": 64,
+      "group": "categorical",
+      "feature_name": "categorical__position_Portero",
+      "source_feature": "position_Portero",
+      "transformation": "SimpleImputer(most_frequent) + OneHotEncoder(fixed categories, handle_unknown=ignore)"
+    },
+    {
+      "index": 65,
+      "group": "categorical",
+      "feature_name": "categorical__position_Defensa",
+      "source_feature": "position_Defensa",
+      "transformation": "SimpleImputer(most_frequent) + OneHotEncoder(fixed categories, handle_unknown=ignore)"
+    },
+    {
+      "index": 66,
+      "group": "categorical",
+      "feature_name": "categorical__position_Lateral",
+      "source_feature": "position_Lateral",
+      "transformation": "SimpleImputer(most_frequent) + OneHotEncoder(fixed categories, handle_unknown=ignore)"
+    },
+    {
+      "index": 67,
+      "group": "categorical",
+      "feature_name": "categorical__position_Mediocampista",
+      "source_feature": "position_Mediocampista",
+      "transformation": "SimpleImputer(most_frequent) + OneHotEncoder(fixed categories, handle_unknown=ignore)"
+    },
+    {
+      "index": 68,
+      "group": "categorical",
+      "feature_name": "categorical__position_Delantero",
+      "source_feature": "position_Delantero",
+      "transformation": "SimpleImputer(most_frequent) + OneHotEncoder(fixed categories, handle_unknown=ignore)"
+    }
+  ]
+}

@@ -1,0 +1,192 @@
+AUDITORIA TECNICA TPScouting - COMANDOS Y RESULTADOS RESUMIDOS
+Fecha: 2026-07-10
+Politica: inspeccion segura; sin entrenamiento; sin escritura sobre codigo, DB, checkpoints, datasets, Word o configuracion.
+
+1) Estado y revision Git
+   Comandos:
+     git status -sb
+     git rev-parse HEAD
+     git branch --show-current
+     git remote -v
+     git log --oneline --decorate -25
+     git log -1 --format=fuller -- <artefacto>
+   Resultado:
+     main...origin/main [ahead 1]
+     HEAD 7d7680e04dd15b4c4f01d9e0aee8711aeea06f0d
+     Ultimo commit que incorpora los artefactos ML inspeccionados: f58fc6bd469c70d0ad60cd7ff114f64c1ec26573.
+     training_metadata.json no contiene SHA Git; no se atribuyo la corrida a un commit exacto.
+
+2) Inventario y busqueda de evidencia
+   Comandos usados (variantes con patrones especificos):
+     rg --files
+     rg -n <patrones> scouting_app docs .github render.yaml README.md RUNBOOK.md README_TESTS.md
+     Get-ChildItem -Force <rutas>
+     Get-Item <artefactos>
+   Resultado:
+     Se localizaron target, features, entrenamiento, inferencia, datasets/backups, metadata, workflows y documentos internos.
+     No se encontro players_updated_v2.db ni players_training.db activo; si existe un backup local de training de 20,000 jugadores.
+
+3) Versiones del entorno
+   Comandos:
+     .\.venv\Scripts\python.exe --version
+     .\.venv\Scripts\python.exe -m pip --version
+   Resultado:
+     Python 3.11.9
+     pip 26.0.1
+
+4) Lectura estructurada de metadata y preprocesador
+   Comando:
+     .\.venv\Scripts\python.exe -c "import json,joblib; ... json.loads(...training_metadata.json...); joblib.load(...preprocessor.joblib...).get_feature_names_out()"
+   Resultado:
+     Metadata leida sin cambios.
+     68 features: 11 base numericas, 52 historicas y 5 de posicion one-hot.
+     Timestamp 2026-05-19T22:51:17.072099; seed 42; 45 epocas solicitadas; 15 entrenadas; best_epoch 5; patience 10.
+
+5) Lectura del checkpoint
+   Comando:
+     .\.venv\Scripts\python.exe -c "import torch; checkpoint=torch.load('scouting_app/model.pt', map_location='cpu', weights_only=True); ..."
+   Resultado:
+     version=1; model_class=PlayerNet; input_dim=68; seed=42.
+     Arquitectura inferida de shapes y confirmada contra PlayerNet: rama wide 68->1 y residual 68->128->64->1.
+     Parametros entrenables: 17,994.
+
+6) Hashes SHA-256
+   Comando:
+     Get-FileHash -Algorithm SHA256 scouting_app\model.pt, scouting_app\preprocessor.joblib, scouting_app\probability_calibrator.joblib, scouting_app\training_metadata.json, scouting_app\training_splits.json
+   Resultado:
+     model.pt D9FAC23BDFC294C91CB8E7A10AAAA3E4BF90F4E6A3CDA14C022880B2AB12BB19
+     preprocessor.joblib 9D5286C52A16A7E004C76A39DCA0A970D6746098866FEEB15F22F503B8E61576
+     probability_calibrator.joblib D9EE7893D62034200BE5402254757A0B9790020F558A4E7CED1A8AC12299325D
+     training_metadata.json 043AC307E433DF717B62045FB05BB63E560A2E029D18F809DBF067C7EA5F05B0
+     training_splits.json AF6EC6B5E9222AB7847E52F303CF7E0EEFD84003F2601C7AB0E91092A5E26F82
+
+7) Consultas SQLite read-only
+   Metodo:
+     Python sqlite3 con URI file:<ruta>?mode=ro; SELECT COUNT(*), MIN/MAX y GROUP BY sobre tablas existentes.
+   Bases inspeccionadas:
+     scouting_app/players.db
+     scouting_app/players_training.db.before_attr_scale_1_20_20260517_225514
+     backups operativos ignorados presentes
+   Resultado principal:
+     Training backup: 20,000 players; 232,960 matches/participations; 116,448 player_stats;
+     180,212 attribute_history; 80,062 scout_reports; 180,212 physical; 180,212 availability.
+     potential_label almacenado: 3,967 positivo / 16,033 negativo.
+     players.db legacy: 1,000 players, edad 16-22, 143 potential_label positivos.
+   Nota:
+     No hubo INSERT, UPDATE, DELETE, DDL, VACUUM ni migracion.
+
+8) Lectura de cache temporal y splits
+   Metodo:
+     Deserializacion de solo lectura del cache existente y training_splits.json; conteo por indices.
+   Resultado:
+     Target temporal total: 1,597 positivo / 18,403 negativo.
+     Train: 1,118 / 12,882; validation: 239 / 2,761; test: 240 / 2,760.
+     Cache version temporal-training-v2; 20,000 filas y 107 columnas.
+
+9) Suite de pruebas
+   Directorio:
+     C:\Tesis\TPScouting-entrega
+   Comando:
+     C:\Tesis\TPScouting\.venv\Scripts\python.exe -m pytest -q -rs -p no:cacheprovider
+   Resultado:
+     83 passed, 1 skipped, 4 warnings in 48.68s.
+     Skip: tests/test_visual_smoke.py:73, Playwright opt-in, requiere RUN_PLAYWRIGHT=1.
+     Warnings: cuatro All-NaN slice encountered de scikit-learn (nanmin/nanmax) en dos tests de preprocesamiento.
+   Motivo de usar TPScouting-entrega:
+     Codigo y tests sincronizados; evita que pytest genere archivos ignorados en el repositorio fuente auditado.
+
+10) Cobertura
+    Directorio:
+      C:\Tesis\TPScouting-entrega
+    Comando:
+      C:\Tesis\TPScouting\.venv\Scripts\python.exe -m pytest -q -rs -p no:cacheprovider --cov=scouting_app --cov-report=term-missing
+    Configuracion auxiliar:
+      COVERAGE_FILE apuntado a un archivo temporal fuera de ambos repositorios.
+    Resultado:
+      TOTAL 5,082 statements, 1,062 missed, 79%.
+      Suite: 83 passed, 1 skipped, 4 warnings.
+
+11) Smoke HTTP publico sin credenciales
+    Comando:
+      .\.venv\Scripts\python.exe scripts\smoke_render.py --base-url https://tpscouting-mvp.onrender.com
+    Resultado:
+      FAIL: The read operation timed out
+    Interpretacion:
+      No confirma indisponibilidad definitiva; tampoco permite afirmar disponibilidad vigente.
+      La evidencia historica versionada del 20/05/2026 se trato por separado.
+
+12) Inspeccion del Word adjunto
+    Archivo leido:
+      C:\Users\Usuario\Desktop\TRABAJO_FINAL - Version corregida TPScouting.docx
+    Metodo:
+      Lectura ZIP/XML con python-docx/XML en un directorio temporal; sin modificar el DOCX.
+      Busquedas rg sobre el texto/estructura extraidos.
+    Resultado relevante:
+      Tabla de entrenamiento: input_dim 68, 45/15 epocas.
+      Tabla de metricas rotula como PlayerNet los valores calibrados 0.9303/0.9174/0.5241/0.5282.
+      La prosa afirma que LogisticRegression supera a PlayerNet en PR-AUC; requiere aclarar que compara contra la salida calibrada.
+      El Word registra cobertura 80%; la corrida actual arrojo 79%.
+
+13) Limpieza completada al cierre
+    Elementos generados por la auditoria fuera de docs/auditoria_tesis:
+      C:\Tesis\_audit_tp_final_20260710 (temporal de lectura Word/cobertura)
+      caches/experiments generados por pytest en TPScouting-entrega
+    Accion:
+      Eliminados luego de verificar sus rutas absolutas dentro de los directorios esperados.
+
+14) Evidencia publica de GitHub Actions
+    Comandos/metodos:
+      Consulta publica de https://github.com/indio21/TPScouting/actions
+      Invoke-WebRequest a la API publica /repos/indio21/TPScouting/actions/runs?per_page=10
+      Invoke-WebRequest a la API publica /repos/indio21/TPScouting/actions/runs/26317958817/jobs
+      python -m playwright screenshot sobre la lista y el detalle de CI #71
+    Resultado:
+      71 runs publicas.
+      CI #71, commit fa8a50d1173f2760329a45f11fbf93a709721235, main, completed/success.
+      Jobs test (3.11) y test (3.12) completed/success; tests y upload coverage exitosos.
+      Dos capturas PNG y dos respuestas JSON conservadas.
+
+15) Transcripciones adicionales de pruebas
+    Directorio de ejecucion:
+      C:\Tesis\TPScouting-entrega
+    Comandos:
+      python -m pytest -q -rs -p no:cacheprovider
+      python -m pytest -q -rs -p no:cacheprovider --cov=scouting_app --cov-report=term-missing
+    Resultados persistidos:
+      pytest_2026-07-10.txt: 83 passed, 1 skipped, 4 warnings in 38.88s.
+      coverage_2026-07-10.txt: 83 passed, 1 skipped, 4 warnings in 55.79s; 5082 statements, 1062 missed, 79%.
+    Aislamiento:
+      PYTHONDONTWRITEBYTECODE=1, cacheprovider desactivado y COVERAGE_FILE temporal fuera de ambos repositorios.
+      Las transcripciones de Tee-Object se normalizaron de UTF-16 a UTF-8 sin cambiar su contenido textual.
+
+16) Exportaciones estructuradas
+    Metodo:
+      Lectura con json/joblib y exportacion mecanica CSV/JSON, sin modificar artefactos fuente.
+    Archivos:
+      features_68.csv / features_68.json
+      training_history.csv
+      metricas_test.csv
+      target_distribution.csv
+      artefactos_sha256.csv
+    Controles:
+      68 features == input_dim 68.
+      15 filas de historial == epochs_trained 15.
+      4 variantes de metricas separadas.
+
+17) Snapshots exactos
+    Metodo:
+      Copy-Item de archivos versionados, sin transformacion.
+    Archivos:
+      training_metadata_snapshot_2026-07-10.json
+      ci_workflow_snapshot_2026-07-10.yml
+      training_curve_snapshot_2026-07-10.png
+
+COMANDOS NO EJECUTADOS
+  generate_data.py
+  train_model.py
+  evaluate_saved_model.py
+  sync_shortlist.py
+  seed_demo_data.py
+  create_admin.py
+  migraciones o escrituras SQL
+  modificaciones al Word

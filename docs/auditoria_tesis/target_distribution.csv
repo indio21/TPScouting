@@ -1,0 +1,5 @@
+﻿split,total,positive,negative,positive_rate,target
+total,20000,1597,18403,0.07985,temporal_target_label
+train,14000,1118,12882,0.07985714285714286,temporal_target_label
+validation,3000,239,2761,0.07966666666666666,temporal_target_label
+test,3000,240,2760,0.08,temporal_target_label

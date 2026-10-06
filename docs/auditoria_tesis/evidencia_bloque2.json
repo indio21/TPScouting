@@ -1,0 +1,263 @@
+{
+  "audit": {
+    "date": "2026-07-10",
+    "repository": "C:\\Tesis\\TPScouting",
+    "commit": "7d7680e04dd15b4c4f01d9e0aee8711aeea06f0d",
+    "branch": "main",
+    "origin_state": "ahead 1",
+    "read_only_scope": true,
+    "retrained": false
+  },
+  "target": {
+    "status": "HECHO VERIFICADO",
+    "stored_label": {
+      "name": "potential_label",
+      "positive_definition": "Bernoulli sintetica con probabilidad producida por label_probability",
+      "negative_definition": "Resultado falso del mismo sorteo",
+      "inputs": [
+        "age",
+        "position",
+        "pace",
+        "shooting",
+        "passing",
+        "dribbling",
+        "defending",
+        "physical",
+        "vision",
+        "tackling",
+        "determination",
+        "technique"
+      ],
+      "used_as_training_target": false,
+      "evidence": [
+        {"file": "scouting_app/models.py", "symbol": "Player", "lines": "31-63"},
+        {"file": "scouting_app/generate_data.py", "symbol": "label_probability/generate_player", "lines": "122-193"}
+      ]
+    },
+    "actual_training_target": {
+      "name": "temporal_target_label",
+      "positive_definition": "selected_mask luego de score temporal, gates, consolidacion/breakout y cuotas",
+      "negative_definition": "fila no seleccionada",
+      "desired_rate": 0.08,
+      "global_bounds": [0.05, 0.12],
+      "formula": "0.15*growth + 0.12*future_level + 0.13*performance + 0.13*pressure + 0.10*consistency + 0.09*role + 0.09*availability + 0.09*recovery + 0.10*scout + 0.14*breakout - 0.08*stability_penalty",
+      "evidence": [
+        {"file": "scouting_app/preprocessing.py", "symbol": "TEMPORAL_TARGET_COLUMN", "lines": "106-109"},
+        {"file": "scouting_app/preprocessing.py", "symbol": "_temporal_target_dataframe", "lines": "1264-1799"},
+        {"file": "scouting_app/preprocessing.py", "symbol": "build_temporal_training_dataframe", "lines": "1802-1915"},
+        {"file": "scouting_app/train_model.py", "symbol": "load_training_data/train_model", "lines": "194-211,525-540"}
+      ]
+    },
+    "distribution": {
+      "total": {"rows": 20000, "positive": 1597, "negative": 18403, "positive_rate": 0.07985},
+      "train": {"rows": 14000, "positive": 1118, "negative": 12882, "positive_rate": 0.079857},
+      "validation": {"rows": 3000, "positive": 239, "negative": 2761, "positive_rate": 0.079667},
+      "test": {"rows": 3000, "positive": 240, "negative": 2760, "positive_rate": 0.08}
+    },
+    "leakage": [
+      {
+        "classification": "HECHO VERIFICADO",
+        "type": "no_direct_feature_leakage_found",
+        "finding": "potential_label y temporal_target_label no integran MODEL_FEATURE_COLUMNS; features historicas se cortan antes del futuro",
+        "evidence": {"file": "scouting_app/preprocessing.py", "symbol": "MODEL_FEATURE_COLUMNS/build_temporal_training_dataframe", "lines": "30-106,1802-1915"}
+      },
+      {
+        "classification": "HECHO VERIFICADO - RIESGO METODOLOGICO",
+        "type": "target_construction_contamination",
+        "finding": "cuantiles y cuotas del target se calculan en el dataset completo antes de train/validation/test split",
+        "evidence": [
+          {"file": "scouting_app/preprocessing.py", "symbol": "_temporal_target_dataframe", "lines": "1700-1799"},
+          {"file": "scouting_app/train_model.py", "symbol": "train_model", "lines": "194-211,525-540"}
+        ]
+      },
+      {
+        "classification": "INFERENCIA",
+        "type": "shared_synthetic_process",
+        "finding": "features y target comparten un proceso generador sintetico, lo que limita validez externa"
+      }
+    ]
+  },
+  "features": {
+    "status": "HECHO VERIFICADO",
+    "input_dim": 68,
+    "groups": [
+      {
+        "name": "base_numeric",
+        "source_count": 11,
+        "transformation": "SimpleImputer(strategy=median) + MinMaxScaler",
+        "generated_count": 11,
+        "accumulated": 11
+      },
+      {
+        "name": "historical_numeric",
+        "source_count": 52,
+        "subgroups": {"stats": 4, "attribute_history": 11, "matches": 10, "scout_reports": 7, "physical": 11, "availability": 9},
+        "transformation": "SimpleImputer(constant=0, keep_empty_features=True) + MinMaxScaler",
+        "generated_count": 52,
+        "accumulated": 63
+      },
+      {
+        "name": "position",
+        "source_count": 1,
+        "categories": ["Portero", "Defensa", "Lateral", "Mediocampista", "Delantero"],
+        "transformation": "SimpleImputer(most_frequent) + OneHotEncoder(categorias fijas, handle_unknown=ignore)",
+        "generated_count": 5,
+        "accumulated": 68
+      }
+    ],
+    "artifacts": ["scouting_app/preprocessor.joblib", "scouting_app/model.pt"],
+    "evidence": [
+      {"file": "scouting_app/player_logic.py", "symbol": "ATTRIBUTE_FIELDS/POSITION_CHOICES", "lines": "13-24,42-48"},
+      {"file": "scouting_app/preprocessing.py", "symbol": "feature constants/build_preprocessor", "lines": "30-148"},
+      {"file": "scouting_app/training_metadata.json", "symbol": "model.input_dim", "lines": "25-29"}
+    ]
+  },
+  "training": {
+    "status": "HECHO VERIFICADO",
+    "timestamp": "2026-05-19T22:51:17.072099",
+    "seed": 42,
+    "dataset_size": 20000,
+    "split": {"train": 14000, "validation": 3000, "test": 3000},
+    "batch_size": 256,
+    "learning_rate": 0.0005,
+    "architecture": "wide linear 68->1 plus residual 68->128->64->1 with BatchNorm, GELU and dropout",
+    "parameter_count": 17994,
+    "loss": "BCEWithLogitsLoss",
+    "pos_weight": 11.522361359570661,
+    "optimizer": "AdamW",
+    "weight_decay": 0.0005,
+    "dropout": 0.15,
+    "epochs_requested": 45,
+    "epochs_trained": 15,
+    "best_epoch": 5,
+    "early_stopping": true,
+    "patience": 10,
+    "monitor": "calibrated validation PR-AUC, F1 tie-break",
+    "final_training_loss": 0.5179418206214905,
+    "best_epoch_training_loss": 0.6431135204705325,
+    "validation_loss": null,
+    "duration": null,
+    "checkpoint": "scouting_app/model.pt",
+    "evidence": [
+      {"file": "scouting_app/training_metadata.json", "symbol": "config/model/pytorch.history", "lines": "2-258"},
+      {"file": "scouting_app/train_model.py", "symbol": "PlayerNet", "lines": "75-100"},
+      {"file": "scouting_app/train_model.py", "symbol": "train_model", "lines": "517-699"}
+    ]
+  },
+  "inference": {
+    "status": "HECHO VERIFICADO",
+    "sequence": [
+      "load player and historical features",
+      "preprocessor.transform to 68 features",
+      "PlayerNet logits",
+      "sigmoid raw_base_prob",
+      "optional isotonic calibrated_base_prob as secondary",
+      "position fit and historical average final score",
+      "combined_prob as primary UI score",
+      "low/medium/high category"
+    ],
+    "combined_formula": "weighted mean of raw model probability, avg_final_score/10 and fit_score/20; default weights 0.35/0.35/0.30; missing components omitted; clamp 0..0.99",
+    "thresholds": {"medium": 0.6, "high": 0.8},
+    "test_metrics_apply_to": {
+      "pytorch.test": "PlayerNet probability calibrated with isotonic regression",
+      "pytorch.raw_test": "raw PlayerNet sigmoid",
+      "combined_score": "not evaluated"
+    },
+    "evidence": [
+      {"file": "scouting_app/app.py", "symbol": "players_to_model_tensor/potential scoring", "lines": "1019-1125"},
+      {"file": "scouting_app/app.py", "symbol": "combine_probability", "lines": "1225-1257"},
+      {"file": "scouting_app/app.py", "symbol": "potential_thresholds", "lines": "1314-1358"},
+      {"file": "scouting_app/train_model.py", "symbol": "test evaluation", "lines": "670-682"},
+      {"file": "scouting_app/routes/players.py", "symbol": "prediction route", "lines": "1439-1501"}
+    ]
+  },
+  "datasets": [
+    {
+      "name": "official_training_backup",
+      "path": "scouting_app/players_training.db.before_attr_scale_1_20_20260517_225514",
+      "classification": "synthetic",
+      "players": 20000,
+      "matches": 232960,
+      "player_stats": 116448,
+      "attribute_history": 180212,
+      "scout_reports": 80062,
+      "physical_assessments": 180212,
+      "availability_records": 180212,
+      "evidence": {"file": "scouting_app/generate_data.py", "symbol": "synthetic generators/main", "lines": "1-1254"}
+    },
+    {
+      "name": "demo",
+      "classification": "synthetic",
+      "default_players": 100,
+      "evidence": {"file": "scouting_app/seed_demo_data.py", "symbol": "main", "lines": "1-57"}
+    },
+    {
+      "name": "current_operational_database",
+      "classification": "NO VERIFICABLE",
+      "finding": "players_updated_v2.db is absent"
+    },
+    {
+      "name": "tracked_legacy_players_db",
+      "classification": "origin NO VERIFICABLE",
+      "players": 1000,
+      "age_range": [16, 22],
+      "potential_label_positive": 143
+    }
+  ],
+  "metrics": {
+    "status": "HECHO VERIFICADO",
+    "playernet_calibrated": {"threshold": 0.25, "accuracy": 0.9303333333, "roc_auc": 0.9174305556, "pr_auc": 0.5241160515, "f1": 0.5282167043, "precision": 0.5763546798, "recall": 0.4875, "confusion_matrix": [[2674, 86], [123, 117]]},
+    "playernet_raw": {"threshold": 0.825, "accuracy": 0.93, "roc_auc": 0.9203411836, "pr_auc": 0.546126675, "f1": 0.5291479821, "precision": 0.572815534, "recall": 0.4916666667, "confusion_matrix": [[2672, 88], [122, 118]]},
+    "logistic_balanced": {"threshold": 0.85, "accuracy": 0.931, "roc_auc": 0.9205057367, "pr_auc": 0.5377764388, "f1": 0.532731377, "precision": 0.5812807882, "recall": 0.4916666667, "confusion_matrix": [[2675, 85], [122, 118]]},
+    "average_skill": {"threshold": 0.625, "accuracy": 0.896, "roc_auc": 0.8390285326, "pr_auc": 0.3513181109, "f1": 0.4200743494, "precision": 0.3791946309, "recall": 0.4708333333, "confusion_matrix": [[2575, 185], [127, 113]]},
+    "evidence": {"file": "scouting_app/training_metadata.json", "symbol": "pytorch/baselines", "lines": "38-120,275-369"}
+  },
+  "artifact_hashes_sha256": {
+    "scouting_app/model.pt": "D9FAC23BDFC294C91CB8E7A10AAAA3E4BF90F4E6A3CDA14C022880B2AB12BB19",
+    "scouting_app/preprocessor.joblib": "9D5286C52A16A7E004C76A39DCA0A970D6746098866FEEB15F22F503B8E61576",
+    "scouting_app/probability_calibrator.joblib": "D9EE7893D62034200BE5402254757A0B9790020F558A4E7CED1A8AC12299325D",
+    "scouting_app/training_metadata.json": "043AC307E433DF717B62045FB05BB63E560A2E029D18F809DBF067C7EA5F05B0",
+    "scouting_app/training_splits.json": "AF6EC6B5E9222AB7847E52F303CF7E0EEFD84003F2601C7AB0E91092A5E26F82"
+  },
+  "tests": {
+    "status": "HECHO VERIFICADO",
+    "repository_used": "C:\\Tesis\\TPScouting-entrega",
+    "reason": "synchronized code/tests; avoids generated files in source repository",
+    "passed": 83,
+    "skipped": 1,
+    "warnings": 4,
+    "duration_seconds": 48.68,
+    "skip": {"file": "tests/test_visual_smoke.py", "line": 73, "reason": "Playwright visual smoke opt-in; RUN_PLAYWRIGHT=1 required"},
+    "warning_summary": "scikit-learn All-NaN slice encountered, nanmin/nanmax, in two preprocessing tests",
+    "coverage": {"percent": 79, "statements": 5082, "missed": 1062},
+    "ci": {
+      "workflow": "CI",
+      "python": ["3.11", "3.12"],
+      "command": "pytest -q --cov=scouting_app --cov-report=term-missing --cov-report=xml",
+      "artifact": "coverage-python-${matrix.python-version}/coverage.xml",
+      "remote_run_passed": "NO VERIFICABLE",
+      "evidence": {"file": ".github/workflows/ci.yml", "symbol": "workflow", "lines": "1-39"}
+    }
+  },
+  "render_smoke": {
+    "current_run": {"date": "2026-07-10", "result": "NO VERIFICABLE", "detail": "read timeout"},
+    "historical_evidence": {"date": "2026-05-20", "classification": "HECHO VERIFICADO COMO REGISTRO VERSIONADO", "file": "docs/cierre_word_corregido_2026-05-19.md", "lines": "107-123"}
+  },
+  "contradictions": [
+    "The Word names the calibrated test metrics as PlayerNet metrics without identifying isotonic calibration.",
+    "The Word says logistic regression exceeds PlayerNet in PR-AUC; that is true versus calibrated output but false versus raw PlayerNet sigmoid.",
+    "Current local coverage is 79%, while existing documentation reports 80%.",
+    "Semisynthetic or real data are not evidenced for the official run; code and artifacts support synthetic data.",
+    "potential_label must not be described as the target used by the official temporal training run."
+  ],
+  "non_verifiable": [
+    "training duration",
+    "validation loss",
+    "exact training commit",
+    "current remote GitHub Actions result",
+    "current operational database contents",
+    "real player data use",
+    "current public Render availability after timeout",
+    "exact origin of tracked legacy players.db"
+  ]
+}

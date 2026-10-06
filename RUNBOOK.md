@@ -68,13 +68,18 @@ Las credenciales publicas `profesor_demo` / `DemoProfesor123` son solo para eval
 
 ## 2) Arranque local
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-torch-cpu.txt
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .\.venv\Scripts\python.exe -m pytest -q --cov=scouting_app --cov-report=term-missing
 .\.venv\Scripts\python.exe scouting_app\app.py
 ```
 
-Para reproducibilidad exacta de dependencias existe `requirements-lock.txt`. Usarlo cuando se necesite recrear el entorno con las mismas versiones instaladas al cierre de esta rama.
+Esos comandos corresponden a Windows/Linux CPU. En macOS usar
+`requirements.txt` en lugar de `requirements-torch-cpu.txt` y
+`requirements-lock.txt`. `requirements-docs.txt` se instala sólo para trabajar
+con el Word. La validación local disponible es Windows 11/Python 3.11.9; CI está
+configurada para Linux/Python 3.11 y 3.12. macOS queda documentado pero no probado.
 
 La explicacion breve de los cambios agregados para cerrar la revision de codigo fuente esta en `docs/explicacion_cambios_revision_codigo_2026-04-27.md`.
 
@@ -85,6 +90,13 @@ Para el deploy de MVP en Render se versionan solo tres artefactos chicos de runt
 metadata y splits siguen fuera de Git.
 
 Por defecto la app no reentrena automaticamente al iniciar si faltan `model.pt` o `preprocessor.joblib`. Si se quiere permitir esa conducta en desarrollo, setear `AUTO_TRAIN_ON_STARTUP=true`.
+
+En producción, la acción web de generación y entrenamiento está desactivada.
+Las corridas se ejecutan fuera de una solicitud HTTP mediante los comandos de la
+sección 2.1, se verifican y luego se despliegan sus artefactos. No se deben
+reemplazar `model.pt`, `preprocessor.joblib` ni `probability_calibrator.joblib`
+por archivos de terceros: PyTorch y joblib requieren confiar en el origen del
+archivo deserializado.
 
 ## 2.0.1) Smoke visual y smoke Render
 
@@ -137,8 +149,10 @@ Desde `scouting_app/`:
 ## 3) Healthcheck
 - Endpoint: `GET /health`
 - Esperado:
-  - HTTP 200 con `status=ok`, conectividad a DB y bloque `data_quality`.
+  - HTTP 200 con `status=ok`; esa respuesta confirma también la consulta mínima a la base.
   - HTTP 500 si falla conectividad.
+- El endpoint público no expone excepciones, límites ni contadores de datos.
+- Los contadores detallados están disponibles para administradores en `Configuracion`.
 
 ## 3.1) Auditoria y limpieza operativa
 - `Configuracion` incluye una accion para auditar y limpiar la base operativa.
@@ -189,7 +203,10 @@ cp scouting_app/players_updated_v2.db-shm backups/  || true
 
 ## 7) Deploy (Render)
 - `render.yaml` define build/start.
-- En plan Free se usa una sola base PostgreSQL (`tpscouting-mvp-db`) por la limitacion vigente de Render.
+- Render queda fijado a Python 3.11.9 y al mismo lock de runtime que CI.
+- En plan Free se usa una sola base PostgreSQL (`tpscouting-mvp-db`) por la limitación vigente de Render.
+- PostgreSQL Free expira a los 30 días, tiene 1 GB y no incluye backups; es una
+  opción de demostración temporal. Fuente oficial: https://render.com/docs/free
 - `APP_DB_URL` y `TRAINING_DB_URL` apuntan a esa misma base solo para cumplir la configuracion de produccion; no ejecutar el pipeline de entrenamiento web en este modo.
 - `seed_demo_data.py` corre antes de Gunicorn y genera 100 jugadores demo solo si la base esta vacia.
 - Validación post-deploy:
