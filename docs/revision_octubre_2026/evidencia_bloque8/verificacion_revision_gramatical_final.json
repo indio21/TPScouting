@@ -1,0 +1,28 @@
+{
+  "docx": "docs\\revision_octubre_2026\\word\\TRABAJO_FINAL_TPScouting_REVISION_GRAMATICAL_2026-10-07.docx",
+  "docx_sha256": "AA197775FBA8441260F9068B9350F1F533249B03C7E73AD5D4F194E336AF66E8",
+  "pdf": "docs\\revision_octubre_2026\\pdf\\TRABAJO_FINAL_TPScouting_REVISION_GRAMATICAL_2026-10-07.pdf",
+  "pdf_sha256": "9F102768CA0561C11F2771F63E1DBF91C1198AEE8ED12B5EBA4D150931A0CAAC",
+  "pdf_pages": 81,
+  "docx_inline_shapes": 26,
+  "docx_tables": 19,
+  "docx_sections": 9,
+  "list_entries": 45,
+  "list_mismatches": [],
+  "pending_editorial_items": 1,
+  "field_errors": [],
+  "page_sizes_points": [
+    [
+      612.0,
+      792.0
+    ]
+  ],
+  "low_text_pages": [
+    {
+      "page": 80,
+      "characters": 2,
+      "images": 1
+    }
+  ],
+  "passed": true
+}

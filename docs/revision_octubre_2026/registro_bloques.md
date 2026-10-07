@@ -473,3 +473,11 @@ entregado; D-16 histórico y opcionales ya registrados. Veredicto:
 Regla de maquetación permanente comunicada el 2026-10-07: portada, índice general,
 resumen, abstract y bibliografía deben comenzar en hojas separadas. Esta condición
 debe volver a comprobarse después de cualquier regeneración del Word o PDF.
+
+Revisión lingüística final del 2026-10-07: se generó
+`TRABAJO_FINAL_TPScouting_REVISION_GRAMATICAL_2026-10-07` en DOCX y PDF. Se
+aplicaron 15 sustituciones verificadas y se retiraron cuatro párrafos vacíos con
+estilos de título o leyenda. La revisión preservó evidencia, métricas, referencias,
+imágenes y tablas. El control documental volvió a pasar y la separación de portada,
+índice, resumen, abstract y bibliografía fue confirmada visualmente. La única marca
+editorial restante es el legajo.

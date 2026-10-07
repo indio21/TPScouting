@@ -15,6 +15,12 @@
 > regeneración futura del DOCX/PDF debe conservar esta separación y comprobarla
 > visualmente antes de considerarse final.
 
+> **Copia autoritativa posterior a la revisión gramatical:**
+> `word/TRABAJO_FINAL_TPScouting_REVISION_GRAMATICAL_2026-10-07.docx` y
+> `pdf/TRABAJO_FINAL_TPScouting_REVISION_GRAMATICAL_2026-10-07.pdf`. La versión
+> anterior `FINAL_BLOQUE8` queda como checkpoint y no debe compartirse en lugar de
+> esta revisión. Sigue pendiente únicamente el legajo en la portada.
+
 Fecha de corte: 2026-10-06 (America/Buenos_Aires).
 
 > **Pausa más reciente:** antes de continuar, leer

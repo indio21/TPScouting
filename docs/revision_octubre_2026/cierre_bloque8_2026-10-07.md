@@ -1,5 +1,14 @@
 # Cierre del Bloque 8 — 2026-10-07
 
+> **Revisión lingüística posterior:** la copia autoritativa para revisión del usuario
+> pasó a ser `word/TRABAJO_FINAL_TPScouting_REVISION_GRAMATICAL_2026-10-07.docx`
+> y su PDF homónimo. Se corrigieron gramática, cohesión, mayúsculas de títulos,
+> anglicismos evitables y referencias al estado local del repositorio, sin alterar
+> resultados ni conclusiones. DOCX SHA-256:
+> `AA197775FBA8441260F9068B9350F1F533249B03C7E73AD5D4F194E336AF66E8`;
+> PDF SHA-256:
+> `9F102768CA0561C11F2771F63E1DBF91C1198AEE8ED12B5EBA4D150931A0CAAC`.
+
 ## Veredicto
 
 **REQUIERE CORRECCIONES MENORES**.
@@ -37,6 +46,12 @@ histórica y no certifica estos cambios locales.
   bibliografía deben comenzar en hojas separadas y conservarse así en toda versión
   regenerada.
 - Pendiente editorial: una sola marca, `Legajo: [PENDIENTE DE INFORMAR]`.
+
+La auditoría de la revisión lingüística informa 0 espacios dobles, 0 espacios
+indebidos antes de puntuación, 0 usos de primera persona plural, 0 usos de segunda
+persona, 0 palabras consecutivas repetidas y 0 oraciones de 45 palabras o más. Las
+cuatro coincidencias del control promocional corresponden a formulaciones negativas
+(`no garantiza`) y no constituyen lenguaje publicitario.
 
 La fuente aprobada del 26/08/2026 y su backup permanecen intactos. Las imágenes se
 retiraron para la revisión textual, se inventariaron y se regeneraron/integraron una
