@@ -1,0 +1,28 @@
+{
+  "docx": "docs\\revision_octubre_2026\\word\\TRABAJO_FINAL_TPScouting_FINAL_BLOQUE8_2026-10-07.docx",
+  "docx_sha256": "5EAA742A6CD83BC91C0C406844A74348B3711D25846FA785AFB24B9F8C3DF36C",
+  "pdf": "docs\\revision_octubre_2026\\pdf\\TRABAJO_FINAL_TPScouting_FINAL_BLOQUE8_2026-10-07.pdf",
+  "pdf_sha256": "4AD71AB97E66A4C5C481E59CE81DAA0D5728722E7005A2118CC03CA23A36DA5E",
+  "pdf_pages": 81,
+  "docx_inline_shapes": 26,
+  "docx_tables": 19,
+  "docx_sections": 9,
+  "list_entries": 45,
+  "list_mismatches": [],
+  "pending_editorial_items": 1,
+  "field_errors": [],
+  "page_sizes_points": [
+    [
+      612.0,
+      792.0
+    ]
+  ],
+  "low_text_pages": [
+    {
+      "page": 80,
+      "characters": 2,
+      "images": 1
+    }
+  ],
+  "passed": true
+}

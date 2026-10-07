@@ -438,3 +438,34 @@ Pendientes:
 
 No se modificaron código funcional, bases, modelos, artefactos ML ni el
 repositorio de entrega durante este bloque.
+
+## Bloque 8 — Cierre y entrega verificable
+
+Estado: cerrado localmente el 2026-10-07. La entrega pública no fue modificada.
+
+| ID | Evidencia de cierre | Estado |
+|---|---|---|
+| A4 | 116 passed, 1 skipped, 4 warnings; cobertura exacta 83,74 % | Resuelta localmente |
+| A5 | Fecha, versiones, logs, hashes y límites conservados | Resuelta localmente |
+| A6 | CI #73 rotulada como histórica; CI del commit entregado pendiente | Parcial por publicación no autorizada |
+| A8 | Demo temporal completa, listas/campos y PDF final verificados | Resuelta localmente |
+
+Documento autoritativo:
+
+- `word/TRABAJO_FINAL_TPScouting_FINAL_BLOQUE8_2026-10-07.docx`, SHA-256
+  `5EAA742A6CD83BC91C0C406844A74348B3711D25846FA785AFB24B9F8C3DF36C`.
+- `pdf/TRABAJO_FINAL_TPScouting_FINAL_BLOQUE8_2026-10-07.pdf`, SHA-256
+  `4AD71AB97E66A4C5C481E59CE81DAA0D5728722E7005A2118CC03CA23A36DA5E`.
+
+El PDF tiene 81 páginas. Se verificaron 45 entradas de listas contra la numeración
+visible, 26 imágenes, 19 tablas, 9 secciones, ausencia de errores de campos y una
+única marca pendiente: el legajo. La revisión visual selectiva confirmó portada,
+índices, glosario y cierre. El detalle está en `cierre_bloque8_2026-10-07.md`.
+
+La demo desde base temporal vacía verificó login, edad/categoría, historiales,
+silueta y predicción. No se modificaron bases persistentes. El repositorio de
+entrega sigue limpio en `ffdefdf8035c994ae285a270de0a4ff4e9f336a8`.
+
+Pendientes finales: legajo; sincronización/push autorizados; CI del commit realmente
+entregado; D-16 histórico y opcionales ya registrados. Veredicto:
+**REQUIERE CORRECCIONES MENORES**.

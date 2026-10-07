@@ -1,0 +1,37 @@
+{
+  "timestamp_utc": "2026-10-06T22:55:46.025529+00:00",
+  "source": "Aplicación local contra SQLite temporal, datos sintéticos, seed 42",
+  "database_removed": true,
+  "screenshots": {
+    "01_login.png": {
+      "route": "/login",
+      "bytes": 113466,
+      "sha256": "127006391ca37c8b6c9225a209ffe0a80dac504bae4bc2c8a48dc763be253054"
+    },
+    "02_dashboard.png": {
+      "route": "/dashboard",
+      "bytes": 179184,
+      "sha256": "76e5166cf516d4eb95d89e2ab837c37eae5ef9f1161c62eaab353635c6e1b85c"
+    },
+    "03_players.png": {
+      "route": "/players",
+      "bytes": 149894,
+      "sha256": "63097ba3dca47e2920bedc8915d127251ab6c6ac8cd9548e64b23b03b79e5834"
+    },
+    "04_player_detail.png": {
+      "route": "/player/1",
+      "bytes": 215571,
+      "sha256": "24fa97191fb3270fe4c7c608b3e5bef3814bd2ca4bac7eac69f0b36037ccfee1"
+    },
+    "05_prediction.png": {
+      "route": "/player/1/predict",
+      "bytes": 178146,
+      "sha256": "f3967734b2ff678570f862cdbce80bf91dc5faca1b4cf47dfc78214d69486740"
+    },
+    "06_compare_multi.png": {
+      "route": "/compare/multi",
+      "bytes": 209831,
+      "sha256": "bff30bdb5302c00a7b262605caa370bd69bcc0cccbd0e32b0083ead125ec3729"
+    }
+  }
+}

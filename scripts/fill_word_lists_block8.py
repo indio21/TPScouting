@@ -19,7 +19,14 @@ def pdf_page_map(pdf_path: Path, captions: list[str]) -> dict[str, int]:
     import fitz
 
     document = fitz.open(pdf_path)
-    pages = [normalized(page.get_text()) for page in document]
+    raw_pages = [page.get_text() for page in document]
+    pages = [normalized(text) for text in raw_pages]
+
+    def displayed_page_number(index: int) -> int:
+        matches = re.findall(r"(?m)^\s*(\d+)\s*$", raw_pages[index])
+        if not matches:
+            raise RuntimeError(f"No se halló el número visible en la página física {index + 1}")
+        return int(matches[0])
     result = {}
     for caption in captions:
         needle = normalized(caption)
@@ -28,7 +35,7 @@ def pdf_page_map(pdf_path: Path, captions: list[str]) -> dict[str, int]:
         matches = [index + 1 for index, text in enumerate(pages) if index >= 8 and needle in text]
         if len(matches) != 1:
             raise RuntimeError(f"El titulo debe aparecer en una pagina: {caption!r}; hallado en {matches}")
-        result[caption] = matches[0]
+        result[caption] = displayed_page_number(matches[0] - 1)
     return result
 
 

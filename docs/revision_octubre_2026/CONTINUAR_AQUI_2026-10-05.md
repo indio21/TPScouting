@@ -1,5 +1,14 @@
 # TPScouting — contexto completo para reanudar
 
+> **Actualización final, 2026-10-07:** el Bloque 8 quedó cerrado localmente. El
+> documento autoritativo es
+> `word/TRABAJO_FINAL_TPScouting_FINAL_BLOQUE8_2026-10-07.docx` y su PDF homónimo
+> está en `pdf/`. Los hashes, pruebas, límites y el conjunto propuesto para una
+> sincronización selectiva están en `cierre_bloque8_2026-10-07.md`. Permanecen
+> pendientes el legajo, la sincronización/publicación autorizada y la CI del commit
+> realmente entregado. Este aviso reemplaza las instrucciones antiguas que indican
+> ejecutar el Bloque 8.
+
 Fecha de corte: 2026-10-06 (America/Buenos_Aires).
 
 > **Pausa más reciente:** antes de continuar, leer

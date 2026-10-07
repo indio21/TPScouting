@@ -1,5 +1,9 @@
 # Punto de reanudación — Bloque 8
 
+> **Documento histórico, superado el 2026-10-07.** El Bloque 8 se completó
+> localmente. Continuar desde `cierre_bloque8_2026-10-07.md`; no usar los candidatos
+> ni las instrucciones de reanudación de este archivo como estado vigente.
+
 Fecha de pausa: 2026-10-06.
 
 ## Estado seguro

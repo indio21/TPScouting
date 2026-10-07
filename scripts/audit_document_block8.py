@@ -2,25 +2,23 @@
 
 from __future__ import annotations
 
+import argparse
 import re
-from collections import Counter
 from pathlib import Path
 
 from docx import Document
 
-
 ROOT = Path(__file__).resolve().parents[1]
-DOCX = ROOT / "docs/revision_octubre_2026/word/TRABAJO_FINAL_TPScouting_CANDIDATO_FINAL_BLOQUE8_2026-10-06.docx"
-REPORT = ROOT / "docs/revision_octubre_2026/auditoria_redaccion_bloque8.md"
+DEFAULT_DOCX = ROOT / "docs/revision_octubre_2026/word/TRABAJO_FINAL_TPScouting_REVISION_TEXTO_SIN_IMAGENES_2026-10-06.docx"
+DEFAULT_REPORT = ROOT / "docs/revision_octubre_2026/auditoria_redaccion_bloque8.md"
 
 SUSPICIOUS = {
     "doble espacio": re.compile(r"(?<! ) {2,}"),
     "espacio antes de puntuacion": re.compile(r"\s+[,:;.](?:\s|$)"),
-    "puntuacion repetida": re.compile(r"[!?.,;:]{2,}"),
-    "primera persona plural": re.compile(r"\b(nosotros|nuestro|nuestra|hemos|realizamos|desarrollamos)\b", re.I),
-    "segunda persona": re.compile(r"\b(tu|tus|usted|ustedes|podras|puedes)\b", re.I),
-    "lenguaje promocional": re.compile(r"\b(revolucionari[oa]s?|innovador(?:a|as|es)?|garantiza|excelente|potente|de vanguardia)\b", re.I),
-    "pendiente editorial": re.compile(r"\b(TODO|FIXME|PENDIENTE DE INFORMAR)\b", re.I),
+    "primera persona plural": re.compile(r"\b(nosotros|nuestro|nuestra|hemos|realizamos|desarrollamos)\b", re.IGNORECASE),
+    "segunda persona": re.compile(r"\b(tu|tus|usted|ustedes|podras|puedes)\b", re.IGNORECASE),
+    "lenguaje promocional": re.compile(r"\b(revolucionari[oa]s?|innovador(?:a|as|es)?|garantiza|excelente|potente|de vanguardia)\b", re.IGNORECASE),
+    "pendiente editorial": re.compile(r"\b(FIXME|PENDIENTE DE INFORMAR)\b", re.IGNORECASE),
 }
 
 
@@ -45,7 +43,14 @@ def sentence_candidates(location: str, text: str):
 
 
 def main() -> None:
-    document = Document(DOCX)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--docx", type=Path, default=DEFAULT_DOCX)
+    parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
+    args = parser.parse_args()
+
+    docx_path = args.docx.resolve()
+    report_path = args.report.resolve()
+    document = Document(docx_path)
     entries = list(iter_text(document))
     findings: dict[str, list[tuple[str, str]]] = {name: [] for name in SUSPICIOUS}
     long_sentences = []
@@ -55,7 +60,7 @@ def main() -> None:
         for name, pattern in SUSPICIOUS.items():
             if pattern.search(text):
                 findings[name].append((location, text))
-        duplicate = re.search(r"\b([A-Za-zÁÉÍÓÚÜÑáéíóúüñ]{3,})\s+\1\b", text, re.I)
+        duplicate = re.search(r"\b([A-Za-zÁÉÍÓÚÜÑáéíóúüñ]{3,})\s+\1\b", text, re.IGNORECASE)
         if duplicate:
             duplicate_words.append((location, duplicate.group(0), text))
         long_sentences.extend(sentence_candidates(location, text))
@@ -63,7 +68,7 @@ def main() -> None:
     body = [
         "# Auditoría reproducible de redacción — Bloque 8",
         "",
-        f"Documento: `{DOCX.relative_to(ROOT)}`",
+        f"Documento: `{docx_path.relative_to(ROOT)}`",
         f"Párrafos y celdas examinados: {len(entries)}.",
         "",
         "Este control detecta candidatos para revisión humana; una coincidencia no equivale por sí sola a un error.",
@@ -100,8 +105,8 @@ def main() -> None:
         for location, count, sentence in long_sentences:
             body.append(f"- **{location}, {count} palabras:** {sentence}")
 
-    REPORT.write_text("\n".join(body) + "\n", encoding="utf-8")
-    print(f"REPORT={REPORT}")
+    report_path.write_text("\n".join(body) + "\n", encoding="utf-8")
+    print(f"REPORT={report_path}")
     print("COUNTS=" + repr({name: len(items) for name, items in findings.items()}))
     print(f"DUPLICATES={len(duplicate_words)} LONG_SENTENCES={len(long_sentences)}")
 

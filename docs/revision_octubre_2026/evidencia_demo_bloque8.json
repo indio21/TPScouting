@@ -1,0 +1,65 @@
+{
+  "timestamp_utc": "2026-10-06T22:52:38.293325+00:00",
+  "database": "SQLite temporal eliminada al finalizar",
+  "seed": 42,
+  "summary": {
+    "players": 60,
+    "missing_birth_date": 0,
+    "age_mismatches": 0,
+    "missing_category": 0,
+    "admins": 1,
+    "credentials_match": 1,
+    "player_stats": 335,
+    "attribute_history": 537,
+    "match_participations": 650,
+    "scout_reports": 243,
+    "physical_assessments": 537,
+    "availability_records": 537
+  },
+  "selected_player": {
+    "id": 1,
+    "age": 17,
+    "stored_age": 17,
+    "category_year": 2009,
+    "history_counts": {
+      "player_stats": 3,
+      "player_attribute_history": 6,
+      "player_match_participations": 3,
+      "scout_reports": 3,
+      "physical_assessments": 6,
+      "player_availability": 6
+    }
+  },
+  "route_statuses": {
+    "players": 200,
+    "detail": 200,
+    "stats": 200,
+    "attributes": 200,
+    "prediction": 200,
+    "silhouette": 200
+  },
+  "login_redirect": "/players",
+  "local_silhouette_verified": true,
+  "prediction_page_verified": true,
+  "versions": {
+    "python": "3.11.9",
+    "flask": "3.1.3",
+    "sqlalchemy": "2.0.49",
+    "torch": "2.9.1+cpu",
+    "scikit-learn": "1.8.0"
+  },
+  "artifacts": {
+    "model.pt": {
+      "bytes": 78067,
+      "sha256": "d9fac23bdfc294c91cb8e7a10aaaa3e4bf90f4e6a3cda14c022880b2ab12bb19"
+    },
+    "preprocessor.joblib": {
+      "bytes": 11926,
+      "sha256": "9d5286c52a16a7e004c76a39dca0a970d6746098866feeb15f22f503b8e61576"
+    },
+    "probability_calibrator.joblib": {
+      "bytes": 855,
+      "sha256": "d9ee7893d62034200be5402254757a0b9790020f558a4e7ced1a8ac12299325d"
+    }
+  }
+}
