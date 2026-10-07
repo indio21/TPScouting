@@ -469,3 +469,7 @@ entrega sigue limpio en `ffdefdf8035c994ae285a270de0a4ff4e9f336a8`.
 Pendientes finales: legajo; sincronización/push autorizados; CI del commit realmente
 entregado; D-16 histórico y opcionales ya registrados. Veredicto:
 **REQUIERE CORRECCIONES MENORES**.
+
+Regla de maquetación permanente comunicada el 2026-10-07: portada, índice general,
+resumen, abstract y bibliografía deben comenzar en hojas separadas. Esta condición
+debe volver a comprobarse después de cualquier regeneración del Word o PDF.

@@ -9,6 +9,12 @@
 > realmente entregado. Este aviso reemplaza las instrucciones antiguas que indican
 > ejecutar el Bloque 8.
 
+> **Regla documental permanente indicada por el usuario:** la portada, el índice
+> general, el resumen, el abstract y la bibliografía deben comenzar en hojas
+> separadas. No deben disponerse como contenido continuo en una misma página. Toda
+> regeneración futura del DOCX/PDF debe conservar esta separación y comprobarla
+> visualmente antes de considerarse final.
+
 Fecha de corte: 2026-10-06 (America/Buenos_Aires).
 
 > **Pausa más reciente:** antes de continuar, leer

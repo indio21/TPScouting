@@ -33,6 +33,9 @@ histórica y no certifica estos cambios locales.
 - Revisión visual selectiva: portada, índice, listas, anexos técnicos, glosario y
   últimas páginas. La portada queda en una sola página y la Tabla 9-3 conserva su
   rótulo junto al glosario.
+- Regla de maquetación del usuario: portada, índice general, resumen, abstract y
+  bibliografía deben comenzar en hojas separadas y conservarse así en toda versión
+  regenerada.
 - Pendiente editorial: una sola marca, `Legajo: [PENDIENTE DE INFORMAR]`.
 
 La fuente aprobada del 26/08/2026 y su backup permanecen intactos. Las imágenes se
