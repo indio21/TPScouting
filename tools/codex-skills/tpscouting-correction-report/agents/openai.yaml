@@ -1,0 +1,4 @@
+interface:
+  display_name: "TPScouting Correction Report"
+  short_description: "Genera una auditoría técnica y académica reproducible"
+  default_prompt: "Usa $tpscouting-correction-report para generar una nueva corrección integral de TPScouting a partir del documento y el commit vigentes."
