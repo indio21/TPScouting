@@ -1,7 +1,7 @@
 # Snapshot reproducible del runtime CPU validado en Windows 11/Python 3.11.
-# CI y Render Linux instalan este archivo. macOS usa requirements.txt porque
-# PyTorch se instala por separado con requirements-torch-cpu.txt para no usar
-# el indice de PyTorch como fuente de las demas dependencias.
+# CI y Render Linux instalan este archivo y luego requirements-torch-cpu.txt.
+# macOS usa requirements.txt, que obtiene el wheel estándar desde PyPI.
+# La separación evita usar el índice de PyTorch para las demás dependencias.
 
 blinker==1.9.0
 click==8.3.3
