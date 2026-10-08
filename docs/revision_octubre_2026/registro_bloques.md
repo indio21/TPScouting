@@ -490,3 +490,30 @@ explícito antes del índice y se eliminó el salto redundante antes de la lista
 figuras. La versión final tiene 94 páginas, 28 imágenes, 19 tablas, 9 secciones,
 45 entradas de listas sin discrepancias, 0 errores de campos, 0 páginas vacías y
 0 marcas editoriales pendientes. Estado local: **LISTO PARA REVISIÓN FINAL HUMANA**.
+
+### Publicación verificable del código — 2026-10-07
+
+Se sincronizó de forma selectiva el código, las plantillas, las pruebas, CI y las
+guías operativas con `TPScouting-entrega`. Se excluyeron documentos internos,
+bases, capturas, scripts de corrección documental y artefactos experimentales.
+El commit publicado es
+`7a47bd3f164e865677f2c70075cbedc9fa63427d`.
+
+Evidencia sobre el árbol exacto de entrega:
+
+- suite local Windows/Python 3.11.9: 116 passed, 1 skipped, 4 warnings conocidos;
+  cobertura 83,74 %;
+- smoke visual Playwright: 1 passed;
+- demo portable sobre SQLite temporal: 60 jugadores, edades 12–18, categorías,
+  historiales y administrador verificados;
+- Ruff crítico, compilación y `pip check`: aprobados;
+- `pip-audit`: sin vulnerabilidades conocidas; el build `torch 2.9.1+cpu` fue
+  omitido por no estar identificado en PyPI;
+- CI remota del SHA entregado: ejecución `37707576905`, aprobada en auditoría de
+  dependencias y en Linux/Python 3.11 y 3.12.
+
+A6 queda cerrado para el código efectivamente publicado. Permanecen como límites
+declarados la ausencia de prueba local en macOS, la validación pendiente en un
+despliegue HTTPS/proxy real y las decisiones opcionales ya registradas. El estado
+del código es **LISTO PARA REVISIÓN FINAL HUMANA**, sin afirmar ausencia absoluta
+de defectos fuera de los escenarios comprobados.
