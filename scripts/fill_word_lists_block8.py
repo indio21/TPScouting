@@ -32,10 +32,15 @@ def pdf_page_map(pdf_path: Path, captions: list[str]) -> dict[str, int]:
         needle = normalized(caption)
         # Las listas ocupan el frente del documento; se buscan los títulos en el
         # cuerpo para no confundir una entrada de lista con su figura o tabla.
-        matches = [index + 1 for index, text in enumerate(pages) if index >= 8 and needle in text]
-        if len(matches) != 1:
-            raise RuntimeError(f"El titulo debe aparecer en una pagina: {caption!r}; hallado en {matches}")
-        result[caption] = displayed_page_number(matches[0] - 1)
+        matches = [index + 1 for index, text in enumerate(pages) if needle in text]
+        if len(matches) < 2:
+            raise RuntimeError(
+                f"El título debe aparecer en la lista y en el cuerpo: {caption!r}; hallado en {matches}"
+            )
+        # La lista está en el frente y la leyenda real aparece después. Tomar la
+        # última coincidencia evita depender de una cantidad fija de páginas
+        # preliminares cuando cambia el tamaño tipográfico.
+        result[caption] = displayed_page_number(matches[-1] - 1)
     return result
 
 

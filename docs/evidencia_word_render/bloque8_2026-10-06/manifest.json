@@ -1,5 +1,5 @@
 {
-  "timestamp_utc": "2026-10-06T22:55:46.025529+00:00",
+  "timestamp_utc": "2026-10-07T23:58:00.762355+00:00",
   "source": "Aplicación local contra SQLite temporal, datos sintéticos, seed 42",
   "database_removed": true,
   "screenshots": {
@@ -16,17 +16,35 @@
     "03_players.png": {
       "route": "/players",
       "bytes": 149894,
-      "sha256": "63097ba3dca47e2920bedc8915d127251ab6c6ac8cd9548e64b23b03b79e5834"
+      "sha256": "afd7548563dc3d92090f661c84644798e47ad79b9dd1d9fba853536f45f5d81f"
     },
     "04_player_detail.png": {
       "route": "/player/1",
-      "bytes": 215571,
-      "sha256": "24fa97191fb3270fe4c7c608b3e5bef3814bd2ca4bac7eac69f0b36037ccfee1"
+      "bytes": 215589,
+      "sha256": "090c4ee14b0b3d59451affa7133ccc14d512b0b66a45283f76278066eb50b92b"
+    },
+    "04a_player_detail_perfil.png": {
+      "route": "/player/1",
+      "scroll_y": 0,
+      "bytes": 215669,
+      "sha256": "6e4200c6459ca70aff290334cea65ac79766f98cd44941cfe632af69721dcf92"
+    },
+    "04b_player_detail_historiales.png": {
+      "route": "/player/1",
+      "scroll_y": 900,
+      "bytes": 71638,
+      "sha256": "87b3b067c15eb415d66616daa0adf4b9e1249a787f672893747839ceaab8c467"
+    },
+    "04c_player_detail_reportes.png": {
+      "route": "/player/1",
+      "scroll_y": 3248,
+      "bytes": 168669,
+      "sha256": "31233c31bf06c5f3d1289b55697fcf438e94835ad4129eb91bd6f4262917b667"
     },
     "05_prediction.png": {
       "route": "/player/1/predict",
-      "bytes": 178146,
-      "sha256": "f3967734b2ff678570f862cdbce80bf91dc5faca1b4cf47dfc78214d69486740"
+      "bytes": 178139,
+      "sha256": "e88ea96edd351914e432c23fc1ab14e10ac948129400520c2b26dfb6a00e719b"
     },
     "06_compare_multi.png": {
       "route": "/compare/multi",

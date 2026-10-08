@@ -21,6 +21,14 @@
 > anterior `FINAL_BLOQUE8` queda como checkpoint y no debe compartirse en lugar de
 > esta revisión. Sigue pendiente únicamente el legajo en la portada.
 
+> **Estado autoritativo más reciente:** usar
+> `word/TRABAJO_FINAL_TPScouting_CORRECCIONES_MENORES_2026-10-07.docx` y
+> `pdf/TRABAJO_FINAL_TPScouting_CORRECCIONES_MENORES_2026-10-07.pdf`. El usuario
+> decidió omitir el legajo. Esta versión usa Arial 14 en los estilos que estaban en
+> Arial 11, restaura las tres subfiguras de la Figura 6-5 y presenta los diagramas
+> ampliados orientados verticalmente, sin recortes. Las versiones anteriores quedan
+> como checkpoints de recuperación.
+
 Fecha de corte: 2026-10-06 (America/Buenos_Aires).
 
 > **Pausa más reciente:** antes de continuar, leer

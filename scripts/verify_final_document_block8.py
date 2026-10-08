@@ -25,6 +25,8 @@ def main() -> None:
     parser.add_argument("--docx", required=True, type=Path)
     parser.add_argument("--pdf", required=True, type=Path)
     parser.add_argument("--json", required=True, type=Path)
+    parser.add_argument("--expected-images", type=int, default=26)
+    parser.add_argument("--expected-pending", type=int, default=1)
     args = parser.parse_args()
 
     word = Document(args.docx)
@@ -103,11 +105,11 @@ def main() -> None:
         "passed": (
             len(list_entries) == 45
             and not mismatches
-            and pending == 1
+            and pending == args.expected_pending
             and not field_errors
             and len(page_sizes) == 1
             and all(item["images"] > 0 for item in low_text_pages)
-            and len(word.inline_shapes) == 26
+            and len(word.inline_shapes) == args.expected_images
             and len(word.tables) == 19
             and len(word.sections) == 9
         ),

@@ -481,3 +481,12 @@ estilos de título o leyenda. La revisión preservó evidencia, métricas, refer
 imágenes y tablas. El control documental volvió a pasar y la separación de portada,
 índice, resumen, abstract y bibliografía fue confirmada visualmente. La única marca
 editorial restante es el legajo.
+
+Correcciones menores del 2026-10-07: el usuario decidió omitir el legajo; se cambió
+de Arial 11 a Arial 14 todo estilo que conservaba ese tamaño; se recuperaron las
+subfiguras actuales a), b) y c) de la Figura 6-5; y los ocho diagramas ampliados se
+orientaron verticalmente y se ajustaron a página sin recortes. Se añadió un salto
+explícito antes del índice y se eliminó el salto redundante antes de la lista de
+figuras. La versión final tiene 94 páginas, 28 imágenes, 19 tablas, 9 secciones,
+45 entradas de listas sin discrepancias, 0 errores de campos, 0 páginas vacías y
+0 marcas editoriales pendientes. Estado local: **LISTO PARA REVISIÓN FINAL HUMANA**.

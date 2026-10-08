@@ -87,6 +87,25 @@ def main() -> None:
                         capture("02_dashboard.png", "/dashboard")
                         capture("03_players.png", "/players")
                         capture("04_player_detail.png", f"/player/{player_id}")
+                        page.goto(f"{base_url}/player/{player_id}", wait_until="networkidle", timeout=60_000)
+                        detail_height = page.evaluate("document.documentElement.scrollHeight")
+                        for name, offset in (
+                            ("04a_player_detail_perfil.png", 0),
+                            ("04b_player_detail_historiales.png", min(900, max(0, detail_height - 1000))),
+                            ("04c_player_detail_reportes.png", max(0, detail_height - 1000)),
+                        ):
+                            page.evaluate("position => window.scrollTo(0, position)", offset)
+                            page.wait_for_timeout(250)
+                            path = OUTPUT_DIR / name
+                            page.screenshot(path=str(path), full_page=False)
+                            if path.stat().st_size < 15_000:
+                                raise RuntimeError(f"La captura {name} es demasiado pequeña.")
+                            evidence[name] = {
+                                "route": f"/player/{player_id}",
+                                "scroll_y": offset,
+                                "bytes": path.stat().st_size,
+                                "sha256": sha256(path),
+                            }
                         capture("05_prediction.png", f"/player/{player_id}/predict")
                         capture("06_compare_multi.png", "/compare/multi")
                         context.close()

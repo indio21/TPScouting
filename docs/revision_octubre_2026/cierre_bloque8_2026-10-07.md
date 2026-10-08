@@ -9,6 +9,18 @@
 > PDF SHA-256:
 > `9F102768CA0561C11F2771F63E1DBF91C1198AEE8ED12B5EBA4D150931A0CAAC`.
 
+> **Correcciones menores posteriores solicitadas por el usuario:** la copia
+> autoritativa pasó a ser
+> `word/TRABAJO_FINAL_TPScouting_CORRECCIONES_MENORES_2026-10-07.docx` y su PDF
+> homónimo. Todo el contenido que heredaba Arial 11 pasó a Arial 14; las subfiguras
+> a), b) y c) de la ficha del jugador quedaron restauradas con capturas locales
+> actuales; y los ocho diagramas ampliados se orientaron verticalmente y ajustaron
+> al máximo tamaño de página sin recortes. El legajo se omitió por decisión expresa
+> del usuario. DOCX SHA-256:
+> `CBED5344342F4E96E0CD996520093AF99A364B851EE24B792A45E171294F474F`;
+> PDF SHA-256:
+> `17850B625C63E06282E1FE68CEEAE2DF8A4063604F1645EE5DBC3CBEF1F2D582`.
+
 ## Veredicto
 
 **REQUIERE CORRECCIONES MENORES**.
