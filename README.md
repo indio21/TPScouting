@@ -187,8 +187,8 @@ archivos recibidos de terceros. PyTorch recomienda cargar `state_dict` y usar
 oficiales: [persistencia de modelos de scikit-learn](https://scikit-learn.org/stable/model_persistence.html)
 y [`torch.load`](https://docs.pytorch.org/docs/stable/generated/torch.load.html).
 
-El 2026-10-05 se comprobó que los tres artefactos existentes cargan con
-PyTorch `2.9.1+cpu`, scikit-learn `1.8.0` y joblib `1.5.3`. Esa es una prueba de
+El 2026-10-07 se comprobó que los tres artefactos existentes cargan con
+PyTorch `2.14.1+cpu`, scikit-learn `1.8.0` y joblib `1.5.3`. Esa es una prueba de
 compatibilidad actual, no evidencia de las versiones usadas para crearlos: el
 metadata histórico no registró las versiones de las bibliotecas.
 
