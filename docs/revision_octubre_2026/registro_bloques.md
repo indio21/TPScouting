@@ -539,3 +539,18 @@ de listas sin discrepancias, 0 errores de campos y 0 marcas editoriales. Detalle
 
 Estado: **LISTO PARA REVISIÓN FINAL HUMANA**. El repositorio de entrega no fue
 modificado; una sincronización futura requiere una instrucción expresa del usuario.
+
+## Limitaciones 1–3 — score, target train-only y corrida reproducible (2026-10-10)
+
+Estado: cerradas localmente como evaluación y corrida candidata. No se realizó commit, no se reemplazaron artefactos de runtime y no se modificó la entrega.
+
+- El score combinado fue evaluado sobre test histórico y no demostró una mejora frente a la probabilidad cruda; empeoró PR-AUC y Brier.
+- El split nuevo se realiza antes de ajustar la etiqueta, estratificado por posición/grupo etario y sin usar el target.
+- Todos los cuantiles se ajustan con train y se congelan para validation/test.
+- Prevalencias: train 8,0000 %, validation 7,4333 % y test 8,0333 %.
+- Corrida autoritativa: `20261010T_local_seed42_leakage_safe_v2`.
+- Repetición exacta aprobada después de corregir la reinicialización de seeds.
+- Suite final: 122 passed, 1 skipped, 4 warnings; cobertura 83,23 %.
+- Informe: `cierre_bloques_1_2_3_limitaciones_2026-10-10.md`.
+
+El Word queda pendiente para la actualización documental integral.

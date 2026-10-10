@@ -1,0 +1,15 @@
+{
+  "checks": {
+    "target_policy_exact": true,
+    "split_ids_exact": true,
+    "training_split_artifact_exact": true,
+    "model_state_exact": false,
+    "preprocessor_transform_exact": true,
+    "calibrator_predictions_exact": false,
+    "training_history_exact": false,
+    "test_metrics_exact": false
+  },
+  "passed": false,
+  "repeat_training_duration_seconds": 14.9646,
+  "note": "Timestamps and wall-clock duration are expected to differ and are not compared."
+}

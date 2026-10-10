@@ -1,0 +1,503 @@
+{
+  "timestamp": "2026-10-10T17:15:20.944398+00:00",
+  "seed": 42,
+  "config": {
+    "epochs_requested": 30,
+    "epochs_trained": 15,
+    "training_duration_seconds": 15.0532,
+    "learning_rate": 0.0005,
+    "patience": 8,
+    "batch_size": 256,
+    "optimizer": "AdamW",
+    "weight_decay": 0.0005,
+    "dropout": 0.15,
+    "age_min": 12,
+    "age_max": 18,
+    "loss": "BCEWithLogitsLoss",
+    "target_type": "temporal_progression",
+    "pos_weight": 11.5,
+    "pos_weight_strategy": "full_ratio",
+    "sampler_strategy": "shuffle",
+    "linear_bootstrap": true,
+    "linear_prior_strength": 0.0001,
+    "test_size": 0.15,
+    "validation_size_on_train_pool": 0.17647058823529413
+  },
+  "model": {
+    "checkpoint_version": 1,
+    "input_dim": 68,
+    "class": "PlayerNet",
+    "trainable_parameters": 17608,
+    "buffer_elements": 386,
+    "state_dict_elements": 17994
+  },
+  "dataset": {
+    "train_size": 14000,
+    "validation_size": 3000,
+    "test_size": 3000,
+    "train_positive_rate": 0.08,
+    "validation_positive_rate": 0.0743,
+    "test_positive_rate": 0.0803
+  },
+  "pytorch": {
+    "best_epoch": 7,
+    "selected_threshold": 0.17500000000000002,
+    "calibration_method": "isotonic",
+    "validation": {
+      "threshold": 0.17500000000000002,
+      "accuracy": 0.9016666666666666,
+      "roc_auc": 0.916661687694079,
+      "pr_auc": 0.47960115387895963,
+      "f1": 0.5042016806722689,
+      "precision": 0.4032258064516129,
+      "recall": 0.672645739910314,
+      "confusion_matrix": [
+        [
+          2555,
+          222
+        ],
+        [
+          73,
+          150
+        ]
+      ],
+      "warnings": []
+    },
+    "test": {
+      "threshold": 0.17500000000000002,
+      "accuracy": 0.897,
+      "roc_auc": 0.9035333627103451,
+      "pr_auc": 0.4620450806330381,
+      "f1": 0.5024154589371981,
+      "precision": 0.4105263157894737,
+      "recall": 0.6473029045643154,
+      "confusion_matrix": [
+        [
+          2535,
+          224
+        ],
+        [
+          85,
+          156
+        ]
+      ],
+      "warnings": []
+    },
+    "raw_validation": {
+      "threshold": 0.775,
+      "accuracy": 0.9076666666666666,
+      "roc_auc": 0.9125003431454081,
+      "pr_auc": 0.48703536154053745,
+      "f1": 0.49909584086799275,
+      "precision": 0.41818181818181815,
+      "recall": 0.6188340807174888,
+      "confusion_matrix": [
+        [
+          2585,
+          192
+        ],
+        [
+          85,
+          138
+        ]
+      ],
+      "warnings": []
+    },
+    "raw_validation_threshold": 0.775,
+    "raw_test": {
+      "threshold": 0.775,
+      "accuracy": 0.902,
+      "roc_auc": 0.9055809805404869,
+      "pr_auc": 0.48884334335764457,
+      "f1": 0.49310344827586206,
+      "precision": 0.4218289085545723,
+      "recall": 0.5933609958506224,
+      "confusion_matrix": [
+        [
+          2563,
+          196
+        ],
+        [
+          98,
+          143
+        ]
+      ],
+      "warnings": []
+    },
+    "history": [
+      {
+        "epoch": 1,
+        "loss": 0.6558624413880435,
+        "validation_loss": 0.6649461388587952,
+        "val_pr_auc": 0.46534519495021864,
+        "val_f1": 0.5173913043478261,
+        "threshold": 0.225,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 2,
+        "loss": 0.6548104860565879,
+        "validation_loss": 0.6646646857261658,
+        "val_pr_auc": 0.46646615313273976,
+        "val_f1": 0.5242290748898678,
+        "threshold": 0.2,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 3,
+        "loss": 0.6508668503978036,
+        "validation_loss": 0.6638476848602295,
+        "val_pr_auc": 0.46860984185348686,
+        "val_f1": 0.5227272727272727,
+        "threshold": 0.225,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 4,
+        "loss": 0.6459295543757352,
+        "validation_loss": 0.6620346307754517,
+        "val_pr_auc": 0.47580064209958417,
+        "val_f1": 0.517814726840855,
+        "threshold": 0.25,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 5,
+        "loss": 0.6338494024493477,
+        "validation_loss": 0.6601930260658264,
+        "val_pr_auc": 0.4776251801110358,
+        "val_f1": 0.5056179775280899,
+        "threshold": 0.2,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 6,
+        "loss": 0.6204652786254883,
+        "validation_loss": 0.6689974665641785,
+        "val_pr_auc": 0.4755969096429987,
+        "val_f1": 0.5037593984962406,
+        "threshold": 0.2,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 7,
+        "loss": 0.5982415334744887,
+        "validation_loss": 0.6619189381599426,
+        "val_pr_auc": 0.47960115387895963,
+        "val_f1": 0.5042016806722689,
+        "threshold": 0.17500000000000002,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 8,
+        "loss": 0.5858916483142159,
+        "validation_loss": 0.6932216882705688,
+        "val_pr_auc": 0.4769063537720675,
+        "val_f1": 0.49282296650717705,
+        "threshold": 0.25,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 9,
+        "loss": 0.5711798310279846,
+        "validation_loss": 0.673196017742157,
+        "val_pr_auc": 0.47675107799251765,
+        "val_f1": 0.49818181818181817,
+        "threshold": 0.2,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 10,
+        "loss": 0.5552814315665852,
+        "validation_loss": 0.7037221789360046,
+        "val_pr_auc": 0.4702132585409294,
+        "val_f1": 0.48872180451127817,
+        "threshold": 0.225,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.0005
+      },
+      {
+        "epoch": 11,
+        "loss": 0.5361316957257011,
+        "validation_loss": 0.6938724517822266,
+        "val_pr_auc": 0.47022388019360534,
+        "val_f1": 0.49678800856531047,
+        "threshold": 0.225,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.00025
+      },
+      {
+        "epoch": 12,
+        "loss": 0.5238226251168685,
+        "validation_loss": 0.7431756854057312,
+        "val_pr_auc": 0.46887174679019744,
+        "val_f1": 0.49500998003992014,
+        "threshold": 0.225,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.00025
+      },
+      {
+        "epoch": 13,
+        "loss": 0.5124349334023216,
+        "validation_loss": 0.7239426970481873,
+        "val_pr_auc": 0.4697998567169386,
+        "val_f1": 0.496,
+        "threshold": 0.2,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.00025
+      },
+      {
+        "epoch": 14,
+        "loss": 0.5009782552719116,
+        "validation_loss": 0.7362958788871765,
+        "val_pr_auc": 0.46949919854459343,
+        "val_f1": 0.4948453608247423,
+        "threshold": 0.225,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.00025
+      },
+      {
+        "epoch": 15,
+        "loss": 0.49645375555211846,
+        "validation_loss": 0.7417916655540466,
+        "val_pr_auc": 0.47231416675796817,
+        "val_f1": 0.49888641425389757,
+        "threshold": 0.25,
+        "calibration_method": "isotonic",
+        "learning_rate": 0.000125
+      }
+    ]
+  },
+  "calibration": {
+    "method": "isotonic",
+    "brier_validation": 0.04848559573292732,
+    "brier_test": 0.05390571057796478
+  },
+  "scoring_policy": {
+    "primary_model_probability": "raw_pytorch_sigmoid",
+    "primary_app_score": "combined_score_from_raw_pytorch_plus_history_and_position_fit",
+    "secondary_probability": "calibrated_pytorch_probability",
+    "raw_validation_threshold": 0.775,
+    "calibrated_validation_threshold": 0.17500000000000002,
+    "reason": "La salida cruda queda como score principal porque en la evidencia actual prioriza mejor candidatos por PR-AUC; la calibrada se conserva como referencia secundaria."
+  },
+  "splits": {
+    "version": 1,
+    "train_count": 14000,
+    "validation_count": 3000,
+    "test_count": 3000
+  },
+  "baselines": {
+    "logistic_regression_balanced": {
+      "method": "logistic_regression_balanced",
+      "selected_threshold": 0.8250000000000001,
+      "validation": {
+        "threshold": 0.8250000000000001,
+        "accuracy": 0.9243333333333333,
+        "roc_auc": 0.9113489893762182,
+        "pr_auc": 0.4734803235329328,
+        "f1": 0.5118279569892473,
+        "precision": 0.49173553719008267,
+        "recall": 0.5336322869955157,
+        "confusion_matrix": [
+          [
+            2654,
+            123
+          ],
+          [
+            104,
+            119
+          ]
+        ],
+        "warnings": []
+      },
+      "test": {
+        "threshold": 0.8250000000000001,
+        "accuracy": 0.9156666666666666,
+        "roc_auc": 0.9012105233870591,
+        "pr_auc": 0.47568534356988285,
+        "f1": 0.46284501061571126,
+        "precision": 0.47391304347826085,
+        "recall": 0.45228215767634855,
+        "confusion_matrix": [
+          [
+            2638,
+            121
+          ],
+          [
+            132,
+            109
+          ]
+        ],
+        "warnings": []
+      }
+    },
+    "avg_skill_score": {
+      "selected_threshold": 0.625,
+      "validation": {
+        "threshold": 0.625,
+        "accuracy": 0.8983333333333333,
+        "roc_auc": 0.8271645208640482,
+        "pr_auc": 0.33428353384308446,
+        "f1": 0.39363817097415504,
+        "precision": 0.3535714285714286,
+        "recall": 0.4439461883408072,
+        "confusion_matrix": [
+          [
+            2596,
+            181
+          ],
+          [
+            124,
+            99
+          ]
+        ],
+        "warnings": []
+      },
+      "test": {
+        "threshold": 0.625,
+        "accuracy": 0.884,
+        "roc_auc": 0.8200878603258441,
+        "pr_auc": 0.3078935784462468,
+        "f1": 0.35555555555555557,
+        "precision": 0.3210702341137124,
+        "recall": 0.3983402489626556,
+        "confusion_matrix": [
+          [
+            2556,
+            203
+          ],
+          [
+            145,
+            96
+          ]
+        ],
+        "warnings": []
+      }
+    }
+  },
+  "target_policy": {
+    "fitted_on": "train_only",
+    "fitted_player_count": 14000,
+    "positive_rate_design_quantile": 0.08,
+    "progression_threshold": 0.3290095817616856,
+    "future_final_floor": 5.1499999999999995,
+    "future_score_threshold": 6.205,
+    "future_projection_floor": 5.3,
+    "future_projection_threshold": 6.035,
+    "volatility_threshold": 0.3676955262170032,
+    "breakout_growth_threshold": 0.120000000000001,
+    "breakout_final_growth_threshold": 0.08499999999999996,
+    "breakout_difficulty_threshold": 5.54,
+    "pressure_growth_threshold": -0.07203428571428493,
+    "start_rate_growth_threshold": 0.0,
+    "scout_growth_threshold": 0.1775000000000002,
+    "availability_floor": 52.0,
+    "fatigue_ceiling": 54.2457,
+    "injury_ceiling": 0.3333333333333333
+  },
+  "split_strategy": "target_independent_position_age_cohort",
+  "dataset_summary": {
+    "rows": 20000,
+    "target_column": "temporal_target_label",
+    "positive_rates": {
+      "train": 0.08,
+      "validation": 0.074333,
+      "test": 0.080333
+    },
+    "source_cache_sha256": "ab8a94bda729e91bd5a2522468f43a61640c6d9159a2cdade196a00d2ef36df4",
+    "features_before_encoding": [
+      "age",
+      "pace",
+      "shooting",
+      "passing",
+      "dribbling",
+      "defending",
+      "physical",
+      "vision",
+      "tackling",
+      "determination",
+      "technique",
+      "stats_entry_count",
+      "avg_final_score_hist",
+      "avg_pass_accuracy_hist",
+      "latest_final_score_hist",
+      "attr_history_entry_count",
+      "attr_avg_improvement_90d",
+      "attr_avg_improvement_180d",
+      "attr_avg_improvement_365d",
+      "attr_avg_trend_per_day",
+      "attr_weighted_improvement_90d",
+      "attr_weighted_improvement_180d",
+      "attr_weighted_improvement_365d",
+      "attr_weighted_trend_per_day",
+      "attr_weighted_volatility",
+      "attr_current_vs_recent_gap",
+      "match_entry_count",
+      "match_avg_final_score",
+      "match_recent_final_score",
+      "match_avg_minutes",
+      "match_minutes_volatility",
+      "match_start_rate",
+      "match_avg_opponent_level",
+      "match_high_difficulty_rate",
+      "match_high_difficulty_score",
+      "match_natural_position_rate",
+      "scout_report_count",
+      "scout_avg_decision_making",
+      "scout_avg_tactical_reading",
+      "scout_avg_mental_profile",
+      "scout_avg_adaptability",
+      "scout_latest_projection_score",
+      "scout_projection_trend",
+      "phys_assessment_count",
+      "phys_recent_height_cm",
+      "phys_recent_weight_kg",
+      "phys_recent_speed_score",
+      "phys_recent_endurance_score",
+      "phys_recent_bmi",
+      "phys_height_growth_365d",
+      "phys_weight_change_180d",
+      "phys_growth_spurt_rate",
+      "phys_left_footed_rate",
+      "phys_two_footed_rate",
+      "avail_record_count",
+      "avail_avg_pct",
+      "avail_recent_pct",
+      "avail_avg_fatigue",
+      "avail_recent_fatigue",
+      "avail_avg_training_load",
+      "avail_injury_rate",
+      "avail_missed_days_avg",
+      "avail_availability_trend",
+      "position"
+    ],
+    "forbidden_features_absent": [
+      "potential_label",
+      "progression_score",
+      "temporal_breakout_path",
+      "temporal_consolidation_path",
+      "temporal_future_score_threshold",
+      "temporal_target_candidate",
+      "temporal_target_label",
+      "temporal_target_threshold"
+    ]
+  },
+  "artifacts": {
+    "model": "model.pt",
+    "preprocessor": "preprocessor.joblib",
+    "calibrator": "probability_calibrator.joblib",
+    "splits": "training_splits.json",
+    "target_policy": "target_policy.json",
+    "labeled_dataframe": "labeled_temporal_dataframe.joblib"
+  }
+}

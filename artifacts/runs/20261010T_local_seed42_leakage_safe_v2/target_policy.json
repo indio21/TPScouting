@@ -1,0 +1,20 @@
+{
+  "fitted_on": "train_only",
+  "fitted_player_count": 14000,
+  "positive_rate_design_quantile": 0.08,
+  "progression_threshold": 0.3290095817616856,
+  "future_final_floor": 5.1499999999999995,
+  "future_score_threshold": 6.205,
+  "future_projection_floor": 5.3,
+  "future_projection_threshold": 6.035,
+  "volatility_threshold": 0.3676955262170032,
+  "breakout_growth_threshold": 0.120000000000001,
+  "breakout_final_growth_threshold": 0.08499999999999996,
+  "breakout_difficulty_threshold": 5.54,
+  "pressure_growth_threshold": -0.07203428571428493,
+  "start_rate_growth_threshold": 0.0,
+  "scout_growth_threshold": 0.1775000000000002,
+  "availability_floor": 52.0,
+  "fatigue_ceiling": 54.2457,
+  "injury_ceiling": 0.3333333333333333
+}

@@ -99,3 +99,21 @@ Si el usuario pide actualizar la entrega:
 
 No recorrer otra vez todos los candidatos ni regenerar imágenes. Empezar leyendo
 este archivo y `cierre_postauditoria_2026-10-10.md`.
+
+## Avance local posterior — limitaciones 1, 2 y 3
+
+Trabajo realizado solo en `TPScouting`; todavía sin commit y sin modificar la entrega:
+
+- score combinado evaluado independientemente sobre test histórico y nueva corrida; no mostró mejora defendible frente a la probabilidad cruda y empeoró Brier/log loss;
+- nueva política temporal ajustada únicamente con train después de un split independiente del target;
+- corrida candidata autoritativa: `artifacts/runs/20261010T_local_seed42_leakage_safe_v2/`;
+- repetición exacta aprobada para política, splits, modelo, preprocesador, calibrador, historial y métricas;
+- artefactos operativos existentes no reemplazados;
+- suite: 122 passed, 1 skipped, 4 warnings; cobertura 83,23 %;
+- cierre detallado: `docs/revision_octubre_2026/cierre_bloques_1_2_3_limitaciones_2026-10-10.md`.
+
+El Word no fue modificado. Sus cambios se difieren hasta el cierre integral. El próximo bloque es la verificación real en macOS.
+
+Decisión confirmada: mantener la probabilidad cruda como score principal y tratar
+el score combinado únicamente como heurística secundaria. No presentar el
+combinado como probabilidad ni como mejora demostrada.

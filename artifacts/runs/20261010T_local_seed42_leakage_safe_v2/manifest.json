@@ -1,0 +1,92 @@
+{
+  "manifest_version": 1,
+  "run_id": "20261010T_local_seed42_leakage_safe_v2",
+  "started_at_utc": "2026-10-10T17:14:37.059406+00:00",
+  "finished_at_utc": "2026-10-10T17:15:49.941729+00:00",
+  "wall_duration_seconds": 72.7944,
+  "git": {
+    "base_commit": "4044652907728ef210dd430a8791b91f74af42fc",
+    "working_tree_diff_sha256": "e01318becdf5c7d2220c52ac48855bed19f931876a2ccc136ff1b0fb7adc57a4",
+    "working_tree_was_dirty": true
+  },
+  "platform": {
+    "system": "Windows",
+    "release": "10",
+    "machine": "AMD64",
+    "python": "3.11.9"
+  },
+  "dependencies": {
+    "torch": "2.14.1+cpu",
+    "numpy": "2.4.4",
+    "pandas": "3.0.2",
+    "scikit-learn": "1.8.0",
+    "joblib": "1.5.3",
+    "sqlalchemy": "2.0.49"
+  },
+  "source_files": {
+    "scouting_app/ml/scoring.py": "034353b96505628306e8fb2218f4fb14fc20e1dbbcdd0a2384b5063b01957751",
+    "scouting_app/ml/score_evaluation.py": "73e11337c9f7707604c729060ffc8f8acd9c85785b7a4e1c050a1b6f2592d4fa",
+    "scouting_app/ml/target_policy.py": "06429ccbd34fd11e947c7e1114b85c7a250b06c88c9af5ae94cb072e88beac63",
+    "scouting_app/train_model.py": "8357fadf52e868172bc3c453453c2e521afde839658f474d100db0d35b383174",
+    "scripts/run_ml_blocks_1_3.py": "2be17ca03c2808851d18dbea12af774024d18edd2b3691888a76a971d047a530",
+    "scripts/verify_ml_run_reproducibility.py": "1067076488229b922734b74bb9059d566c283901d0938dff0751405c414b9857"
+  },
+  "files": {
+    "historical_score_evaluation.json": {
+      "sha256": "fa7e88715d44d1100ff0cc1673b74ed0669495825744815b250726c05e42624b",
+      "bytes": 10448
+    },
+    "historical_test_predictions.csv": {
+      "sha256": "788d6e85e75570be689683166514e8694c825518751875fd90952a04b70b2916",
+      "bytes": 147971
+    },
+    "labeled_temporal_dataframe.joblib": {
+      "sha256": "ad3a8a8b328171bb21de50e3a05845727354bdc0a81917c3e64f0a50eae684d9",
+      "bytes": 16503569
+    },
+    "leakage_safe_score_evaluation.json": {
+      "sha256": "191a7ee294a84c106636d5d42223c0a042ebc12e52b48e0137b71f8743efdcc2",
+      "bytes": 10486
+    },
+    "leakage_safe_test_predictions.csv": {
+      "sha256": "4e5735b39b96b6fc8a48cc97cbe256e441939d4e03d8a68d3e14967489389107",
+      "bytes": 147210
+    },
+    "model.pt": {
+      "sha256": "cfbc15454da7bda32654be401c690ae0d27fc4511d4a696c0d8509e852f31f85",
+      "bytes": 78067
+    },
+    "preprocessor.joblib": {
+      "sha256": "b3275f490b6b10853ac4a0165ba8ae9ea4a658b2abb4163a03db01d60f04bf0a",
+      "bytes": 11942
+    },
+    "probability_calibrator.joblib": {
+      "sha256": "04821680f422e16a710d72dc105ad5dbd212cb42b8332c204598c6a3f0e2a874",
+      "bytes": 887
+    },
+    "python_environment_freeze.txt": {
+      "sha256": "3ffc02c81531547fc75fa846aa9e323479154d21cd4c851d8a27763d0e2066a1",
+      "bytes": 1477
+    },
+    "reproducibility_check.json": {
+      "sha256": "a8b0a59148ac33c4517f9b409c6dfd55482580aa85dea931576ca3970f9f35d1",
+      "bytes": 480
+    },
+    "summary.json": {
+      "sha256": "e0fa20008e8a042dd99a1e2fa10aed07a115f8b7ced08c737ed59dad81903598",
+      "bytes": 23597
+    },
+    "target_policy.json": {
+      "sha256": "7972be6c788092f5827cb98562b8df21ef65a1289fd4320a6038800105331f3b",
+      "bytes": 757
+    },
+    "training_metadata.json": {
+      "sha256": "7490a5931d7865645a50578939601a15e5d8025c2c3e718aeca59796392408d5",
+      "bytes": 14577
+    },
+    "training_splits.json": {
+      "sha256": "bad5a3b4085212cea7360725c1324e1235224ea6ce08d85a63ca898fa375d396",
+      "bytes": 229194
+    }
+  }
+}

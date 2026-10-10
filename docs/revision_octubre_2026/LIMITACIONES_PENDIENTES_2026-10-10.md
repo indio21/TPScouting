@@ -7,18 +7,18 @@ como funcionalidades o evidencias ya disponibles.
 
 ## Orden recomendado
 
-1. **Evaluación independiente del score combinado.** El score que mezcla salida
+1. **RESUELTA — Evaluación independiente del score combinado.** El score que mezcla salida
    del modelo, historial y adecuación posicional no conserva una evaluación
    independiente en test. Preparar un evaluador offline, fijar datos y split,
    comparar contra la probabilidad cruda/calibrada y guardar resultados e hashes.
 
-2. **ML-01: target definido antes del split.** Los cuantiles y cuotas de la
+2. **RESUELTA EN CORRIDA CANDIDATA — ML-01: target definido antes del split.** Los cuantiles y cuotas de la
    etiqueta sintética se calcularon antes de separar train/validation/test. Una
    nueva corrida debería ajustar toda transformación dependiente de distribución
    solamente con train y aplicar sus parámetros sin recalcular en validation/test.
    Debe conservarse separada de la corrida histórica y no sobrescribir artefactos.
 
-3. **D-16: trazabilidad incompleta de la corrida histórica.** No existen
+3. **RESUELTA PARA LA CORRIDA NUEVA; IRRECUPERABLE EN LA HISTÓRICA — D-16.** No existen
    validation loss, duración ni SHA exacto de aquella corrida. Esos valores no se
    pueden recuperar honestamente. La solución posible es ejecutar una corrida
    nueva y versionada que registre configuración, dependencias, seed, splits,
@@ -51,8 +51,7 @@ como funcionalidades o evidencias ya disponibles.
    evaluarse por utilidad operativa; la licencia requiere una decisión explícita
    del titular del proyecto.
 
-## Primera tarea recomendada
+## Próxima tarea recomendada
 
-Comenzar por la evaluación independiente del score combinado. Es acotada, produce
-evidencia útil y permite decidir si ese indicador debe conservarse, ajustarse o
-presentarse solamente como heurística del MVP.
+Continuar por la validación real en macOS. Requiere un equipo macOS o un runner
+macOS; hasta obtener esa ejecución debe conservarse el estado «no probado».
