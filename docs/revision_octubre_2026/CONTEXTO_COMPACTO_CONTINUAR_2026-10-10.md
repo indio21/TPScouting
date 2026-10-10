@@ -18,7 +18,7 @@ Actualizado: 2026-10-10, America/Buenos_Aires.
 
 ## Estado Git
 
-- Principal `main`: `f128261` (`docs: finalize post-audit thesis corrections`).
+- Principal `main`: `85278db6b9c55c3fe10fcfbe9cbf49971bf70dfc` (`release: record verified academic delivery`), con CI `38069261221` aprobada.
 - Bloque funcional anterior: `6f83e40` (`security: update PyTorch and close audit gap`).
 - `origin/main` recibió ambos commits.
 - Entrega `main`: `bf2de2f5872e9fdd05b5175bba97bca5469267bf`, publicada y certificada por la CI `38069047550`.
