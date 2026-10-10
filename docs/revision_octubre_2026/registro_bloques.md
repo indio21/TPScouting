@@ -517,3 +517,25 @@ declarados la ausencia de prueba local en macOS, la validación pendiente en un
 despliegue HTTPS/proxy real y las decisiones opcionales ya registradas. El estado
 del código es **LISTO PARA REVISIÓN FINAL HUMANA**, sin afirmar ausencia absoluta
 de defectos fuera de los escenarios comprobados.
+
+### Correcciones posteriores a la revalidación — 2026-10-10
+
+La auditoría repetida detectó cuatro puntos accionables: trazabilidad documental de
+la entrega, comandos de instalación desactualizados, PyTorch 2.9.1 con avisos
+vigentes y una auditoría CI que omitía el build `+cpu`. Se corrigieron de la
+siguiente manera:
+
+- PyTorch 2.14.1 en los manifests directo y CPU;
+- doble auditoría CI: entorno instalado y manifest directo;
+- documento actualizado con entrega `7a47bd3f...`, CI `37707576905`, respaldo
+  `6f83e40...` y CI `37709526994`;
+- sección 9.4 alineada con lock, manifest CPU, desarrollo y macOS.
+
+La suite pasó con 116 pruebas, 1 omitida, 4 warnings y 83,74 % de cobertura. Las
+dos auditorías no encontraron vulnerabilidades conocidas. El DOCX/PDF final
+postauditoría tiene 94 páginas, 28 imágenes, 19 tablas, 9 secciones, 45 entradas
+de listas sin discrepancias, 0 errores de campos y 0 marcas editoriales. Detalle:
+`cierre_postauditoria_2026-10-10.md`.
+
+Estado: **LISTO PARA REVISIÓN FINAL HUMANA**. El repositorio de entrega no fue
+modificado; una sincronización futura requiere una instrucción expresa del usuario.
