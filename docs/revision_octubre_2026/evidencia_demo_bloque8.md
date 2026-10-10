@@ -1,6 +1,6 @@
 # Evidencia de demo desde base vacía — Bloque 8
 
-Fecha UTC: 2026-10-06T22:52:38.293325+00:00.
+Fecha UTC: 2026-10-08T00:19:09.697851+00:00.
 
 - Base SQLite temporal creada desde cero y eliminada al finalizar.
 - Jugadores sintéticos: 60; semilla: 42.
