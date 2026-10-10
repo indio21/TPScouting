@@ -21,8 +21,8 @@ Actualizado: 2026-10-10, America/Buenos_Aires.
 - Principal `main`: `f128261` (`docs: finalize post-audit thesis corrections`).
 - Bloque funcional anterior: `6f83e40` (`security: update PyTorch and close audit gap`).
 - `origin/main` recibió ambos commits.
-- Entrega `main`: `7a47bd3f164e865677f2c70075cbedc9fa63427d`, limpia y sincronizada.
-- La entrega no contiene todavía PyTorch 2.14.1 ni el documento postauditoría.
+- Entrega `main`: `bf2de2f5872e9fdd05b5175bba97bca5469267bf`, publicada y certificada por la CI `38069047550`.
+- La entrega contiene PyTorch 2.14.1, auditoría doble, guía reproducible y el documento académico final en Word/PDF.
 
 ## Documento autoritativo
 
@@ -37,6 +37,13 @@ Actualizado: 2026-10-10, America/Buenos_Aires.
   y 0 páginas de texto mínimo.
 - Informe: `docs/revision_octubre_2026/cierre_postauditoria_2026-10-10.md`.
 
+La copia exacta vinculada a la entrega publicada es:
+
+- DOCX: `docs/revision_octubre_2026/word/TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_VERIFICADA_2026-10-10.docx`.
+- PDF: `docs/revision_octubre_2026/pdf/TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_VERIFICADA_2026-10-10.pdf`.
+- Conserva 94 páginas, 28 imágenes, 19 tablas, 9 secciones y 45 entradas; la verificación automatizada aprobó.
+- Identifica el commit funcional de entrega `72314c2072729c524c0eb4ca57e5e241feb433b6` y su CI aprobada `38068749412`.
+
 ## Código verificado
 
 - PyTorch actualizado a `2.14.1` / `2.14.1+cpu`.
@@ -50,6 +57,8 @@ Actualizado: 2026-10-10, America/Buenos_Aires.
 - CI de `6f83e40`: ejecución `37709526994`, `success`.
 - CI del cierre documental `f128261`: ejecución `38067969112`, `success`.
 - CI de la entrega `7a47bd3`: ejecución `37707576905`, `success`.
+- CI funcional actual de la entrega `72314c2`: ejecución `38068749412`, `success`.
+- CI del commit final completo `bf2de2f`: ejecución `38069047550`, `success`.
 
 ## Correcciones cerradas
 
@@ -73,8 +82,10 @@ Actualizado: 2026-10-10, America/Buenos_Aires.
 
 ## Próximo paso
 
-No hay correcciones obligatorias abiertas. El estado es
-`LISTO PARA REVISIÓN FINAL HUMANA`.
+No hay correcciones obligatorias abiertas para evaluar el MVP. El estado es
+`LISTO PARA REVISIÓN FINAL HUMANA`. Las mejoras posteriores se enumeran en
+`LIMITACIONES_PENDIENTES_2026-10-10.md` y deben abordarse una por una, empezando
+por la evaluación independiente del score combinado.
 
 Si el usuario pide actualizar la entrega:
 
