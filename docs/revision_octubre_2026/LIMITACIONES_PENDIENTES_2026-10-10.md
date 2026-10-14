@@ -24,10 +24,11 @@ como funcionalidades o evidencias ya disponibles.
    nueva y versionada que registre configuración, dependencias, seed, splits,
    métricas, tiempos y hashes, manteniéndola diferenciada de la histórica.
 
-4. **Validación en macOS.** Existen instrucciones, pero no una ejecución
-   comprobada. Verificar en un equipo o runner macOS y registrar versión de Python,
-   arquitectura, instalación, pruebas y resultado. Hasta entonces debe seguir
-   declarado como no probado.
+4. **RESUELTA PARA APPLE SILICON — Validación en macOS.** El runner real
+   `macos-15` arm64 con Python 3.11 completó instalación, carga de artefactos,
+   suite, cobertura y demo el 2026-10-14. macOS Intel queda explícitamente fuera
+   del soporte: PyPI no publica un wheel x86_64 de `torch==2.14.1`. No se cambió
+   la versión fijada para ocultar esa incompatibilidad.
 
 5. **CAL-03: organización de pruebas.** `test_mvp_regressions.py` todavía puede
    dividirse por dominio. Hacerlo sin cambiar fixtures ni cobertura y comprobar la
@@ -53,5 +54,6 @@ como funcionalidades o evidencias ya disponibles.
 
 ## Próxima tarea recomendada
 
-Continuar por la validación real en macOS. Requiere un equipo macOS o un runner
-macOS; hasta obtener esa ejecución debe conservarse el estado «no probado».
+Continuar por la división de pruebas extensas por dominio. La compatibilidad macOS
+Apple Silicon ya tiene ejecución remota; Intel permanece documentado como no
+soportado por la versión fijada de PyTorch.

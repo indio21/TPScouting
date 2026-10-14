@@ -554,3 +554,15 @@ Estado: cerradas localmente como evaluación y corrida candidata. No se realizó
 - Informe: `cierre_bloques_1_2_3_limitaciones_2026-10-10.md`.
 
 El Word queda pendiente para la actualización documental integral.
+
+## Limitación 4 — verificación real en macOS (2026-10-14)
+
+- Commit inicial evaluado: `39bda92da4324acc2317c25e13c38aa33cdcf0f0`.
+- GitHub Actions `38643910674` ejecutó el proyecto en runners macOS reales.
+- Apple Silicon (`macos-15`, arm64, Python 3.11): instalación, artefactos,
+  Ruff crítico, suite/cobertura y demo temporal aprobados.
+- Intel (`macos-15-intel`, x64): instalación no disponible porque PyPI no
+  publica wheel macOS Intel para `torch==2.14.1`.
+- Decisión: soporte macOS limitado y documentado para Apple Silicon; no se
+  rebajaron dependencias ni se atribuyó aprobación a Intel.
+- El repositorio de entrega no fue modificado.

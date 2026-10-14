@@ -122,7 +122,8 @@ combinado como probabilidad ni como mejora demostrada.
 
 - Se eligió una verificación remota real mediante GitHub Actions, sin requerir una Mac del usuario.
 - Workflow preparado: `.github/workflows/macos.yml`.
-- Matriz prevista: `macos-15` arm64 y `macos-15-intel` x64, con Python 3.11.
+- Apple Silicon `macos-15` arm64 con Python 3.11 aprobó la ejecución real sobre el commit `39bda92`.
+- Intel x64 falló durante instalación porque PyPI no publica `torch==2.14.1` para esa arquitectura; quedó fuera del soporte documentado y no se rebajó PyTorch.
 - Alcance: instalación limpia, carga de artefactos, Ruff crítico, suite con cobertura y demo en una base temporal.
-- Mientras no finalicen las ejecuciones remotas, el estado debe figurar como pendiente y no como compatibilidad confirmada.
+- Evidencia inicial: https://github.com/indio21/TPScouting/actions/runs/38643910674.
 - El repositorio `TPScouting-entrega` permanece fuera de alcance.

@@ -24,7 +24,7 @@ py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe .\scripts\iniciar_demo.py
 ```
 
-### Linux o macOS
+### Linux o macOS Apple Silicon
 
 ```bash
 python3.11 -m venv .venv
@@ -34,6 +34,11 @@ python3.11 -m venv .venv
 ```
 
 Luego abrir `http://127.0.0.1:5000/`.
+
+La versión fijada de PyTorch dispone de wheel para macOS arm64, pero no para macOS
+Intel. En equipos Intel, la instalación de `requirements.txt` se detendrá de forma
+explícita; no se recomienda sustituir PyTorch por otra versión sin repetir las
+pruebas de compatibilidad y de los artefactos.
 
 Credenciales locales de evaluacion:
 
@@ -66,7 +71,7 @@ Detener primero la aplicacion con `Ctrl+C` y ejecutar:
 .\.venv\Scripts\python.exe .\scripts\iniciar_demo.py --recrear
 ```
 
-### Linux o macOS
+### Linux o macOS Apple Silicon
 
 ```bash
 ./.venv/bin/python ./scripts/iniciar_demo.py --recrear

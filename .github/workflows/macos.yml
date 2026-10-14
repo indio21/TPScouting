@@ -13,12 +13,8 @@ on:
 
 jobs:
   verify-macos:
-    name: ${{ matrix.runner }} / Python 3.11
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        runner: [macos-15, macos-15-intel]
+    name: Apple Silicon / Python 3.11
+    runs-on: macos-15
 
     steps:
       - uses: actions/checkout@v4

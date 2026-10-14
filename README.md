@@ -95,11 +95,13 @@ Windows y Linux CPU usan el mismo snapshot que CI y Render:
 .\.venv\Scripts\python.exe scouting_app\app.py
 ```
 
-En macOS se instala `requirements.txt` en lugar de los dos primeros archivos,
-porque PyTorch publica allí el wheel estándar sin sufijo `+cpu`. Esta rama fue
-probada localmente en Windows 11 con Python 3.11.9; el workflow de CI configura
-Linux con Python 3.11 y 3.12. Este cambio local aún no tiene una corrida remota y
-no se afirma una ejecución probada en macOS.
+En macOS Apple Silicon se instala `requirements.txt` en lugar de los dos primeros
+archivos, porque PyTorch publica allí el wheel estándar sin sufijo `+cpu`. La
+instalación, los artefactos, la suite y la demo se verificaron en un runner arm64
+`macos-15` con Python 3.11 el 2026-10-14. PyTorch 2.14.1 no publica un wheel para
+macOS Intel, por lo que esa arquitectura no está soportada por este entorno fijado.
+Windows 11 con Python 3.11.9 se verificó localmente; la CI cubre Linux con Python
+3.11 y 3.12.
 
 `requirements.txt` contiene dependencias directas, `requirements-lock.txt` fija
 el runtime transitivo CPU, `requirements-dev.txt` contiene pruebas/auditoría/lint
