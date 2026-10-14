@@ -611,3 +611,19 @@ El Word queda pendiente para la actualización documental integral.
 - macOS no se relanzó por el filtro de rutas de un cambio solo documental; la
   última validación del código vigente sigue aprobada en `38648685581`.
 - Informe: `cierre_bloque_7_application_factory_2026-10-14.md`.
+
+## Limitación 8 — datos reales de menores (2026-10-14)
+
+- Se verificó que el MVP utiliza datos sintéticos y que los controles actuales no
+  habilitan un tratamiento real de datos de menores.
+- Se inventariaron brechas en consentimiento/representación, información,
+  derechos, retención, auditoría, incidentes, proveedores y validación del modelo.
+- Se contrastaron fuentes oficiales: Ley 25.326, AAIP, Ley 26.061 y Resolución
+  AAIP 47/2018.
+- `docs/REAL_DATA_READINESS.md` define diez puertas obligatorias, cambios
+  técnicos, pruebas y responsables previos a un piloto.
+- README y guía de demo prohíben cargar datos reales en el estado actual.
+- Estado: diseño completado; uso real no habilitado. No se simularon funciones
+  inexistentes ni se adoptaron decisiones institucionales.
+- Fuentes y enlaces verificados; Ruff/`compileall` aprobados; suite con 123
+  aprobadas, 1 omitida, 4 advertencias conocidas y 83,29 % de cobertura.

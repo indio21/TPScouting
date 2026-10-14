@@ -48,10 +48,12 @@ como funcionalidades o evidencias ya disponibles.
    validada. Quedó definido un plan por etapas y criterios previos; la
    implementación requiere una autorización futura específica.
 
-8. **Uso futuro de datos reales de menores.** El MVP usa datos sintéticos. Antes
-   de cualquier uso real se necesitan consentimiento de tutores, información al
-   titular, reglas de retención y baja, control de acceso, trazabilidad y revisión
-   normativa/institucional. No corresponde simular que estos controles existen.
+8. **DISEÑO COMPLETADO; USO REAL NO HABILITADO — datos reales de menores.** Se
+   documentaron puertas de habilitación, cambios técnicos, pruebas y responsables
+   en `docs/REAL_DATA_READINESS.md`, contrastados con fuentes oficiales. El MVP
+   sigue usando datos sintéticos y no implementa aún consentimiento/representación,
+   derechos, retención, auditoría, gestión de incidentes ni validación externa.
+   Esos controles dependen de decisiones institucionales que no deben inventarse.
 
 9. **Artefactos opcionales de distribución.** Dockerfile, `.env.example` y LICENSE
    continúan fuera del alcance obligatorio. Docker y el ejemplo de entorno pueden
@@ -60,7 +62,7 @@ como funcionalidades o evidencias ya disponibles.
 
 ## Próxima tarea recomendada
 
-Continuar con el diseño de controles legales y operativos anteriores al uso de
-datos reales de menores. La application factory quedó evaluada y diferida por
-riesgo; Ruff/logging quedó ampliado gradualmente y macOS Intel permanece
-documentado como no soportado por la versión fijada de PyTorch.
+Continuar con la decisión sobre los artefactos opcionales de distribución:
+Dockerfile, `.env.example` y LICENSE. La preparación para datos reales quedó
+diseñada, pero el uso continúa expresamente inhabilitado hasta implementar y
+aprobar todas sus puertas.

@@ -192,3 +192,21 @@ etapas. No implementar el refactor sin una autorización específica.
   documental; la última validación ejecutable aprobada sigue siendo `38648685581`.
 - Próximo bloque: controles legales y operativos antes de usar datos reales de
   menores.
+
+## Bloque 8: preparación para datos reales de menores
+
+- Estado: diseño completado; uso real expresamente no habilitado.
+- La aplicación actual no registra consentimiento/representación, avisos
+  versionados, auditoría de accesos, solicitudes de derechos, retención ni
+  incidentes; tampoco tiene validación externa del modelo.
+- Se contrastaron Ley 25.326, derechos publicados por AAIP, Ley 26.061 y
+  Resolución AAIP 47/2018 en fuentes oficiales vigentes al 2026-10-14.
+- Documento público creado: `docs/REAL_DATA_READINESS.md`.
+- Informe interno: `cierre_bloque_8_datos_reales_menores_2026-10-14.md`.
+- README y guía de demo advierten que no se deben cargar datos reales.
+- No se agregaron tablas, pantallas ni controles ficticios; las decisiones
+  institucionales quedan abiertas.
+- Verificación: fuentes oficiales y enlaces locales accesibles; Ruff y
+  `compileall` aprobados; 123 pruebas aprobadas, 1 omitida, 4 advertencias
+  conocidas y 83,29 % de cobertura.
+- Próximo bloque: decidir Dockerfile, `.env.example` y LICENSE.
