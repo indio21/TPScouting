@@ -587,3 +587,9 @@ El Word queda pendiente para la actualización documental integral.
 - Ruff reveló y permitió corregir el uso omitido de las condiciones breakout.
 - Suite integral: 123 aprobadas, 1 omitida, 4 advertencias y 83,29 % de cobertura.
 - Quedan 732 avisos fuera del alcance gradual, declarados y no ocultados.
+- Commit propio: `1804540bb056e053e29b03943e60ce95fb6d5d94`; CI y macOS aprobados
+  en `38648685553` y `38648685581`.
+- Commit final de entrega: `fb9de4be474faf610759461bd19376aae4e5c315`; CI y macOS
+  aprobados en `38648888954` y `38648888903`.
+- La sincronización fue selectiva: no incluyó registros internos, documentos
+  candidatos ni artefactos de la corrida ML.

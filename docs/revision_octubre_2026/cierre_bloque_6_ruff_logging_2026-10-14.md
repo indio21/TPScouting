@@ -43,3 +43,19 @@ continúa sobre `scouting_app`, `tests` y `scripts`.
 La medición completa queda en 732 avisos, principalmente modernización de tipos e
 imports ordenados. No se los ocultó ni se redujo el alcance para declarar Ruff
 completo. Cualquier ampliación futura debe hacerse por regla o módulo, con pruebas.
+
+## Publicación y verificación remota
+
+- Repositorio propio: commit `1804540bb056e053e29b03943e60ce95fb6d5d94`.
+- CI Linux/Python 3.11 y 3.12 y auditoría de dependencias: ejecución
+  `38648685553`, aprobada.
+- macOS Apple Silicon/Python 3.11: ejecución `38648685581`, aprobada.
+- Repositorio de entrega: sincronización funcional en
+  `76390c31ad854c1ec0cd319092e2f508f18fb826` y cierre de calidad en
+  `fb9de4be474faf610759461bd19376aae4e5c315`.
+- CI de entrega: ejecución `38648888954`, aprobada.
+- macOS de entrega: ejecución `38648888903`, aprobada.
+
+Las páginas de comprobación de ambos commits mostraron estado global exitoso y
+cero trabajos fallidos. Los artefactos internos, candidatos documentales y la
+corrida ML versionada no se copiaron al repositorio de entrega.

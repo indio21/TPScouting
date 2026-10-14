@@ -152,3 +152,21 @@ combinado como probabilidad ni como mejora demostrada.
 - Ruff completo restante: 732 avisos declarados, sin ocultarlos.
 - Informe: `cierre_bloque_6_ruff_logging_2026-10-14.md`.
 - Próximo bloque: evaluar application factory; no implementarla sin una decisión específica.
+
+## Publicación posterior a los bloques 1–6
+
+- Repositorio propio: `1804540bb056e053e29b03943e60ce95fb6d5d94`.
+- Repositorio de entrega: `fb9de4be474faf610759461bd19376aae4e5c315`.
+- Ambos repositorios aprobaron CI Linux/Python 3.11 y 3.12, auditoría de
+  dependencias y macOS Apple Silicon/Python 3.11.
+- Ejecuciones propias: `38648685553` y `38648685581`.
+- Ejecuciones de entrega: `38648888954` y `38648888903`.
+- Verificación local de la entrega: 123 aprobadas, 1 omitida, 4 advertencias y
+  83,29 % de cobertura; Ruff gradual/crítico, `compileall`, `pip check` y demo
+  temporal aprobados.
+- La entrega recibió solo archivos necesarios para ejecutar y verificar el MVP;
+  no recibió informes internos, candidatos Word/PDF ni artefactos de corridas.
+
+Próximo bloque: **7, evaluación de application factory**. Preparar un diagnóstico,
+mapa de dependencias, riesgos, pruebas de caracterización y una propuesta por
+etapas. No implementar el refactor sin una autorización específica.
