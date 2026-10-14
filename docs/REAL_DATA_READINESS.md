@@ -99,4 +99,3 @@ referente de protección de datos o asesoramiento jurídico aplicable, seguridad
 la información, responsable deportivo, operación técnica y un canal responsable
 por los derechos de titulares y representantes. El desarrollador no debe decidir
 en soledad la base jurídica ni la duración de conservación.
-

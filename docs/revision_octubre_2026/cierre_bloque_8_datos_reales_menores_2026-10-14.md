@@ -92,3 +92,18 @@ No corresponde implementar estas decisiones por inferencia.
 Las pruebas verifican que la documentación no introdujo una regresión. No
 constituyen una prueba de cumplimiento para datos reales, porque esos controles
 todavía no están implementados.
+
+## Publicación
+
+- Repositorio propio: commit `0da89594e685076cdf3ecbd00c96d6e9d50fd718`.
+- CI propia: ejecución `38651555664`, aprobada en Linux/Python 3.11 y 3.12 y
+  auditoría de dependencias.
+- Repositorio de entrega: commit
+  `916c7bc0ff47aadaf76cca6b9831d34e85840028`.
+- CI de entrega: ejecución `38651775522`, aprobada en Linux/Python 3.11 y 3.12 y
+  auditoría de dependencias.
+- A la entrega se copiaron solo `docs/REAL_DATA_READINESS.md` y las advertencias
+  de `README.md` y `GUIA_DEMO_PROFESOR.md`.
+- Los informes internos, la matriz y el contexto no se copiaron.
+- macOS no se relanzó porque ambos workflows excluyen cambios solo documentales;
+  el último código vigente conserva su validación macOS aprobada.

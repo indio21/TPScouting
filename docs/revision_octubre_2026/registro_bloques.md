@@ -627,3 +627,7 @@ El Word queda pendiente para la actualización documental integral.
   inexistentes ni se adoptaron decisiones institucionales.
 - Fuentes y enlaces verificados; Ruff/`compileall` aprobados; suite con 123
   aprobadas, 1 omitida, 4 advertencias conocidas y 83,29 % de cobertura.
+- Commit propio `0da89594e685076cdf3ecbd00c96d6e9d50fd718`, CI `38651555664`
+  aprobada.
+- Entrega selectiva `916c7bc0ff47aadaf76cca6b9831d34e85840028`, CI
+  `38651775522` aprobada; sin documentos internos.

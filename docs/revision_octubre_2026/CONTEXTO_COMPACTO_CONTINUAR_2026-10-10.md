@@ -209,4 +209,9 @@ etapas. No implementar el refactor sin una autorización específica.
 - Verificación: fuentes oficiales y enlaces locales accesibles; Ruff y
   `compileall` aprobados; 123 pruebas aprobadas, 1 omitida, 4 advertencias
   conocidas y 83,29 % de cobertura.
+- Commit propio: `0da89594e685076cdf3ecbd00c96d6e9d50fd718`; CI aprobada en
+  `38651555664`.
+- Entrega: `916c7bc0ff47aadaf76cca6b9831d34e85840028`; CI aprobada en
+  `38651775522`. Solo se publicaron el documento público y las advertencias de
+  README/guía; no se publicaron registros internos.
 - Próximo bloque: decidir Dockerfile, `.env.example` y LICENSE.
