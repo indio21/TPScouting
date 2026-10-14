@@ -140,3 +140,15 @@ combinado como probabilidad ni como mejora demostrada.
   Apple Silicon 3.11.
 - Informe: `cierre_bloque_5_pruebas_por_dominio_2026-10-14.md`.
 - Próximo bloque: ampliación gradual de Ruff y logging.
+
+## Bloque 6: Ruff y logging graduales
+
+- Línea base Ruff completa: 751 hallazgos; 591 eran modernización masiva de tipos.
+- CI ahora agrega `F401,F841,RUF059,S110,S112` para aplicación y pruebas, además
+  del control crítico existente.
+- Se mejoró logging de fallos recuperables y se conservaron salidas CLI.
+- Se corrigió la ruta `temporal_breakout_path` y se agregó una regresión específica.
+- Suite: 123 aprobadas, 1 omitida, 4 advertencias y 83,29 % de cobertura.
+- Ruff completo restante: 732 avisos declarados, sin ocultarlos.
+- Informe: `cierre_bloque_6_ruff_logging_2026-10-14.md`.
+- Próximo bloque: evaluar application factory; no implementarla sin una decisión específica.

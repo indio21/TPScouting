@@ -577,3 +577,13 @@ El Word queda pendiente para la actualización documental integral.
 - Resultado por dominio: 18 + 13 + 26 + 19 pruebas aprobadas.
 - Suite integral: 122 aprobadas, 1 omitida, 4 advertencias y 83,23 % de cobertura.
 - El repositorio de entrega no fue modificado.
+
+## Limitación 6 — Ruff y logging graduales (2026-10-14)
+
+- Línea base completa: 751 hallazgos; se evitó una modernización masiva de tipos.
+- CI agrega `F401,F841,RUF059,S110,S112` para aplicación y pruebas.
+- Se corrigieron imports/variables sin uso y excepciones silenciadas del alcance.
+- Se preservó la salida intencional de los comandos CLI.
+- Ruff reveló y permitió corregir el uso omitido de las condiciones breakout.
+- Suite integral: 123 aprobadas, 1 omitida, 4 advertencias y 83,29 % de cobertura.
+- Quedan 732 avisos fuera del alcance gradual, declarados y no ocultados.

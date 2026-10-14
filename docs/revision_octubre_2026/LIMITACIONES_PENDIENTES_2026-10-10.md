@@ -35,9 +35,11 @@ como funcionalidades o evidencias ya disponibles.
    ML/datos, con helpers compartidos. Se conservaron exactamente los cuerpos y la
    colección; la suite integral mantuvo 83,23 % de cobertura.
 
-6. **CAL-02: lint y logging graduales.** El CI aplica solo reglas críticas de
-   Ruff. Medir primero el conjunto completo, corregir por módulos y reemplazar
-   `print` operativos cuando corresponda, sin reformatear masivamente.
+6. **RESUELTA EN ALCANCE GRADUAL — CAL-02: lint y logging.** Además de las reglas
+   críticas, CI controla imports/variables sin uso y excepciones silenciadas en
+   aplicación y pruebas. Se mejoró logging puntual y se preservaron las salidas
+   CLI. La medición completa mantiene 732 avisos declarados, principalmente
+   modernización masiva de tipos; su ampliación futura debe hacerse por regla.
 
 7. **CAL-01: application factory y módulos grandes.** Es un refactor amplio.
    Preparar diseño, dependencias y pruebas de caracterización antes de autorizarlo;
@@ -55,7 +57,6 @@ como funcionalidades o evidencias ya disponibles.
 
 ## Próxima tarea recomendada
 
-Continuar por la ampliación gradual de Ruff y la mejora de logging. La
-compatibilidad macOS Apple Silicon y la división de pruebas ya tienen evidencia;
-macOS Intel permanece documentado como no soportado por la versión fijada de
-PyTorch.
+Continuar por la evaluación del refactor hacia application factory. Ruff/logging
+quedó ampliado con un alcance gradual verificable; macOS Intel permanece
+documentado como no soportado por la versión fijada de PyTorch.
