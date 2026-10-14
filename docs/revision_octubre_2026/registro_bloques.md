@@ -631,3 +631,18 @@ El Word queda pendiente para la actualización documental integral.
   aprobada.
 - Entrega selectiva `916c7bc0ff47aadaf76cca6b9831d34e85840028`, CI
   `38651775522` aprobada; sin documentos internos.
+
+## Limitación 9 — distribución y licencia (2026-10-14)
+
+- Se agregaron `Dockerfile`, `.dockerignore` y `.env.example`.
+- El diseño reutiliza los manifests Linux CPU verificados y no incorpora
+  secretos, bases, artefactos internos ni material documental al build.
+- Docker no está disponible localmente; build y smoke quedan pendientes de una
+  ejecución real y no se declaran aprobados.
+- Se agregó un workflow Linux aislado que construirá la imagen y comprobará
+  `/health` y `/login` con una base sintética, sin publicar la imagen.
+- No se agregó `LICENSE`: sigue pendiente una decisión explícita sobre derechos
+  conservados, licencia abierta o esquema dual/source-available.
+- Validación estática/YAML y ausencia de secretos: aprobadas. Ruff y
+  `compileall`: aprobados. Suite: 123 aprobadas, 1 omitida, 4 advertencias
+  conocidas; cobertura: 83,29 %.

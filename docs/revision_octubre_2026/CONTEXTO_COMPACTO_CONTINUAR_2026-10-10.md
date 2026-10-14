@@ -215,3 +215,22 @@ etapas. No implementar el refactor sin una autorización específica.
   `38651775522`. Solo se publicaron el documento público y las advertencias de
   README/guía; no se publicaron registros internos.
 - Próximo bloque: decidir Dockerfile, `.env.example` y LICENSE.
+
+## Bloque 9: distribución y licencia
+
+- Se incorporaron `Dockerfile`, `.dockerignore` y `.env.example`.
+- El contenedor usa Python 3.11 slim, manifests CPU fijados, usuario sin
+  privilegios, healthcheck y Gunicorn; excluye datos y material interno.
+- `.env.example` no contiene secretos y la aplicación no lo carga
+  automáticamente.
+- Docker no está instalado localmente: build y smoke reales quedan pendientes y
+  no deben declararse aprobados hasta que finalice el workflow dedicado.
+- `.github/workflows/docker.yml` construye la imagen y verifica `/health` y
+  `/login` con datos sintéticos; no publica la imagen.
+- No se agregó `LICENSE`. Una licencia abierta actual no puede revocarse para
+  copias ya publicadas; el titular debe elegir conservar derechos, licencia
+  abierta para estas versiones o esquema dual/source-available.
+- Validación local: archivos de distribución y YAML aprobados, sin secretos;
+  Ruff/`compileall` aprobados; 123 pruebas aprobadas, 1 omitida, 4 advertencias
+  conocidas y 83,29 % de cobertura.
+- Informe: `cierre_bloque_9_distribucion_2026-10-14.md`.
