@@ -233,4 +233,10 @@ etapas. No implementar el refactor sin una autorización específica.
 - Validación local: archivos de distribución y YAML aprobados, sin secretos;
   Ruff/`compileall` aprobados; 123 pruebas aprobadas, 1 omitida, 4 advertencias
   conocidas y 83,29 % de cobertura.
+- Commit propio `754ccb3601a489ed1249a078ad700d1eb546a494`: Container
+  `38655727631` y CI `38655727560`, aprobados.
+- Entrega `8093fe616c9c50b72078ff4f241d9ab3427e763d`: Container
+  `38656129892` y CI `38656130065`, aprobados.
+- Estado final: distribución resuelta; licencia diferida y derechos conservados
+  hasta que el titular elija un modelo concreto.
 - Informe: `cierre_bloque_9_distribucion_2026-10-14.md`.

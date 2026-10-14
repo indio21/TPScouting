@@ -73,3 +73,26 @@ con dominio público o código abierto.
 
 La construcción y el smoke del contenedor quedan sujetos al resultado del nuevo
 workflow remoto. La suite local no sustituye esa evidencia.
+
+## Verificación remota y entrega
+
+- Repositorio propio: commit `754ccb3601a489ed1249a078ad700d1eb546a494`.
+- Container propio: ejecución `38655727631`, aprobada. Construyó la imagen,
+  inició la demo sintética y verificó `/health` y `/login`.
+- CI propia: ejecución `38655727560`, aprobada en Linux/Python 3.11 y 3.12 y
+  auditoría de dependencias.
+- Entrega: commit `8093fe616c9c50b72078ff4f241d9ab3427e763d`.
+- Container de entrega: ejecución `38656129892`, aprobada con el mismo build y
+  smoke.
+- CI de entrega: ejecución `38656130065`, aprobada.
+
+La limitación de construcción local queda suplida por dos ejecuciones reales e
+independientes en runners Linux. No se publicó ninguna imagen en un registry.
+
+## Estado final
+
+- Dockerfile, `.dockerignore` y `.env.example`: incorporados y verificados.
+- Construcción y smoke del contenedor: aprobados en repositorio propio y entrega.
+- Licencia: decisión diferida; por ahora no se conceden permisos generales de
+  reutilización. Esto preserva la posibilidad de elegir luego un modelo abierto,
+  comercial o dual sin intentar revocar derechos ya otorgados.

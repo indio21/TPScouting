@@ -646,3 +646,9 @@ El Word queda pendiente para la actualización documental integral.
 - Validación estática/YAML y ausencia de secretos: aprobadas. Ruff y
   `compileall`: aprobados. Suite: 123 aprobadas, 1 omitida, 4 advertencias
   conocidas; cobertura: 83,29 %.
+- Commit propio `754ccb3601a489ed1249a078ad700d1eb546a494`: Container
+  `38655727631` y CI `38655727560`, aprobados.
+- Entrega `8093fe616c9c50b72078ff4f241d9ab3427e763d`: Container
+  `38656129892` y CI `38656130065`, aprobados.
+- Distribución cerrada; licencia diferida con derechos conservados hasta una
+  elección explícita del titular.

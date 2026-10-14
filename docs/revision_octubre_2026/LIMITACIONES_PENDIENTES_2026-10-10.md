@@ -55,15 +55,14 @@ como funcionalidades o evidencias ya disponibles.
    derechos, retención, auditoría, gestión de incidentes ni validación externa.
    Esos controles dependen de decisiones institucionales que no deben inventarse.
 
-9. **RESUELTA EN PARTE — artefactos de distribución.** Se incorporaron
-   `Dockerfile`, `.dockerignore` y `.env.example`, con validación estática y sin
-   secretos. Falta construir la imagen en una máquina/CI con Docker. No se agregó
-   `LICENSE`: el usuario indicó gratuidad inicial y posible cambio futuro, pero
-   debe elegir entre conservar derechos, licencia abierta irrevocable para las
-   versiones publicadas o un esquema dual/source-available.
+9. **RESUELTA PARA DISTRIBUCIÓN; LICENCIA DIFERIDA.** Se incorporaron
+   `Dockerfile`, `.dockerignore` y `.env.example`, sin secretos. La imagen se
+   construyó y superó smoke tests independientes en los repositorios propio y de
+   entrega. No se agregó `LICENSE`: se conservan los derechos hasta elegir entre
+   licencia abierta para las versiones publicadas o un esquema comercial/dual.
 
 ## Próxima tarea recomendada
 
-Ejecutar el build y smoke test del contenedor en CI o una máquina con Docker, y
-elegir explícitamente el modelo de licencia. La preparación para datos reales
-quedó diseñada, pero el uso continúa expresamente inhabilitado.
+La lista técnica de nueve limitaciones quedó tratada. Permanece como decisión del
+titular el modelo de licencia; no es un defecto funcional del MVP. La preparación
+para datos reales quedó diseñada, pero su uso continúa inhabilitado.
