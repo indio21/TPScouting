@@ -104,3 +104,14 @@ operativos previos a cualquier uso de datos reales de menores.
 
 No hay evidencia de una regresión funcional en este bloque. La prueba confirma el
 estado actual; no reduce el riesgo estimado de una futura migración transversal.
+
+## Punto de guardado
+
+- Commit de la evaluación: `ad331344d81d52ac82065cb569687e6b174f9d11`.
+- GitHub Actions: ejecución `38649994032`, aprobada en Linux/Python 3.11 y 3.12
+  y auditoría de dependencias.
+- El workflow macOS no se ejecutó nuevamente porque este commit solo modificó
+  documentación y su filtro observa código, pruebas, dependencias y el propio
+  workflow. La última versión ejecutable permanece en `1804540b...`, cuya
+  ejecución macOS `38648685581` fue aprobada.
+- El repositorio de entrega permaneció intacto en `fb9de4be...`.

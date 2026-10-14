@@ -187,5 +187,8 @@ etapas. No implementar el refactor sin una autorización específica.
 - Verificación final: Ruff crítico/gradual y `compileall` aprobados; 123 pruebas
   aprobadas, 1 omitida, 4 advertencias conocidas y 83,29 % de cobertura.
 - Informe: `cierre_bloque_7_application_factory_2026-10-14.md`.
+- Commit: `ad331344d81d52ac82065cb569687e6b174f9d11`; CI Linux y auditoría
+  aprobadas en `38649994032`. macOS no se relanzó por ser un cambio solo
+  documental; la última validación ejecutable aprobada sigue siendo `38648685581`.
 - Próximo bloque: controles legales y operativos antes de usar datos reales de
   menores.

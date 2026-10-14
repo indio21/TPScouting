@@ -606,4 +606,8 @@ El Word queda pendiente para la actualización documental integral.
 - No se modificó código, Word, datos, artefactos ni repositorio de entrega.
 - Ruff crítico/gradual y `compileall`: aprobados. Suite: 123 aprobadas, 1
   omitida, 4 advertencias conocidas; cobertura: 83,29 %.
+- Commit `ad331344d81d52ac82065cb569687e6b174f9d11`; CI Linux 3.11/3.12 y
+  auditoría aprobadas en la ejecución `38649994032`.
+- macOS no se relanzó por el filtro de rutas de un cambio solo documental; la
+  última validación del código vigente sigue aprobada en `38648685581`.
 - Informe: `cierre_bloque_7_application_factory_2026-10-14.md`.
