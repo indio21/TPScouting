@@ -117,3 +117,12 @@ El Word no fue modificado. Sus cambios se difieren hasta el cierre integral. El 
 Decisión confirmada: mantener la probabilidad cruda como score principal y tratar
 el score combinado únicamente como heurística secundaria. No presentar el
 combinado como probabilidad ni como mejora demostrada.
+
+## Bloque 4: verificación de macOS
+
+- Se eligió una verificación remota real mediante GitHub Actions, sin requerir una Mac del usuario.
+- Workflow preparado: `.github/workflows/macos.yml`.
+- Matriz prevista: `macos-15` arm64 y `macos-15-intel` x64, con Python 3.11.
+- Alcance: instalación limpia, carga de artefactos, Ruff crítico, suite con cobertura y demo en una base temporal.
+- Mientras no finalicen las ejecuciones remotas, el estado debe figurar como pendiente y no como compatibilidad confirmada.
+- El repositorio `TPScouting-entrega` permanece fuera de alcance.
