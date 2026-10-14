@@ -44,6 +44,13 @@ Después de la división:
 - suite integral: 122 aprobadas, 1 omitida, 4 advertencias y 83,23 % de cobertura;
 - `compileall` y Ruff crítico: aprobados.
 
+Evidencia remota del commit `8e6d82a42278fe653fbeb59e581c2262ba260d30`:
+
+- CI Linux Python 3.11, Python 3.12 y auditoría: aprobada en
+  https://github.com/indio21/TPScouting/actions/runs/38646506400;
+- macOS Apple Silicon Python 3.11: aprobada en 1 minuto 35 segundos, visible en
+  https://github.com/indio21/TPScouting/commit/8e6d82a42278fe653fbeb59e581c2262ba260d30/checks.
+
 ## Límites
 
 No se cambió código de aplicación, no se agregaron pruebas nuevas y no se alteró

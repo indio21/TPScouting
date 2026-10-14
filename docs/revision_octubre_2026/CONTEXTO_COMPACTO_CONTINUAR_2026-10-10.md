@@ -136,5 +136,7 @@ combinado como probabilidad ni como mejora demostrada.
 - Se conservaron los 76 nombres, el orden de colección y cuerpos AST idénticos.
 - Verificación integral: 122 aprobadas, 1 omitida, 4 advertencias conocidas y
   83,23 % de cobertura.
+- El commit funcional `8e6d82a` aprobó CI Linux 3.11/3.12, auditoría y macOS
+  Apple Silicon 3.11.
 - Informe: `cierre_bloque_5_pruebas_por_dominio_2026-10-14.md`.
 - Próximo bloque: ampliación gradual de Ruff y logging.
