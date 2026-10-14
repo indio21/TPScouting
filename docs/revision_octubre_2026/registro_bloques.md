@@ -566,3 +566,14 @@ El Word queda pendiente para la actualización documental integral.
 - Decisión: soporte macOS limitado y documentado para Apple Silicon; no se
   rebajaron dependencias ni se atribuyó aprobación a Intel.
 - El repositorio de entrega no fue modificado.
+
+## Limitación 5 — división de pruebas por dominio (2026-10-14)
+
+- `test_mvp_regressions.py` (3328 líneas) se reemplazó por cuatro módulos de
+  runtime, autenticación/seguridad, jugadores y ML/datos.
+- Diez helpers comunes se centralizaron en `tests/mvp_regression_helpers.py`.
+- La colección conservó los 76 nombres en el mismo orden y sin duplicados.
+- La comparación AST confirmó que los 76 cuerpos de prueba no cambiaron.
+- Resultado por dominio: 18 + 13 + 26 + 19 pruebas aprobadas.
+- Suite integral: 122 aprobadas, 1 omitida, 4 advertencias y 83,23 % de cobertura.
+- El repositorio de entrega no fue modificado.

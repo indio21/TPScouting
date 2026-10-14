@@ -127,3 +127,14 @@ combinado como probabilidad ni como mejora demostrada.
 - Alcance: instalación limpia, carga de artefactos, Ruff crítico, suite con cobertura y demo en una base temporal.
 - Evidencia inicial: https://github.com/indio21/TPScouting/actions/runs/38643910674.
 - El repositorio `TPScouting-entrega` permanece fuera de alcance.
+
+## Bloque 5: pruebas divididas por dominio
+
+- `test_mvp_regressions.py` fue dividido en cuatro módulos: runtime,
+  autenticación/seguridad, jugadores y ML/datos.
+- Los 10 helpers comunes quedaron en `tests/mvp_regression_helpers.py`.
+- Se conservaron los 76 nombres, el orden de colección y cuerpos AST idénticos.
+- Verificación integral: 122 aprobadas, 1 omitida, 4 advertencias conocidas y
+  83,23 % de cobertura.
+- Informe: `cierre_bloque_5_pruebas_por_dominio_2026-10-14.md`.
+- Próximo bloque: ampliación gradual de Ruff y logging.

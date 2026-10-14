@@ -30,9 +30,10 @@ como funcionalidades o evidencias ya disponibles.
    del soporte: PyPI no publica un wheel x86_64 de `torch==2.14.1`. No se cambió
    la versión fijada para ocultar esa incompatibilidad.
 
-5. **CAL-03: organización de pruebas.** `test_mvp_regressions.py` todavía puede
-   dividirse por dominio. Hacerlo sin cambiar fixtures ni cobertura y comprobar la
-   suite antes y después.
+5. **RESUELTA — CAL-03: organización de pruebas.** Las 76 regresiones del archivo
+   monolítico se dividieron en runtime, autenticación/seguridad, jugadores y
+   ML/datos, con helpers compartidos. Se conservaron exactamente los cuerpos y la
+   colección; la suite integral mantuvo 83,23 % de cobertura.
 
 6. **CAL-02: lint y logging graduales.** El CI aplica solo reglas críticas de
    Ruff. Medir primero el conjunto completo, corregir por módulos y reemplazar
@@ -54,6 +55,7 @@ como funcionalidades o evidencias ya disponibles.
 
 ## Próxima tarea recomendada
 
-Continuar por la división de pruebas extensas por dominio. La compatibilidad macOS
-Apple Silicon ya tiene ejecución remota; Intel permanece documentado como no
-soportado por la versión fijada de PyTorch.
+Continuar por la ampliación gradual de Ruff y la mejora de logging. La
+compatibilidad macOS Apple Silicon y la división de pruebas ya tienen evidencia;
+macOS Intel permanece documentado como no soportado por la versión fijada de
+PyTorch.
