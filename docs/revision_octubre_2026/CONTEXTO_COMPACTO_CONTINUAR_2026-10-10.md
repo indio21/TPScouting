@@ -170,3 +170,22 @@ combinado como probabilidad ni como mejora demostrada.
 Próximo bloque: **7, evaluación de application factory**. Preparar un diagnóstico,
 mapa de dependencias, riesgos, pruebas de caracterización y una propuesta por
 etapas. No implementar el refactor sin una autorización específica.
+
+## Bloque 7: evaluación de application factory
+
+- Decisión: no implementar en el MVP actual por riesgo alto de regresión y bajo
+  beneficio inmediato para una entrega ya validada.
+- Evidencia: `app.py` tiene 1.755 líneas, 85 funciones, 72 asignaciones globales
+  y 17 llamadas de nivel de módulo con efectos; registra 85 reglas y seis
+  blueprints.
+- Las pruebas contienen 218 referencias directas a `app_module.*`.
+- El import temporal creó la base, cargó modelo/preprocesador/calibrador y exigió
+  `engine.dispose()` para liberar correctamente SQLite.
+- Se definió un plan en siete etapas con snapshot de rutas, contenedor de runtime,
+  tareas de arranque explícitas, compatibilidad de entrada y pruebas de dos apps.
+- No se cambió código, Word, artefactos ni repositorio de entrega.
+- Verificación final: Ruff crítico/gradual y `compileall` aprobados; 123 pruebas
+  aprobadas, 1 omitida, 4 advertencias conocidas y 83,29 % de cobertura.
+- Informe: `cierre_bloque_7_application_factory_2026-10-14.md`.
+- Próximo bloque: controles legales y operativos antes de usar datos reales de
+  menores.

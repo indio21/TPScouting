@@ -593,3 +593,17 @@ El Word queda pendiente para la actualización documental integral.
   aprobados en `38648888954` y `38648888903`.
 - La sincronización fue selectiva: no incluyó registros internos, documentos
   candidatos ni artefactos de la corrida ML.
+
+## Limitación 7 — evaluación de application factory (2026-10-14)
+
+- Se midió el alcance real: 1.755 líneas en `app.py`, 85 funciones, 72
+  asignaciones globales, 17 llamadas de import con efectos y 85 reglas Flask.
+- Se identificaron 218 referencias directas a `app_module.*` en las pruebas.
+- Una caracterización con base temporal confirmó creación de esquema, carga de
+  artefactos y recursos globales durante el import.
+- Veredicto: no implementar en el MVP actual. El riesgo de regresión supera el
+  beneficio inmediato y el refactor debe realizarse luego por etapas.
+- No se modificó código, Word, datos, artefactos ni repositorio de entrega.
+- Ruff crítico/gradual y `compileall`: aprobados. Suite: 123 aprobadas, 1
+  omitida, 4 advertencias conocidas; cobertura: 83,29 %.
+- Informe: `cierre_bloque_7_application_factory_2026-10-14.md`.

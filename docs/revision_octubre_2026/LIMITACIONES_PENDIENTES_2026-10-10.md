@@ -41,9 +41,12 @@ como funcionalidades o evidencias ya disponibles.
    CLI. La medición completa mantiene 732 avisos declarados, principalmente
    modernización masiva de tipos; su ampliación futura debe hacerse por regla.
 
-7. **CAL-01: application factory y módulos grandes.** Es un refactor amplio.
-   Preparar diseño, dependencias y pruebas de caracterización antes de autorizarlo;
-   no mezclarlo con correcciones funcionales menores.
+7. **EVALUADA; NO IMPLEMENTAR EN EL MVP — CAL-01: application factory y
+   módulos grandes.** La evaluación verificó estado global, efectos durante el
+   import, 85 reglas Flask y 218 referencias directas desde pruebas. El riesgo de
+   una migración transversal supera su beneficio inmediato para la entrega ya
+   validada. Quedó definido un plan por etapas y criterios previos; la
+   implementación requiere una autorización futura específica.
 
 8. **Uso futuro de datos reales de menores.** El MVP usa datos sintéticos. Antes
    de cualquier uso real se necesitan consentimiento de tutores, información al
@@ -57,6 +60,7 @@ como funcionalidades o evidencias ya disponibles.
 
 ## Próxima tarea recomendada
 
-Continuar por la evaluación del refactor hacia application factory. Ruff/logging
-quedó ampliado con un alcance gradual verificable; macOS Intel permanece
+Continuar con el diseño de controles legales y operativos anteriores al uso de
+datos reales de menores. La application factory quedó evaluada y diferida por
+riesgo; Ruff/logging quedó ampliado gradualmente y macOS Intel permanece
 documentado como no soportado por la versión fijada de PyTorch.
