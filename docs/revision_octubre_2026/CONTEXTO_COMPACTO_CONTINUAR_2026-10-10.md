@@ -282,3 +282,23 @@ etapas. No implementar el refactor sin una autorización específica.
   entradas sin diferencias, campos y estructura correctos.
 - No se modificaron código, modelos, imágenes ni repositorio de entrega.
 - Informe: `cierre_comparacion_corridas_ml_2026-10-15.md`.
+
+## Preparación del punto 4 — revisión final — 2026-10-15
+
+- Decisión definitiva: no incorporar `LICENSE`; todos los derechos quedan
+  reservados. README, guía de evaluación y Word lo declaran expresamente.
+- Se ejecutó nuevamente la suite: 123 aprobadas, 1 omitida, 4 advertencias
+  conocidas y 83,29 % de cobertura. Ruff crítico/gradual, `pip check` y
+  `compileall` aprobaron.
+- El Word se actualizó con los commits y ejecuciones vigentes de CI y contenedor,
+  soporte real de macOS Apple Silicon, distribución Docker y decisión de derechos.
+- Se retiraron de la nueva copia las referencias obsoletas a 116 pruebas, 83,74 %,
+  entrega `72314c2` y CI `38068749412`.
+- Candidato para el punto 4:
+  `TRABAJO_FINAL_TPScouting_PRE_REVISION_FINAL_2026-10-15.docx` y PDF.
+- Validación: 96 páginas, 28 imágenes, 19 tablas, 9 secciones y 45 entradas de
+  listas sin diferencias; campos e inicios de secciones aprobados.
+- No se modificaron comportamiento, artefactos de runtime, imágenes ni repositorio
+  de entrega.
+- Informe: `cierre_preparacion_revision_final_2026-10-15.md`.
+- Próxima tarea: ejecutar la revisión final integral del documento actualizado.
