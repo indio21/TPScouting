@@ -96,3 +96,11 @@ independientes en runners Linux. No se publicó ninguna imagen en un registry.
 - Licencia: decisión diferida; por ahora no se conceden permisos generales de
   reutilización. Esto preserva la posibilidad de elegir luego un modelo abierto,
   comercial o dual sin intentar revocar derechos ya otorgados.
+
+## Decisión posterior del titular — 2026-10-15
+
+La decisión pendiente quedó cerrada: el proyecto no incorporará un archivo
+`LICENSE` en esta entrega y todos los derechos se encuentran reservados. La
+publicación permite la revisión académica del proyecto, pero no concede una
+autorización general para copiarlo, modificarlo, redistribuirlo, sublicenciarlo
+o explotarlo comercialmente. README y guía de demo deben reflejar esta decisión.

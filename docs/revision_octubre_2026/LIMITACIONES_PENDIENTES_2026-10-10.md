@@ -55,14 +55,15 @@ como funcionalidades o evidencias ya disponibles.
    derechos, retención, auditoría, gestión de incidentes ni validación externa.
    Esos controles dependen de decisiones institucionales que no deben inventarse.
 
-9. **RESUELTA PARA DISTRIBUCIÓN; LICENCIA DIFERIDA.** Se incorporaron
+9. **RESUELTA PARA DISTRIBUCIÓN Y DERECHOS.** Se incorporaron
    `Dockerfile`, `.dockerignore` y `.env.example`, sin secretos. La imagen se
    construyó y superó smoke tests independientes en los repositorios propio y de
-   entrega. No se agregó `LICENSE`: se conservan los derechos hasta elegir entre
-   licencia abierta para las versiones publicadas o un esquema comercial/dual.
+   entrega. Por decisión del titular no se agregó `LICENSE`: todos los derechos
+   se encuentran reservados y no se concede una autorización general de
+   reutilización.
 
 ## Próxima tarea recomendada
 
-La lista técnica de nueve limitaciones quedó tratada. Permanece como decisión del
-titular el modelo de licencia; no es un defecto funcional del MVP. La preparación
-para datos reales quedó diseñada, pero su uso continúa inhabilitado.
+La lista técnica de nueve limitaciones quedó tratada. La preparación para datos
+reales quedó diseñada, pero su uso continúa inhabilitado. La siguiente tarea es
+la revisión final integral del documento actualizado.

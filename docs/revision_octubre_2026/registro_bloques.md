@@ -652,3 +652,13 @@ El Word queda pendiente para la actualización documental integral.
   `38656129892` y CI `38656130065`, aprobados.
 - Distribución cerrada; licencia diferida con derechos conservados hasta una
   elección explícita del titular.
+
+### Decisión posterior de derechos — 2026-10-15
+
+- El titular decidió no incorporar un archivo `LICENSE` en esta entrega.
+- Todos los derechos quedan reservados y no se concede autorización general de
+  copia, modificación, redistribución, sublicenciamiento o explotación comercial.
+- README y guía de demo informan la decisión sin presentar el proyecto como
+  código abierto.
+- El punto 9 queda cerrado; la próxima etapa es la revisión final del documento
+  actualizado.
