@@ -302,3 +302,27 @@ etapas. No implementar el refactor sin una autorización específica.
   de entrega.
 - Informe: `cierre_preparacion_revision_final_2026-10-15.md`.
 - Próxima tarea: ejecutar la revisión final integral del documento actualizado.
+
+## Auditoría final y publicación de entrega — 2026-10-15
+
+- Se sincronizaron selectivamente README, guía del profesor y la copia
+  documental verificada; no se copiaron contextos, evidencias, auditorías,
+  candidatos ni corridas internas.
+- La entrega publica únicamente
+  `TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_2026-10-15.docx` y su PDF.
+- Commit final publicado: `4c5ef2c88494e257a3bd8232bccba7f33f79b66a`.
+- CI `38815440730`: aprobado sobre el commit final en Python 3.11 y 3.12,
+  incluidos Ruff, suite, cobertura y auditoría de dependencias.
+- Container `38815440745`: aprobado; construyó la imagen, inició la demo
+  sintética y superó el smoke test.
+- Verificación local: 123 pruebas aprobadas, 1 omitida, 4 advertencias
+  conocidas, cobertura 83,29 %, Ruff crítico/gradual, `compileall`, `pip check`
+  y `pip-audit` aprobados.
+- Demo con base temporal aprobada: 60 jugadores sintéticos, login con CSRF,
+  listados, detalle, estadísticas, atributos, predicción, silueta y salud.
+- Auditoría de publicación: 101 archivos rastreados, un Word y un PDF final,
+  cero documentos internos/candidatos, cero bases o `.env` reales y sin
+  `LICENSE`; todos los derechos están reservados.
+- Informe completo: `auditoria_final_entrega_2026-10-15.md`.
+- Estado: punto 5 cerrado; entrega lista para evaluación dentro del alcance
+  declarado del MVP.
