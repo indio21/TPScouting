@@ -262,3 +262,23 @@ etapas. No implementar el refactor sin una autorización específica.
 - No se modificó código de la aplicación ni el repositorio de entrega. Las
   imágenes se conservaron sin volver a analizarlas.
 - Informe: `cierre_actualizacion_limitaciones_trabajo_2026-10-15.md`.
+
+## Comparación de corridas ML — 2026-10-15
+
+- Se adoptó la alternativa de menor riesgo: conservar la corrida histórica y
+  documentar `20261010T_local_seed42_leakage_safe_v2` como comparación
+  experimental, sin reemplazar artefactos de runtime.
+- En salida cruda, la histórica obtuvo ROC-AUC 0,9203, PR-AUC 0,5461, Brier
+  0,1049, log loss 0,3294 y F1 0,5291; la candidata obtuvo 0,9056, 0,4888,
+  0,1175, 0,3673 y 0,4931, respectivamente.
+- Los valores no se interpretan como una comparación causal del modelo: la
+  histórica ajustó cuantiles antes del split y la candidata ajustó la política
+  solo con train. La candidata mejora el procedimiento y la trazabilidad, pero
+  no demuestra mejor desempeño predictivo.
+- La comparación se agregó en 6.4, sin nuevas tablas ni figuras numeradas.
+- Nuevo candidato documental:
+  `TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_COMPARACION_ML_2026-10-15.docx` y PDF.
+- Verificación aprobada: 96 páginas, 28 imágenes, 19 tablas, 9 secciones, 45
+  entradas sin diferencias, campos y estructura correctos.
+- No se modificaron código, modelos, imágenes ni repositorio de entrega.
+- Informe: `cierre_comparacion_corridas_ml_2026-10-15.md`.

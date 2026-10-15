@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-15",
+  "run_id": "20261010T_local_seed42_leakage_safe_v2",
+  "candidate": {
+    "docx_sha256": "021AD5624F1AE5E6796904AB5AFC3AD2682887FD0338846E24C3FF8B3917ED7E",
+    "pdf_sha256": "380BFF0F1B5C04A45C445E6FCF4A32BCA7D49BCE399131040DC6F8D016A150A6",
+    "pdf_pages": 96
+  },
+  "evidence": {
+    "historical_score_evaluation_sha256": "FA7E88715D44D1100FF0CC1673B74ED0669495825744815B250726C05E42624B",
+    "leakage_safe_score_evaluation_sha256": "191A7EE294A84C106636D5D42223C0A042EBC12E52B48E0137B71F8743EFDCC2",
+    "target_policy_sha256": "7972BE6C788092F5827CB98562B8DF21EF65A1289FD4320A6038800105331F3B",
+    "reproducibility_check_sha256": "A8B0A59148AC33C4517F9B409C6DFD55482580AA85DEA931576CA3970F9F35D1",
+    "rounded_values_match_sources": true
+  },
+  "structure": {
+    "inline_images": 28,
+    "tables": 19,
+    "sections": 9,
+    "list_entries": 45,
+    "list_mismatches": 0,
+    "page_starts": {
+      "index": {
+        "physical_page": 2,
+        "y0_points": 71.2
+      },
+      "summary": {
+        "physical_page": 9,
+        "y0_points": 71.3
+      },
+      "abstract": {
+        "physical_page": 10,
+        "y0_points": 79.7
+      },
+      "bibliography": {
+        "physical_page": 77,
+        "y0_points": 77.2
+      }
+    },
+    "separate_required_pages": true,
+    "comparison_location": [
+      {
+        "physical_page": 69,
+        "y0_points": 71.2
+      }
+    ]
+  },
+  "text_integrity": {
+    "replacement_characters": 0,
+    "mojibake_A_tilde": 0
+  },
+  "scope": {
+    "runtime_artifacts_replaced": false,
+    "application_code_changed": false,
+    "delivery_repository_changed": false,
+    "images_reanalyzed": false
+  }
+}
