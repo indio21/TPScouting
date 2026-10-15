@@ -240,3 +240,25 @@ etapas. No implementar el refactor sin una autorización específica.
 - Estado final: distribución resuelta; licencia diferida y derechos conservados
   hasta que el titular elija un modelo concreto.
 - Informe: `cierre_bloque_9_distribucion_2026-10-14.md`.
+
+## Actualización documental de limitaciones — 2026-10-15
+
+- Se comprobó que `TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_VERIFICADA_2026-10-10.docx`
+  es idéntico por SHA-256 al Word publicado en entrega y posterior a
+  `FINAL_POSTAUDITORIA`; se utilizó como fuente.
+- Se creó, sin sobrescribir la fuente,
+  `TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ACTUALIZADA_2026-10-15.docx` y su PDF.
+- Se incorporaron en 7.3 y 7.5 las cinco mejoras diferidas: Ruff gradual,
+  application factory, macOS Intel, controles para datos reales de menores y
+  metadatos históricos irrecuperables.
+- Se alinearon cuatro párrafos anteriores con la evidencia de los bloques 1–3:
+  corrida candidata sin fuga, evaluación del score combinado, metadatos de la
+  corrida nueva y discusión de resultados.
+- Verificación documental aprobada: 95 páginas, 28 imágenes, 19 tablas, 9
+  secciones, 45 entradas de listas sin diferencias, sin errores de campos ni
+  pendientes editoriales.
+- Portada, índice, resumen, abstract y bibliografía comienzan en páginas
+  independientes. El texto agregado conserva Arial 14.
+- No se modificó código de la aplicación ni el repositorio de entrega. Las
+  imágenes se conservaron sin volver a analizarlas.
+- Informe: `cierre_actualizacion_limitaciones_trabajo_2026-10-15.md`.

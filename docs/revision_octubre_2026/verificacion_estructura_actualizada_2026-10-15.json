@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-15",
+  "source": {
+    "path": "C:\\Tesis\\TPScouting\\docs\\revision_octubre_2026\\word\\TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_VERIFICADA_2026-10-10.docx",
+    "sha256": "D7FFBCE018C9FD438012083E48F053618C9E14E67A30AB249412A02522D4C946"
+  },
+  "delivery_document_compared": {
+    "path": "C:\\Tesis\\TPScouting-entrega\\documento\\TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_2026-10-10.docx",
+    "sha256": "D7FFBCE018C9FD438012083E48F053618C9E14E67A30AB249412A02522D4C946",
+    "identical_to_source": true
+  },
+  "candidate": {
+    "docx": "C:\\Tesis\\TPScouting\\docs\\revision_octubre_2026\\word\\TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ACTUALIZADA_2026-10-15.docx",
+    "docx_sha256": "B4A80877FFE0E8688BD53140EB7A6E6F82AAC753E5DB60553B7E2C4AAA07A0F9",
+    "pdf": "C:\\Tesis\\TPScouting\\docs\\revision_octubre_2026\\pdf\\TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ACTUALIZADA_2026-10-15.pdf",
+    "pdf_sha256": "A190EAB4BF2129FD3FBC8589667EC388D1F6725D0FA5713E975B4924012D14C1",
+    "pdf_pages": 95
+  },
+  "structure": {
+    "inline_images": 28,
+    "tables": 19,
+    "sections": 9,
+    "list_entries": 45,
+    "list_mismatches": 0,
+    "page_starts": {
+      "index": {
+        "physical_page": 2,
+        "y0_points": 71.2
+      },
+      "summary": {
+        "physical_page": 9,
+        "y0_points": 71.3
+      },
+      "abstract": {
+        "physical_page": 10,
+        "y0_points": 79.7
+      },
+      "bibliography": {
+        "physical_page": 76,
+        "y0_points": 77.2
+      }
+    },
+    "separate_required_pages": true
+  },
+  "format": {
+    "normal_font": "Arial",
+    "normal_size_points": 14.0
+  },
+  "text_controls": {
+    "double_spaces": 0,
+    "space_before_punctuation": 0,
+    "first_person_plural": 0,
+    "second_person": 0,
+    "editorial_pending": 0
+  },
+  "scope": {
+    "images_reanalyzed": false,
+    "application_code_changed": false,
+    "delivery_repository_changed": false
+  }
+}
