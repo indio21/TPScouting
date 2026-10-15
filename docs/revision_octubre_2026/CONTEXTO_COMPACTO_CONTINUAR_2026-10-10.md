@@ -326,3 +326,25 @@ etapas. No implementar el refactor sin una autorización específica.
 - Informe completo: `auditoria_final_entrega_2026-10-15.md`.
 - Estado: punto 5 cerrado; entrega lista para evaluación dentro del alcance
   declarado del MVP.
+
+## Punto de continuación acordado — 2026-10-15
+
+- El usuario revisará el documento final publicado:
+  `TPScouting-entrega/documento/TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_2026-10-15.docx`
+  y su PDF equivalente.
+- La línea base de entrega que debe preservarse es el commit
+  `4c5ef2c88494e257a3bd8232bccba7f33f79b66a`.
+- En la próxima sesión se tomarán las nuevas correcciones del profesor y se
+  realizará una auditoría independiente contra el Word, el PDF y el código
+  vigentes.
+- Cada nueva observación deberá clasificarse como resuelta, parcial, abierta o
+  no aplicable, con evidencia concreta. No se asumirá vigente una referencia a
+  páginas, líneas, versiones o métricas sin volver a comprobarla.
+- Después de la auditoría se aplicarán solamente las correcciones confirmadas,
+  en bloques pequeños y verificables. Código y documento se probarán nuevamente
+  antes de preparar otra publicación.
+- El repositorio de entrega no debe modificarse hasta que el usuario revise y
+  autorice una nueva actualización.
+- Para la nueva auditoría puede reutilizarse la skill
+  `tpscouting-correction-report`; para la revisión integral académica y técnica,
+  `scouting-thesis-reviewer`.
