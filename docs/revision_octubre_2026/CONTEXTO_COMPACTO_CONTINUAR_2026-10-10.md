@@ -348,3 +348,16 @@ etapas. No implementar el refactor sin una autorización específica.
 - Para la nueva auditoría puede reutilizarse la skill
   `tpscouting-correction-report`; para la revisión integral académica y técnica,
   `scouting-thesis-reviewer`.
+
+## Reconstrucción del pedido de auditoría — 2026-10-19
+
+- Se leyó `C:\Users\Usuario\Desktop\correccion-octubre.md` y se comparó con
+  los prompts de abril existentes en `C:\Tesis` y con la skill local
+  `tpscouting-correction-report`.
+- No se encontró el prompt literal que originó el informe de octubre. Los
+  prompts de abril son antecedentes de corrección por etapas; no prueban ser
+  la instrucción de esa auditoría.
+- Se preparó un prompt autónomo y reutilizable, metodológicamente cercano al
+  informe: `prompt_reconstruido_informe_correcciones_2026-10-19.md`.
+- El archivo distingue hechos observables, inferencias y datos no recuperables.
+  No modifica el documento final ni el repositorio de entrega.
