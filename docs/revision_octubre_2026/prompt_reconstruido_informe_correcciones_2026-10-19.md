@@ -1,6 +1,6 @@
 # Prompt reconstruido para un informe de correcciones como el de octubre
 
-**Fecha de reconstrucción:** 19/10/2026.  
+**Fecha de reconstrucción:** 19/10/2026.
 **Naturaleza:** propuesta basada en la estructura y las afirmaciones observables de
 `C:\Users\Usuario\Desktop\correccion-octubre.md`. No es una transcripción del
 pedido original ni una nueva auditoría del proyecto.
@@ -115,12 +115,12 @@ metodológica y estructural, no una prueba de autoría.
 > `correccion-octubre.md`, con encabezado que identifique documento y commit,
 > veredicto separado de código y documento, y secciones:
 >
-> A. Prioridad 1 antes de defensa.  
-> B. Código: seguridad.  
-> C. Código: dependencias, datos, calidad, pruebas, CI e infraestructura.  
-> D. Código: ML y trazabilidad.  
-> E. Documento: errores de contenido y coherencia con código.  
-> F. Documento: forma, redacción y fuentes.
+> - A. Prioridad 1 antes de defensa.
+> - B. Código: seguridad.
+> - C. Código: dependencias, datos, calidad, pruebas, CI e infraestructura.
+> - D. Código: ML y trazabilidad.
+> - E. Documento: errores de contenido y coherencia con código.
+> - F. Documento: forma, redacción y fuentes.
 >
 > Para **cada observación**, asigná un ID estable, ubicación actual (archivo y
 > símbolo o sección y página PDF), severidad justificada, descripción precisa,
