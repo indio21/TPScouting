@@ -1,0 +1,33 @@
+{
+  "publication_commit": "0f7696b2b002ea149d81092aae921bed450ef6bb",
+  "ci": {
+    "id": 39513994230,
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/indio21/TPScouting-entrega/actions/runs/39513994230",
+    "updated_at": "2026-10-20T23:19:33Z"
+  },
+  "jobs": [
+    {
+      "id": 118941621680,
+      "name": "dependency-audit",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 118941622081,
+      "name": "test (3.11)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 118941622475,
+      "name": "test (3.12)",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "functional_commit": "2a27d53ae4f8a4849bee7d1bea362fd9146886b5",
+  "functional_code_unchanged": true,
+  "document_controls_passed": true
+}

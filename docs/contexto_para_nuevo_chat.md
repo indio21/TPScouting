@@ -2,10 +2,10 @@
 
 ## Punto de continuación vigente — 20/10/2026
 
-Leer primero [CONTEXTO_FINAL_ARIAL_2026-10-20.md](revision_octubre_2026/CONTEXTO_FINAL_ARIAL_2026-10-20.md).
-El Word/PDF final vigente es `TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ARIAL_2026-10-20`,
+Leer primero [CONTEXTO_LISTAS_ALINEADAS_2026-10-20.md](revision_octubre_2026/CONTEXTO_LISTAS_ALINEADAS_2026-10-20.md).
+El Word/PDF final vigente es `TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ARIAL_LISTAS_ALINEADAS_2026-10-20`,
 de 97 páginas, publicado en `TPScouting-entrega` en el commit
-`fdf2805975efbf1de78dfe7d350f0ebb30f1c1bd`. Código funcional corregido: `2a27d53`.
+`0f7696b2b002ea149d81092aae921bed450ef6bb`. Código funcional corregido: `2a27d53`.
 Las notas siguientes son históricas.
 
 Fecha de ultima actualizacion: 2026-08-26

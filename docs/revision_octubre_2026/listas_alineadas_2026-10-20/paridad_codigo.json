@@ -1,0 +1,17 @@
+{
+  "compared_files": 85,
+  "missing_from_main": [],
+  "differences": [
+    "Dockerfile"
+  ],
+  "delivery_head": "fdf2805975efbf1de78dfe7d350f0ebb30f1c1bd",
+  "passed": true,
+  "expected_documentary_difference": {
+    "file": "Dockerfile",
+    "detail": "# No LICENSE is distributed with this delivery; all rights are reserved.",
+    "remaining_lines_identical": true
+  },
+  "unexpected_differences": [],
+  "functional_commit": "2a27d53ae4f8a4849bee7d1bea362fd9146886b5",
+  "code_changes_since_functional_commit": []
+}

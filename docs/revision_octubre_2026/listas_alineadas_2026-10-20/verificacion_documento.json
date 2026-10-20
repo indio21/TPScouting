@@ -1,0 +1,22 @@
+{
+  "docx": "docs\\revision_octubre_2026\\listas_alineadas_2026-10-20\\TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ARIAL_LISTAS_ALINEADAS_2026-10-20.docx",
+  "docx_sha256": "09E39E79BBFADB3154396FF91FCC606F53B9BD2D552ABC833FB263B8C9958EAF",
+  "pdf": "docs\\revision_octubre_2026\\listas_alineadas_2026-10-20\\TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ARIAL_LISTAS_ALINEADAS_2026-10-20.pdf",
+  "pdf_sha256": "836082639D4A00EE4A315FA9E8D7F3ABDAB2161253E528F795E8AF5216B590FE",
+  "pdf_pages": 97,
+  "docx_inline_shapes": 28,
+  "docx_tables": 19,
+  "docx_sections": 9,
+  "list_entries": 45,
+  "list_mismatches": [],
+  "pending_editorial_items": 0,
+  "field_errors": [],
+  "page_sizes_points": [
+    [
+      612.0,
+      792.0
+    ]
+  ],
+  "low_text_pages": [],
+  "passed": true
+}

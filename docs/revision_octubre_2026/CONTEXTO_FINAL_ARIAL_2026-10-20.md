@@ -1,5 +1,9 @@
 # Punto de continuación vigente — Arial y autenticación, 20/10/2026
 
+> Actualización posterior: el documento vigente incorpora listas alineadas.
+> Leer primero `CONTEXTO_LISTAS_ALINEADAS_2026-10-20.md`.
+> Las referencias de esta nota describen el cierre anterior preservado.
+
 ## Versión final vigente
 
 - `cierre_correcciones_2026-10-20/TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ARIAL_2026-10-20.docx`

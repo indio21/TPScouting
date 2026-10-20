@@ -1,0 +1,16 @@
+{
+  "publication_commit": "0f7696b2b002ea149d81092aae921bed450ef6bb",
+  "files": [
+    {
+      "path": "documento/TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ARIAL_LISTAS_ALINEADAS_2026-10-20.docx",
+      "sha256": "09E39E79BBFADB3154396FF91FCC606F53B9BD2D552ABC833FB263B8C9958EAF",
+      "bytes": 2712471
+    },
+    {
+      "path": "documento/TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ARIAL_LISTAS_ALINEADAS_2026-10-20.pdf",
+      "sha256": "836082639D4A00EE4A315FA9E8D7F3ABDAB2161253E528F795E8AF5216B590FE",
+      "bytes": 2447688
+    }
+  ],
+  "passed": true
+}

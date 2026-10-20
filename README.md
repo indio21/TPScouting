@@ -1,6 +1,6 @@
 # TPScouting - Scouting Inteligente con IA (MVP)
 
-Documento final: [Word](docs/revision_octubre_2026/cierre_correcciones_2026-10-20/TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ARIAL_2026-10-20.docx) | [PDF](docs/revision_octubre_2026/cierre_correcciones_2026-10-20/TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ARIAL_2026-10-20.pdf).
+Documento final: [Word](docs/revision_octubre_2026/listas_alineadas_2026-10-20/TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ARIAL_LISTAS_ALINEADAS_2026-10-20.docx) | [PDF](docs/revision_octubre_2026/listas_alineadas_2026-10-20/TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ARIAL_LISTAS_ALINEADAS_2026-10-20.pdf).
 
 [![CI](https://github.com/indio21/TPScouting/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/indio21/TPScouting/actions/workflows/ci.yml)
 
