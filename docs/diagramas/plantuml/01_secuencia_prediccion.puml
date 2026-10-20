@@ -1,5 +1,5 @@
 @startuml
-title Diagrama de secuencia - Inferencia y score combinado de potencial
+title Diagrama de secuencia - Inferencia y score operativo de la interfaz
 
 actor "Usuario autenticado\nScout / Admin / Director" as Usuario
 participant "Navegador\nBootstrap + Jinja2" as Browser
@@ -25,7 +25,7 @@ alt Modelo no disponible
     Flask --> Browser: 500 Internal Server Error
     Browser --> Usuario: Informa que el calculo no esta disponible
 else Modelo cargado y datos suficientes
-    Flask -> Prep: Construir features del jugador
+    Flask -> Prep: Construir 64 columnas de entrada
     Prep --> Flask: Vector transformado\ninput_dim=68
     Flask -> Runtime: Solicitar inferencia de potencial
     Runtime -> Model: forward(vector)
@@ -38,12 +38,12 @@ else Modelo cargado y datos suficientes
         Runtime --> Flask: Referencia calibrada
     end
     Flask -> Logic: combine_probability(base_prob,\nstats_summary, fit_score)
-    Logic --> Flask: combined_prob principal
+    Logic --> Flask: combined_prob mostrado en la interfaz\n(heuristica operativa)
     Flask -> Flask: Clasificar bajo / medio / alto\numbrales 0.60 / 0.80
-    Flask -> View: render_template(prediction.html,\nscore combinado y referencia secundaria)
+    Flask -> View: render_template(prediction.html,\nheuristica combinada y referencia calibrada)
     View --> Flask: HTML renderizado
     Flask --> Browser: 200 OK
-    Browser --> Usuario: Muestra combined_prob y apoyo a decision scout
+    Browser --> Usuario: Muestra combined_prob como apoyo revisable\na la decision scout
 else Modelo cargado pero datos insuficientes
     Flask -> View: Renderizar vista con advertencia controlada
     View --> Flask: HTML con mensaje de limitacion

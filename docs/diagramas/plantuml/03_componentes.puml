@@ -2,6 +2,7 @@
 title Diagrama de componentes - Arquitectura logica TPScouting
 
 skinparam componentStyle rectangle
+left to right direction
 
 actor "Usuario\nScout / Director / Admin" as User
 
@@ -26,6 +27,9 @@ package "Aplicacion Flask" {
 
   package "Servicios" {
     [services/cache.py\nCache in-memory] as Cache
+    [services/security.py\nRate limiting y validaciones] as Security
+    [services/locks.py\nLocks locales del pipeline] as Locks
+    [services/operational_data.py\nConsultas operativas] as Operational
     [db_utils.py\nConexion y migraciones livianas] as DBUtils
     [sync_shortlist.py\nSincronizacion de datos] as Sync
   }
@@ -75,12 +79,15 @@ Runtime --> Calibrator
 Train --> Metadata
 
 Auth --> DBUtils
+Auth --> Security
 Players --> DBUtils
 Dashboard --> DBUtils
 Compare --> DBUtils
 Staff --> DBUtils
 Settings --> DBUtils
 Sync --> DBUtils
+Settings --> Locks
+Dashboard --> Operational
 
 DBUtils --> SQLite : local
 DBUtils --> PostgreSQL : Render
@@ -88,6 +95,12 @@ DBUtils --> PostgreSQL : Render
 Cache ..> Dashboard
 Cache ..> Compare
 Cache ..> Players
+
+note right of Security
+El rate limiting usa el nombre de usuario
+normalizado y memoria del proceso.
+No confia en X-Forwarded-For del cliente.
+end note
 
 note right of PostgreSQL
 En despliegue Render se usa PostgreSQL.

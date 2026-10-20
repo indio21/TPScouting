@@ -39,7 +39,7 @@ $env:SMOKE_PASSWORD = "AdminDemo123"
 
 ## Estado Actual
 
-- Ultima validacion documentada: `83 passed, 1 skipped`, cobertura total `80%` al cierre de este bloque.
+- Ultima validacion local (20/10/2026): `123 passed, 1 skipped, 4 warnings`; cobertura total `83,29%`. Las cuatro advertencias conocidas provienen de columnas completamente NaN en dos pruebas de preprocesamiento.
 - Los tests usan bases temporales y no tocan las `.db` reales del MVP.
 - `/settings` queda restringido a rol `administrador`.
 - CI ejecuta la suite con `pytest-cov` y publica `coverage.xml` como artefacto por version de Python.

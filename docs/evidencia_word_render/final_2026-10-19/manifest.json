@@ -1,0 +1,55 @@
+{
+  "timestamp_utc": "2026-10-19T23:40:17.600617+00:00",
+  "source": "Aplicación local contra SQLite temporal, datos sintéticos, seed 42",
+  "database_removed": true,
+  "screenshots": {
+    "01_login.png": {
+      "route": "/login",
+      "bytes": 113466,
+      "sha256": "127006391ca37c8b6c9225a209ffe0a80dac504bae4bc2c8a48dc763be253054"
+    },
+    "02_dashboard.png": {
+      "route": "/dashboard",
+      "bytes": 179184,
+      "sha256": "76e5166cf516d4eb95d89e2ab837c37eae5ef9f1161c62eaab353635c6e1b85c"
+    },
+    "03_players.png": {
+      "route": "/players",
+      "bytes": 149894,
+      "sha256": "afd7548563dc3d92090f661c84644798e47ad79b9dd1d9fba853536f45f5d81f"
+    },
+    "04_player_detail.png": {
+      "route": "/player/1",
+      "bytes": 215593,
+      "sha256": "f7218bc874dbe164b0eb96382e77e4479edfbd583288fe89532aaf7a0f64cbf0"
+    },
+    "04a_player_detail_perfil.png": {
+      "route": "/player/1",
+      "scroll_y": 0,
+      "bytes": 215653,
+      "sha256": "2bef090811ad95c3a499b11b927301740077b25ec3f16edb7ad3731d4c144744"
+    },
+    "04b_player_detail_historiales.png": {
+      "route": "/player/1",
+      "scroll_y": 900,
+      "bytes": 71190,
+      "sha256": "3eac0682521575e1fc48ed10a77bd5c604dfadeb92c3ad2e70f95d37a64f9f3d"
+    },
+    "04c_player_detail_reportes.png": {
+      "route": "/player/1",
+      "scroll_y": 3248,
+      "bytes": 168669,
+      "sha256": "31233c31bf06c5f3d1289b55697fcf438e94835ad4129eb91bd6f4262917b667"
+    },
+    "05_prediction.png": {
+      "route": "/player/1/predict",
+      "bytes": 178114,
+      "sha256": "74ccad6041f8c2eebe1bfb1f3d01c92c1f95ced8c8c0e55ae65f684669da39b9"
+    },
+    "06_compare_multi.png": {
+      "route": "/compare/multi",
+      "bytes": 209831,
+      "sha256": "bff30bdb5302c00a7b262605caa370bd69bcc0cccbd0e32b0083ead125ec3729"
+    }
+  }
+}

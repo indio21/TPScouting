@@ -1,5 +1,12 @@
 # Contexto Para Nuevo Chat
 
+## Punto de continuación vigente — 20/10/2026
+
+Leer primero [CONTEXTO_COMPACTO_FINAL_2026-10-20.md](revision_octubre_2026/CONTEXTO_COMPACTO_FINAL_2026-10-20.md).
+El Word/PDF final vigente es `TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_2026-10-20`,
+de 97 páginas, publicado en `TPScouting-entrega` en el commit
+`d3e62fe720e24d89b2715ad50a0c100a66be43df`. Las notas siguientes son históricas.
+
 Fecha de ultima actualizacion: 2026-08-26
 
 Este archivo sirve como contexto semilla para continuar el proyecto `TPScouting` en un chat nuevo sin arrastrar toda la conversacion anterior.

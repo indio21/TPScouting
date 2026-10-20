@@ -1,0 +1,54 @@
+{
+  "delivery_commit": "d3e62fe720e24d89b2715ad50a0c100a66be43df",
+  "delivery_branch": "main",
+  "publication_verified": true,
+  "documents": [
+    {
+      "path": "documento/TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_2026-10-20.docx",
+      "git_blob_sha": "3b873a0d7fca377490fa118504320fe4af9432d2",
+      "size": 2714799
+    },
+    {
+      "path": "documento/TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_2026-10-20.pdf",
+      "git_blob_sha": "5b49ebd8f5786311fc9a41acc0d8239160a496f9",
+      "size": 2598075
+    }
+  ],
+  "ci": {
+    "id": 39507542398,
+    "url": "https://github.com/indio21/TPScouting-entrega/actions/runs/39507542398",
+    "head_sha": "d3e62fe720e24d89b2715ad50a0c100a66be43df",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 118920139973,
+        "name": "test (3.11)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 118920140285,
+        "name": "dependency-audit",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 118920140308,
+        "name": "test (3.12)",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "local_suite": {
+    "date": "2026-10-20",
+    "repository": "C:\\Tesis\\TPScouting-entrega",
+    "passed": 123,
+    "skipped": 1,
+    "warnings": 4,
+    "coverage_percent": 83.29
+  },
+  "container": "No se ejecutó un contenedor nuevo: cambio solo documental; código operativo y configuración sin cambios respecto del paquete anterior.",
+  "internal_material_not_published": true
+}

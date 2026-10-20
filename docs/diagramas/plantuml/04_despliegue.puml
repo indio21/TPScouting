@@ -26,8 +26,10 @@ cloud "Render" {
 
 node "Repositorio GitHub" as GitHub {
   artifact "Codigo fuente" as Code
+  artifact "Dockerfile" as Dockerfile
   artifact "render.yaml" as RenderYaml
-  artifact "requirements.txt" as Requirements
+  artifact "requirements-lock.txt" as RuntimeRequirements
+  artifact "requirements-torch-cpu.txt" as TorchRequirements
 }
 
 Browser --> RenderWeb : HTTPS
@@ -54,9 +56,9 @@ No reemplaza coordinacion distribuida multi-instancia.
 end note
 
 note top of GitHub
-Evidencia historica del 20/05/2026:
-rama render-free-deploy.
-La rama conectada actualmente no fue verificada.
+La entrega fija dependencias de runtime y PyTorch CPU.
+El commit funcional y las ejecuciones CI se registran
+en el documento y en el historial del repositorio.
 end note
 
 @enduml

@@ -1,0 +1,22 @@
+{
+  "docx": "docs\\revision_octubre_2026\\final\\TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_2026-10-20.docx",
+  "docx_sha256": "2EA4A6EA4C99617CB3EDA36F8C9218E28D4D9B479D812F1240F81347569AAD16",
+  "pdf": "docs\\revision_octubre_2026\\final\\TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_2026-10-20.pdf",
+  "pdf_sha256": "4774BD07C32DD393BB56FC7F3DD06E8D121AA19DBF7064A66F797481D9AE55AD",
+  "pdf_pages": 97,
+  "docx_inline_shapes": 28,
+  "docx_tables": 19,
+  "docx_sections": 9,
+  "list_entries": 45,
+  "list_mismatches": [],
+  "pending_editorial_items": 0,
+  "field_errors": [],
+  "page_sizes_points": [
+    [
+      612.0,
+      792.0
+    ]
+  ],
+  "low_text_pages": [],
+  "passed": true
+}

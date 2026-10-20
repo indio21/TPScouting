@@ -8,6 +8,7 @@ import os
 import sys
 import tempfile
 import threading
+import argparse
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -31,8 +32,13 @@ def sha256(path: Path) -> str:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR)
+    args = parser.parse_args()
+    output_dir = args.output_dir.resolve()
+    manifest_path = output_dir / "manifest.json"
     original_cwd = Path.cwd()
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     evidence = {}
     try:
         with tempfile.TemporaryDirectory(prefix="tpscouting_capture_block8_") as directory:
@@ -69,7 +75,7 @@ def main() -> None:
 
                         def capture(name: str, route: str) -> None:
                             page.goto(f"{base_url}{route}", wait_until="networkidle", timeout=60_000)
-                            path = OUTPUT_DIR / name
+                            path = output_dir / name
                             page.screenshot(path=str(path), full_page=False)
                             if path.stat().st_size < 15_000:
                                 raise RuntimeError(f"La captura {name} es demasiado pequeña.")
@@ -96,7 +102,7 @@ def main() -> None:
                         ):
                             page.evaluate("position => window.scrollTo(0, position)", offset)
                             page.wait_for_timeout(250)
-                            path = OUTPUT_DIR / name
+                            path = output_dir / name
                             page.screenshot(path=str(path), full_page=False)
                             if path.stat().st_size < 15_000:
                                 raise RuntimeError(f"La captura {name} es demasiado pequeña.")
@@ -124,7 +130,7 @@ def main() -> None:
         "database_removed": True,
         "screenshots": evidence,
     }
-    MANIFEST.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps(manifest, indent=2, ensure_ascii=False))
 
 
