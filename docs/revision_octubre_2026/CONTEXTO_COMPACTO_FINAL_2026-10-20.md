@@ -1,5 +1,22 @@
 # Contexto para continuar TPScouting — 20/10/2026
 
+Este punto fue sustituido por `CONTEXTO_FINAL_ARIAL_2026-10-20.md`, que registra
+las correcciones autorizadas y verificadas posteriores a la revisión.
+
+## Revisión posterior al cierre — leer primero
+
+El usuario pidió volver a verificar código, commits/resultados del Word,
+tipografía y escritura. El informe vigente de esta revisión es
+`revision_posterior_codigo_word_2026-10-20.md`: **REQUIERE CORRECCIONES MENORES**.
+Se reprodujeron dos HTTP 500 (contraseña ausente y CSRF no ASCII), sin sesión
+autenticada. Faltan incorporar al Word el commit `d3e62fe` y su CI aprobada,
+actualizar la fecha de pruebas, ajustar la descripción de HSTS y unificar
+diferencias puntuales de títulos/captions/fuentes de comandos.
+No se corrigieron aún la aplicación ni el Word/PDF; la entrega publicada sigue
+intacta. Las notas de cierre siguientes describen el estado anterior a esta
+revisión. Próximo bloque recomendado: dos correcciones de autenticación,
+regresiones/suite y, después, actualización documental conjunta.
+
 ## Estado y archivo vigente
 
 El usuario aprobó la copia limpia del 19/10 y autorizó regenerar imágenes,

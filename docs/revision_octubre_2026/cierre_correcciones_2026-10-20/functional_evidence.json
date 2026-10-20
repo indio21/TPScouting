@@ -1,0 +1,28 @@
+{
+  "main_commit": "8809760cd20d804927d3604c160aee2459506b3d",
+  "delivery_commit": "2a27d53ae4f8a4849bee7d1bea362fd9146886b5",
+  "ci": {
+    "id": 39509728373,
+    "name": "CI",
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "2a27d53ae4f8a4849bee7d1bea362fd9146886b5",
+    "url": "https://github.com/indio21/TPScouting-entrega/actions/runs/39509728373"
+  },
+  "container": {
+    "id": 39509728476,
+    "name": "Container",
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "2a27d53ae4f8a4849bee7d1bea362fd9146886b5",
+    "url": "https://github.com/indio21/TPScouting-entrega/actions/runs/39509728476"
+  },
+  "macos": {
+    "id": 39509728473,
+    "name": "macOS compatibility",
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "2a27d53ae4f8a4849bee7d1bea362fd9146886b5",
+    "url": "https://github.com/indio21/TPScouting-entrega/actions/runs/39509728473"
+  }
+}

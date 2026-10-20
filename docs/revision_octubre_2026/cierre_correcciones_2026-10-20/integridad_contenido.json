@@ -1,0 +1,6 @@
+{
+  "unchanged_media": true,
+  "unchanged_model_tables": true,
+  "functional_commits_and_ci_present": true,
+  "outdated_pytest_result_absent": true
+}

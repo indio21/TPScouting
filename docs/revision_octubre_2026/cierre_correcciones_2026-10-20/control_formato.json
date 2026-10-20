@@ -1,0 +1,40 @@
+{
+  "docx": "C:\\Tesis\\TPScouting\\docs\\revision_octubre_2026\\cierre_correcciones_2026-10-20\\TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ARIAL_2026-10-20.docx",
+  "docx_sha256": "29ACEE4C6117C143FA7086E7F15A2FDB27F6716ADE3261BD23DC32F960BCB03E",
+  "pdf_sha256": "E97B4902D8A02AEC2C883CF0A02A96E8782ADBD48C1FCF861BEF755786B2944B",
+  "pdf_pages": 97,
+  "zip_error": null,
+  "font_sizes_below_10pt": [],
+  "cover_has_visible_page_number": false,
+  "numbering_issues": [],
+  "toc_entries_checked": 88,
+  "toc_mismatches": [],
+  "separate_sections": [
+    {
+      "title": "RESUMEN",
+      "physical_page": 9,
+      "starts_on_own_page": true
+    },
+    {
+      "title": "ABSTRACT",
+      "physical_page": 10,
+      "starts_on_own_page": true
+    },
+    {
+      "title": "8. BIBLIOGRAFÍA",
+      "physical_page": 76,
+      "starts_on_own_page": true
+    },
+    {
+      "title": "9. ANEXOS TÉCNICOS",
+      "physical_page": 79,
+      "starts_on_own_page": true
+    }
+  ],
+  "out_of_bounds_pages": [],
+  "figure_captions_without_image": [],
+  "images": 28,
+  "tables": 19,
+  "sections": 9,
+  "passed": true
+}

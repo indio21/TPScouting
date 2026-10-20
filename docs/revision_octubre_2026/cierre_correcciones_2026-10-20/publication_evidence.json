@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-20",
+  "functional_commit": "2a27d53ae4f8a4849bee7d1bea362fd9146886b5",
+  "main_functional_commit": "8809760cd20d804927d3604c160aee2459506b3d",
+  "publication_commit": "fdf2805975efbf1de78dfe7d350f0ebb30f1c1bd",
+  "publication_ci": {
+    "id": 39510545376,
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "fdf2805975efbf1de78dfe7d350f0ebb30f1c1bd",
+    "url": "https://github.com/indio21/TPScouting-entrega/actions/runs/39510545376",
+    "updated_at": "2026-10-20T22:48:53Z"
+  },
+  "files": {
+    "docx_sha256": "29ACEE4C6117C143FA7086E7F15A2FDB27F6716ADE3261BD23DC32F960BCB03E",
+    "pdf_sha256": "E97B4902D8A02AEC2C883CF0A02A96E8782ADBD48C1FCF861BEF755786B2944B"
+  }
+}

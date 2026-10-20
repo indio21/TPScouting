@@ -1,0 +1,15 @@
+{
+  "temporary_database_removed": true,
+  "results": [
+    {
+      "case": "password_ausente",
+      "http_status": 400,
+      "authenticated": false
+    },
+    {
+      "case": "csrf_no_ascii",
+      "http_status": 400,
+      "authenticated": false
+    }
+  ]
+}
