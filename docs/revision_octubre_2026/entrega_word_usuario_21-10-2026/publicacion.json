@@ -1,0 +1,43 @@
+{
+  "publication_commit": "705d5c65696144eec18249b8f03ccf06db6cac81",
+  "functional_application_commit": "2a27d53ae4f8a4849bee7d1bea362fd9146886b5",
+  "source_word_sha256": "81A743DF38FB32820EA7DC3BEC247F57CCE6F3F826510DFEA2ED9CF3D63A131C",
+  "pdf_sha256": "587FB8393C6ED864A2FE6399548E458F8E2654943DD939649ED01856C31DBCC2",
+  "source_word_preserved_byte_for_byte": true,
+  "local_tests": {
+    "passed": 131,
+    "skipped": 1,
+    "warnings": 4,
+    "coverage_percent": 83.31,
+    "seconds": 85.05
+  },
+  "workflows": [
+    {
+      "id": 39523230238,
+      "name": "Container",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "705d5c65696144eec18249b8f03ccf06db6cac81",
+      "url": "https://github.com/indio21/TPScouting-entrega/actions/runs/39523230238",
+      "updated_at": "2026-10-21T00:46:26Z"
+    },
+    {
+      "id": 39523230353,
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "705d5c65696144eec18249b8f03ccf06db6cac81",
+      "url": "https://github.com/indio21/TPScouting-entrega/actions/runs/39523230353",
+      "updated_at": "2026-10-21T00:47:55Z"
+    },
+    {
+      "id": 39523230354,
+      "name": "macOS compatibility",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "705d5c65696144eec18249b8f03ccf06db6cac81",
+      "url": "https://github.com/indio21/TPScouting-entrega/actions/runs/39523230354",
+      "updated_at": "2026-10-21T00:47:17Z"
+    }
+  ]
+}

@@ -1,82 +1,50 @@
-# Guia De Indicadores De La App
+# Guía de indicadores de la aplicación
 
-Fecha: 2026-04-26
+## Rendimiento en posición y puesto natural
 
-Este documento explica los indicadores principales que aparecen en la ficha, prediccion y comparadores del MVP.
+Es un puntaje de adecuación calculado con atributos ponderados según el puesto.
+Se expresa en la escala de atributos 1–20 y no es una probabilidad. En el puesto
+natural se aplica a la posición registrada del jugador.
 
-## Rendimiento En Posicion
+## Puntaje de ficha
 
-Ejemplo en pantalla: `Rendimiento en posicion 12.1`.
+Es la salida cruda de `PlayerNet`, obtenida mediante sigmoid y presentada como
+porcentaje. Permite priorizar revisión scout; no equivale a una probabilidad
+validada de desarrollo deportivo real.
 
-Es un puntaje de ajuste del jugador a una posicion determinada.
+## Probabilidad combinada
 
-Escala:
+Es el nombre de interfaz para el score heurístico combinado. Con los valores
+predeterminados mezcla:
 
-- Va aproximadamente de `0` a `20`.
-- No es una probabilidad.
-- Sale de los atributos del jugador ponderados segun la posicion.
+- 35 % de salida cruda del modelo;
+- 35 % del promedio histórico `final_score`, dividido por 10;
+- 30 % de adecuación posicional, dividida por 20.
 
-Interpretacion:
+Si falta una señal opcional, renormaliza los pesos disponibles. El resultado
+se limita al intervalo 0–0,99. Los pesos se configuran con `POT_W_MODEL`,
+`POT_W_RATING` y `POT_W_FIT`; la fórmula está en `scouting_app/ml/scoring.py`.
+La comparación sobre test sintético no mostró una mejora sobre la salida cruda;
+el combinado se mantiene como heurística secundaria.
 
-- Un delantero pondera mas atributos como ritmo, disparo, regate y tecnica.
-- Un defensor pondera mas defensa, fisico, marcaje y determinacion.
-- Un mediocampista pondera mas pase, vision, tecnica y determinacion.
+## Referencia calibrada
 
-Un valor como `12.1` indica un encaje medio del jugador en esa posicion segun sus atributos actuales.
+Cuando hay calibrador, el sistema transforma la salida cruda y aplica a esa
+salida la misma combinación con historial y posición. La referencia calibrada
+mostrada en Predicción es el combinado desde la salida calibrada, distinto de
+la probabilidad calibrada aislada evaluada en las tablas ML.
 
-## Rendimiento En Puesto Natural
+## Bandas de presentación
 
-Ejemplo en pantalla: `Rendimiento en puesto natural 12.1`.
+Con los valores predeterminados:
 
-Es el mismo concepto que rendimiento en posicion, pero aplicado a la posicion registrada actualmente para el jugador.
+- Bajo potencial: menos de 0,60.
+- Potencial medio: desde 0,60 hasta menos de 0,80.
+- Alto potencial: desde 0,80.
 
-Sirve para ver si el jugador esta bien perfilado para su puesto actual o si podria convenir evaluar una posicion alternativa.
+Son bandas visuales, distintas de los umbrales optimizados en validación.
+El `potential_label` persistido puede actualizarse según el score, pero no entra
+como feature del modelo.
 
-## Puntaje De Ficha
-
-Ejemplo en pantalla: `Puntaje de ficha: 48.7%`.
-
-Es la salida principal del modelo PyTorch para ese jugador.
-
-En el MVP se usa la salida cruda de PyTorch (`raw_pytorch_sigmoid`) como score principal porque en la evidencia actual ordena mejor a los jugadores por `PR-AUC`.
-
-Interpretacion:
-
-- Resume lo que el modelo estima a partir de la ficha y las variables preprocesadas del jugador.
-- Es un score de priorizacion, no una sentencia definitiva.
-- Ayuda a ordenar candidatos para revision del scout.
-
-## Probabilidad Combinada
-
-Ejemplo en pantalla: `Probabilidad combinada 57.5%`.
-
-Es el score final que muestra la app.
-
-Combina:
-
-- el puntaje de ficha del modelo;
-- senales del historial de rendimiento, como `final_score`;
-- el ajuste del jugador a su posicion.
-
-Por eso puede ser mayor o menor que el puntaje de ficha.
-
-Ejemplo:
-
-- Puntaje de ficha: `48.7%`.
-- Rendimiento en posicion: `12.1/20`.
-- Historial de rendimiento favorable.
-- Probabilidad combinada: `57.5%`.
-
-En ese caso, el historial y el encaje posicional suben el score final.
-
-## Referencia Calibrada
-
-La app puede mostrar una referencia calibrada cuando existe calibrador.
-
-No es el score principal del MVP.
-
-La calibracion se conserva como evidencia secundaria porque en la corrida oficial actual mejora levemente `F1` y `recall`, pero baja `PR-AUC` frente a la salida cruda.
-
-## Frase Recomendada Para Presentacion
-
-El puntaje de ficha es la estimacion del modelo a partir de los datos del jugador. La probabilidad combinada ajusta esa estimacion con senales adicionales del MVP, como rendimiento historico y adecuacion a la posicion. El rendimiento en posicion no es una probabilidad, sino un puntaje de 1 a 20 que mide que tan bien encajan sus atributos con el puesto en el que juega.
+Estos indicadores se demuestran con datos sintéticos y sirven de apoyo a la
+revisión humana. No deben utilizarse para decidir sobre una persona real.

@@ -1,0 +1,40 @@
+{
+  "docx": "C:\\Tesis\\TPScouting\\docs\\revision_octubre_2026\\entrega_word_usuario_21-10-2026\\Trabajo Final_Solari Pablo_21-10-2026.docx",
+  "docx_sha256": "81A743DF38FB32820EA7DC3BEC247F57CCE6F3F826510DFEA2ED9CF3D63A131C",
+  "pdf_sha256": "587FB8393C6ED864A2FE6399548E458F8E2654943DD939649ED01856C31DBCC2",
+  "pdf_pages": 97,
+  "zip_error": null,
+  "font_sizes_below_10pt": [],
+  "cover_has_visible_page_number": false,
+  "numbering_issues": [],
+  "toc_entries_checked": 88,
+  "toc_mismatches": [],
+  "separate_sections": [
+    {
+      "title": "RESUMEN",
+      "physical_page": 9,
+      "starts_on_own_page": true
+    },
+    {
+      "title": "ABSTRACT",
+      "physical_page": 10,
+      "starts_on_own_page": true
+    },
+    {
+      "title": "8. BIBLIOGRAFÍA",
+      "physical_page": 76,
+      "starts_on_own_page": true
+    },
+    {
+      "title": "9. ANEXOS TÉCNICOS",
+      "physical_page": 79,
+      "starts_on_own_page": true
+    }
+  ],
+  "out_of_bounds_pages": [],
+  "figure_captions_without_image": [],
+  "images": 28,
+  "tables": 19,
+  "sections": 9,
+  "passed": true
+}

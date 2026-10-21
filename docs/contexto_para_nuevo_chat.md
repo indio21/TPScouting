@@ -2,10 +2,10 @@
 
 ## Punto de continuación vigente — 20/10/2026
 
-Leer primero [CONTEXTO_LISTAS_ALINEADAS_2026-10-20.md](revision_octubre_2026/CONTEXTO_LISTAS_ALINEADAS_2026-10-20.md).
-El Word/PDF final vigente es `TRABAJO_FINAL_TPScouting_ENTREGA_FINAL_ARIAL_LISTAS_ALINEADAS_2026-10-20`,
+Leer primero [CONTEXTO_WORD_AUTOR_21-10-2026.md](revision_octubre_2026/CONTEXTO_WORD_AUTOR_21-10-2026.md).
+El Word/PDF final vigente es `Trabajo Final_Solari Pablo_21-10-2026`,
 de 97 páginas, publicado en `TPScouting-entrega` en el commit
-`0f7696b2b002ea149d81092aae921bed450ef6bb`. Código funcional corregido: `2a27d53`.
+`705d5c65696144eec18249b8f03ccf06db6cac81`. Código funcional corregido: `2a27d53`.
 Las notas siguientes son históricas.
 
 Fecha de ultima actualizacion: 2026-08-26

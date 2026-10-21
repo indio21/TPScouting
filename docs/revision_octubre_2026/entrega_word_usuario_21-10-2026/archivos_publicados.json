@@ -1,0 +1,18 @@
+{
+  "publication_commit": "705d5c65696144eec18249b8f03ccf06db6cac81",
+  "files": [
+    {
+      "path": "documento/Trabajo Final_Solari Pablo_21-10-2026.docx",
+      "sha256": "81A743DF38FB32820EA7DC3BEC247F57CCE6F3F826510DFEA2ED9CF3D63A131C",
+      "bytes": 2721373
+    },
+    {
+      "path": "documento/Trabajo Final_Solari Pablo_21-10-2026.pdf",
+      "sha256": "587FB8393C6ED864A2FE6399548E458F8E2654943DD939649ED01856C31DBCC2",
+      "bytes": 2448337
+    }
+  ],
+  "source_word_unchanged": true,
+  "application_and_models_unchanged_since_functional_commit": true,
+  "passed": true
+}

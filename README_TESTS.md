@@ -3,9 +3,15 @@
 ## Instalacion
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-torch-cpu.txt
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 ```
+
+Estos comandos usan Windows/Linux CPU. En Linux, sustituir el intérprete por
+`./.venv/bin/python`. En macOS Apple Silicon, instalar `requirements.txt` en
+lugar del lock y del wheel CPU, y luego `requirements-dev.txt`. Crear primero la
+`.venv` según [GUIA_DEMO_PROFESOR.md](GUIA_DEMO_PROFESOR.md).
 
 ## Ejecutar
 

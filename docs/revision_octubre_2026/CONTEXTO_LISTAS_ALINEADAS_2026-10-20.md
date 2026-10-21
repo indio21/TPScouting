@@ -1,5 +1,8 @@
 # Continuación vigente — listas alineadas, 20/10/2026
 
+> Actualización posterior: el usuario designó su Word con nombre 21-10-2026 como
+> final. Leer primero `CONTEXTO_WORD_AUTOR_21-10-2026.md`. Esta nota es histórica.
+
 ## Documento final vigente
 
 Carpeta interna `docs/revision_octubre_2026/listas_alineadas_2026-10-20/`:

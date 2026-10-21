@@ -1,0 +1,307 @@
+{
+  "files": [
+    "GUIA_DEMO_PROFESOR.md",
+    "README.md",
+    "README_TESTS.md",
+    "RUNBOOK.md",
+    "VERIFICACION_ENTREGA.md",
+    "docs/REAL_DATA_READINESS.md",
+    "docs/guia_indicadores_app.md",
+    "docs/modelo_ml.md",
+    "docs/puesta_en_marcha.md",
+    "requirements-dev.txt",
+    "requirements-docs.txt",
+    "requirements-lock.txt",
+    "requirements-torch-cpu.txt",
+    "requirements.txt"
+  ],
+  "markdown_files": 9,
+  "text_manifests": 5,
+  "relative_links": [
+    {
+      "source": "README.md",
+      "target": "documento/Trabajo Final_Solari Pablo_21-10-2026.docx",
+      "exists": true
+    },
+    {
+      "source": "README.md",
+      "target": "documento/Trabajo Final_Solari Pablo_21-10-2026.pdf",
+      "exists": true
+    },
+    {
+      "source": "README.md",
+      "target": "GUIA_DEMO_PROFESOR.md",
+      "exists": true
+    },
+    {
+      "source": "README.md",
+      "target": "GUIA_DEMO_PROFESOR.md",
+      "exists": true
+    },
+    {
+      "source": "README.md",
+      "target": "docs/REAL_DATA_READINESS.md",
+      "exists": true
+    },
+    {
+      "source": "README_TESTS.md",
+      "target": "GUIA_DEMO_PROFESOR.md",
+      "exists": true
+    },
+    {
+      "source": "RUNBOOK.md",
+      "target": "GUIA_DEMO_PROFESOR.md",
+      "exists": true
+    },
+    {
+      "source": "RUNBOOK.md",
+      "target": ".env.example",
+      "exists": true
+    },
+    {
+      "source": "RUNBOOK.md",
+      "target": "docs/puesta_en_marcha.md",
+      "exists": true
+    },
+    {
+      "source": "RUNBOOK.md",
+      "target": "README_TESTS.md",
+      "exists": true
+    },
+    {
+      "source": "RUNBOOK.md",
+      "target": "docs/modelo_ml.md",
+      "exists": true
+    },
+    {
+      "source": "RUNBOOK.md",
+      "target": "README.md",
+      "exists": true
+    },
+    {
+      "source": "RUNBOOK.md",
+      "target": "docs/REAL_DATA_READINESS.md",
+      "exists": true
+    },
+    {
+      "source": "VERIFICACION_ENTREGA.md",
+      "target": "documento/Trabajo Final_Solari Pablo_21-10-2026.docx",
+      "exists": true
+    },
+    {
+      "source": "VERIFICACION_ENTREGA.md",
+      "target": "documento/Trabajo Final_Solari Pablo_21-10-2026.pdf",
+      "exists": true
+    },
+    {
+      "source": "docs/modelo_ml.md",
+      "target": "guia_indicadores_app.md",
+      "exists": true
+    },
+    {
+      "source": "docs/modelo_ml.md",
+      "target": "../RUNBOOK.md",
+      "exists": true
+    },
+    {
+      "source": "docs/puesta_en_marcha.md",
+      "target": "../README_TESTS.md",
+      "exists": true
+    },
+    {
+      "source": "docs/puesta_en_marcha.md",
+      "target": "../RUNBOOK.md",
+      "exists": true
+    }
+  ],
+  "inline_file_references": [
+    {
+      "source": "GUIA_DEMO_PROFESOR.md",
+      "target": "docs/REAL_DATA_READINESS.md"
+    },
+    {
+      "source": "GUIA_DEMO_PROFESOR.md",
+      "target": "requirements.txt"
+    },
+    {
+      "source": "GUIA_DEMO_PROFESOR.md",
+      "target": "requirements.txt"
+    },
+    {
+      "source": "README.md",
+      "target": "docs/puesta_en_marcha.md"
+    },
+    {
+      "source": "README.md",
+      "target": "docs/guia_indicadores_app.md"
+    },
+    {
+      "source": "README.md",
+      "target": "docs/modelo_ml.md"
+    },
+    {
+      "source": "README.md",
+      "target": "docs/REAL_DATA_READINESS.md"
+    },
+    {
+      "source": "README.md",
+      "target": "scripts/smoke_render.py"
+    },
+    {
+      "source": "README.md",
+      "target": "scripts/iniciar_demo.py"
+    },
+    {
+      "source": "README.md",
+      "target": "scouting_app/model.pt"
+    },
+    {
+      "source": "README.md",
+      "target": "scouting_app/preprocessor.joblib"
+    },
+    {
+      "source": "README.md",
+      "target": "scouting_app/probability_calibrator.joblib"
+    },
+    {
+      "source": "README.md",
+      "target": "requirements.txt"
+    },
+    {
+      "source": "README.md",
+      "target": "requirements.txt"
+    },
+    {
+      "source": "README.md",
+      "target": "requirements-lock.txt"
+    },
+    {
+      "source": "README.md",
+      "target": "requirements-dev.txt"
+    },
+    {
+      "source": "README.md",
+      "target": "requirements-docs.txt"
+    },
+    {
+      "source": "README.md",
+      "target": "scouting_app/static/img/player-silhouette.svg"
+    },
+    {
+      "source": "README.md",
+      "target": "docs/REAL_DATA_READINESS.md"
+    },
+    {
+      "source": "README_TESTS.md",
+      "target": "requirements.txt"
+    },
+    {
+      "source": "README_TESTS.md",
+      "target": "requirements-dev.txt"
+    },
+    {
+      "source": "RUNBOOK.md",
+      "target": "requirements-lock.txt"
+    },
+    {
+      "source": "RUNBOOK.md",
+      "target": "requirements-torch-cpu.txt"
+    },
+    {
+      "source": "RUNBOOK.md",
+      "target": "requirements-dev.txt"
+    },
+    {
+      "source": "RUNBOOK.md",
+      "target": "requirements.txt"
+    },
+    {
+      "source": "RUNBOOK.md",
+      "target": "scripts/run_ml_blocks_1_3.py"
+    },
+    {
+      "source": "docs/guia_indicadores_app.md",
+      "target": "scouting_app/ml/scoring.py"
+    },
+    {
+      "source": "docs/modelo_ml.md",
+      "target": "scouting_app/model.pt"
+    },
+    {
+      "source": "docs/modelo_ml.md",
+      "target": "scouting_app/preprocessor.joblib"
+    },
+    {
+      "source": "docs/modelo_ml.md",
+      "target": "scouting_app/probability_calibrator.joblib"
+    },
+    {
+      "source": "docs/puesta_en_marcha.md",
+      "target": "requirements-dev.txt"
+    }
+  ],
+  "manifest_versions": {
+    "requirements-dev.txt": {
+      "pytest": "==9.0.3",
+      "pytest-cov": "==7.1.0",
+      "playwright": "==1.59.0",
+      "ruff": "==0.16.10",
+      "pip-audit": "==2.10.1",
+      "certifi": "==2026.10.19"
+    },
+    "requirements-docs.txt": {
+      "python-docx": "==1.2.0",
+      "lxml": "==6.1.0"
+    },
+    "requirements-lock.txt": {
+      "blinker": "==1.9.0",
+      "click": "==8.3.3",
+      "colorama": "==0.4.6",
+      "filelock": "==3.28.0",
+      "flask": "==3.1.3",
+      "fsspec": "==2026.6.0",
+      "greenlet": "==3.4.0",
+      "gunicorn": "==25.3.0",
+      "itsdangerous": "==2.2.0",
+      "jinja2": "==3.1.6",
+      "joblib": "==1.5.3",
+      "markupsafe": "==3.0.3",
+      "mpmath": "==1.3.0",
+      "networkx": "==3.6.1",
+      "numpy": "==2.4.4",
+      "packaging": "==26.1",
+      "pandas": "==3.0.2",
+      "psycopg": "==3.3.3",
+      "psycopg-binary": "==3.3.3",
+      "python-dateutil": "==2.9.0.post0",
+      "scikit-learn": "==1.8.0",
+      "scipy": "==1.17.1",
+      "six": "==1.17.0",
+      "sqlalchemy": "==2.0.49",
+      "sympy": "==1.14.0",
+      "threadpoolctl": "==3.6.0",
+      "typing-extensions": "==4.15.0",
+      "tzdata": "==2026.1",
+      "werkzeug": "==3.1.9"
+    },
+    "requirements-torch-cpu.txt": {
+      "torch": "==2.14.1"
+    },
+    "requirements.txt": {
+      "torch": "==2.14.1",
+      "flask": "==3.1.3",
+      "sqlalchemy": "==2.0.49",
+      "numpy": "==2.4.4",
+      "pandas": "==3.0.2",
+      "scipy": "==1.17.1",
+      "scikit-learn": "==1.8.0",
+      "joblib": "==1.5.3",
+      "gunicorn": "==25.3.0",
+      "werkzeug": "==3.1.9",
+      "psycopg": "==3.3.3"
+    }
+  },
+  "backup_recipe_verified_on_temporary_wal_database": true,
+  "issues": [],
+  "passed": true
+}

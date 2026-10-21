@@ -1,0 +1,70 @@
+{
+  "publication_commit": "705d5c65696144eec18249b8f03ccf06db6cac81",
+  "reviewed_files": [
+    {
+      "path": "GUIA_DEMO_PROFESOR.md",
+      "sha256": "3396BE202654DD11CE2BAEBAEBE526A850CED3805CBB1CD28B23DAA70D5C3501"
+    },
+    {
+      "path": "README.md",
+      "sha256": "2F64731B8CC3EA9CCC14E5BE39D6E23533D009E2DCB9C30190EDDDA44AB1A0C7"
+    },
+    {
+      "path": "README_TESTS.md",
+      "sha256": "C2CE820D7F3A0E97DF81A4800BA21E8FBE4332DFCC715D1B16C9A74B09C8951E"
+    },
+    {
+      "path": "RUNBOOK.md",
+      "sha256": "0B1C178699ADC3F587DB9A61EC7B5458A902E2DDBA6F016A929E1B2480276B06"
+    },
+    {
+      "path": "VERIFICACION_ENTREGA.md",
+      "sha256": "F8FBB447B9CB4F43CD287A641F02672B56601233D8488B90B1FE616B8F096DCE"
+    },
+    {
+      "path": "docs/REAL_DATA_READINESS.md",
+      "sha256": "BDCB572C2D36BF4D6DAEEE72A6106D4CCDC6B22BE9EE966DF7916E5A0B323165"
+    },
+    {
+      "path": "docs/guia_indicadores_app.md",
+      "sha256": "878537B989852D35B679FC87B918BAD1127A64D148FE43989A0D9125DBE640E1"
+    },
+    {
+      "path": "docs/modelo_ml.md",
+      "sha256": "1CF4B0AC916F1C9CAF9DF1BD79A18D4BD432EB42A532729425B3052AD1DB5B26"
+    },
+    {
+      "path": "docs/puesta_en_marcha.md",
+      "sha256": "B1D5EAF6FACFBAA126EA9C6A6E8BA9A79465184344FC2FCDB5EF7A92508ECFF3"
+    },
+    {
+      "path": "requirements-dev.txt",
+      "sha256": "7D6DD0E35165EEA9631F8F1F900F7033A69FAAAADF2B6CADF9B457E1F24C505A"
+    },
+    {
+      "path": "requirements-docs.txt",
+      "sha256": "6D574622D46D9E63517093A7B44BF7C830747BE4F8409FB80721A80884EF688A"
+    },
+    {
+      "path": "requirements-lock.txt",
+      "sha256": "8123A026B40CFA6F1774807A98F19DA19836AD4055A92E9AA71EF72D26CA4986"
+    },
+    {
+      "path": "requirements-torch-cpu.txt",
+      "sha256": "0EF4C11AE7857EF2BBE7698B25B852A2CED9B7BD006CD36419FFA8C99CDB79F0"
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "02E2DCABF0F7B1B40E97ACE63DDBB6E4D332B815D04A0AEA50A8B783153A2340"
+    }
+  ],
+  "official_sources": [
+    "https://render.com/docs/free",
+    "https://www.sqlite.org/backup.html",
+    "https://pypi.org/project/certifi/2026.10.19/",
+    "https://pillow.readthedocs.io/en/stable/releasenotes/13.0.0.html",
+    "https://www.argentina.gob.ar/normativa/nacional/ley-25326-2000-64790/texto",
+    "https://www.argentina.gob.ar/normativa/nacional/ley-26061-110778/texto",
+    "https://www.argentina.gob.ar/normativa/nacional/resoluci%C3%B3n-47-2018-312662/texto"
+  ]
+}
