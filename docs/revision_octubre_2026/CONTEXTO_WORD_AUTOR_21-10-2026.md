@@ -1,5 +1,9 @@
 # Continuación vigente — Word final del autor, nombre 21/10/2026
 
+> Cierre de conversación: el usuario planea enviar esta versión y esperar
+> feedback. Leer primero `PUNTO_GUARDADO_ENVIO_FEEDBACK_2026-10-20.md`.
+> No hay nuevas correcciones ni modificaciones pendientes autorizadas.
+
 ## Versión que rige la entrega
 
 El usuario designó como Word final su archivo del Escritorio:

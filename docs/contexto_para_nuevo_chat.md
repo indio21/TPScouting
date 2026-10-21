@@ -2,6 +2,10 @@
 
 ## Punto de continuación vigente — 20/10/2026
 
+Leer primero [PUNTO_GUARDADO_ENVIO_FEEDBACK_2026-10-20.md](revision_octubre_2026/PUNTO_GUARDADO_ENVIO_FEEDBACK_2026-10-20.md).
+El usuario planea enviar el trabajo mañana y esperar feedback. No se ha enviado
+desde esta sesión; no hay cambios nuevos que aplicar. Guardado interno únicamente.
+
 Leer primero [CONTEXTO_WORD_AUTOR_21-10-2026.md](revision_octubre_2026/CONTEXTO_WORD_AUTOR_21-10-2026.md).
 El Word/PDF final vigente es `Trabajo Final_Solari Pablo_21-10-2026`,
 de 97 páginas, publicado en `TPScouting-entrega` en el commit
