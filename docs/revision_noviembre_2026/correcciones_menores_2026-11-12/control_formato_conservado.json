@@ -1,0 +1,108 @@
+{
+  "format_parts_identical": {
+    "word/footer26.xml": true,
+    "word/footer18.xml": true,
+    "word/footer19.xml": true,
+    "word/footer20.xml": true,
+    "word/footer21.xml": true,
+    "word/footer22.xml": true,
+    "word/footer6.xml": true,
+    "word/header1.xml": true,
+    "word/header2.xml": true,
+    "word/footer1.xml": true,
+    "word/footer2.xml": true,
+    "word/header3.xml": true,
+    "word/footer3.xml": true,
+    "word/footer4.xml": true,
+    "word/footer5.xml": true,
+    "word/footer23.xml": true,
+    "word/footer7.xml": true,
+    "word/footer8.xml": true,
+    "word/footer9.xml": true,
+    "word/footer10.xml": true,
+    "word/footer11.xml": true,
+    "word/footer12.xml": true,
+    "word/footer24.xml": true,
+    "word/header4.xml": true,
+    "word/footer25.xml": true,
+    "word/footer17.xml": true,
+    "word/footer27.xml": true,
+    "word/footer13.xml": true,
+    "word/footer14.xml": true,
+    "word/footer15.xml": true,
+    "word/footer16.xml": true,
+    "word/theme/theme1.xml": true,
+    "word/numbering.xml": true,
+    "word/styles.xml": true
+  },
+  "tables_with_one_caption": 19,
+  "table_count": 19,
+  "table_caption_associations": [
+    [
+      "Tabla 3-1. Secuencia de actividades realizadas."
+    ],
+    [
+      "Tabla 4-1. Capas y responsabilidades del MVP."
+    ],
+    [
+      "Tabla 4-2. Dimensiones de evaluación deportiva."
+    ],
+    [
+      "Tabla 4-3. Requisitos funcionales del sistema."
+    ],
+    [
+      "Tabla 4-4. Entidades principales del modelo de datos."
+    ],
+    [
+      "Tabla 4-5. Endpoints principales del MVP."
+    ],
+    [
+      "Tabla 4-6. Decisiones tecnológicas."
+    ],
+    [
+      "Tabla 4-7. Casos de uso principales."
+    ],
+    [
+      "Tabla 5-1. Configuración verificada del modelo PlayerNet."
+    ],
+    [
+      "Tabla 5-2. Estado del despliegue en Render."
+    ],
+    [
+      "Tabla 6-1. Cobertura del plan de pruebas."
+    ],
+    [
+      "Tabla 6-2. Resultados de validación automatizada y CI."
+    ],
+    [
+      "Tabla 6-3. Métricas de PlayerNet calibrado y crudo en test."
+    ],
+    [
+      "Tabla 6-4. Comparación con baselines."
+    ],
+    [
+      "Tabla 6-5. Prueba real de disponibilidad del despliegue en Render."
+    ],
+    [
+      "Tabla 7-1. Cumplimiento de objetivos."
+    ],
+    [
+      "Tabla 9-1. Rutas principales."
+    ],
+    [
+      "Tabla 9-2. Variables de entorno relevantes."
+    ],
+    [
+      "Tabla 9-3. Glosario técnico."
+    ]
+  ],
+  "aligned_list_numbers": 44,
+  "right_edge_spread": 0.0,
+  "visual_sample_pages": [
+    31,
+    36,
+    39,
+    84
+  ],
+  "passed": true
+}

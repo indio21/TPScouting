@@ -1,0 +1,45 @@
+{
+  "publication_commit": "84b6e0a30a269c6f6cb2ac6c1c1ceef148347793",
+  "previous_delivery_commit": "705d5c65696144eec18249b8f03ccf06db6cac81",
+  "docx_sha256": "C6BEB90582E818D371AC9CF96EBAB0C1A1DA025C6DE689DC2383EB606DBFDC79",
+  "pdf_sha256": "E43883FC89601B5E14B7144BA885BD6454C84C2FBCF0CC139B9DBC5621EAE5F0",
+  "document_controls_passed": true,
+  "application_models_requirements_unchanged": true,
+  "ci": {
+    "id": 43339674664,
+    "status": "completed",
+    "conclusion": "failure",
+    "head_sha": "84b6e0a30a269c6f6cb2ac6c1c1ceef148347793",
+    "url": "https://github.com/indio21/TPScouting-entrega/actions/runs/43339674664"
+  },
+  "jobs": [
+    {
+      "id": 131604539358,
+      "name": "dependency-audit",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 131604539743,
+      "name": "test (3.11)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 131604539848,
+      "name": "test (3.12)",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "dependency_audit": {
+    "passed": false,
+    "advisories": 10,
+    "packages": [
+      "filelock==3.28.0",
+      "setuptools==83.0.0"
+    ],
+    "details": "alertas_dependencias_ci.json",
+    "action": "Recorded for a separately authorized dependency review; no application or manifest edits."
+  }
+}

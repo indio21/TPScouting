@@ -1,0 +1,24 @@
+{
+  "publication_commit": "84b6e0a30a269c6f6cb2ac6c1c1ceef148347793",
+  "files": [
+    {
+      "path": "documento/Trabajo Final_Solari Pablo_CORRECCIONES_NOVIEMBRE_12-11-2026.docx",
+      "sha256": "C6BEB90582E818D371AC9CF96EBAB0C1A1DA025C6DE689DC2383EB606DBFDC79",
+      "bytes": 2704857
+    },
+    {
+      "path": "documento/Trabajo Final_Solari Pablo_CORRECCIONES_NOVIEMBRE_12-11-2026.pdf",
+      "sha256": "E43883FC89601B5E14B7144BA885BD6454C84C2FBCF0CC139B9DBC5621EAE5F0",
+      "bytes": 2448721
+    }
+  ],
+  "changes": [
+    ".gitignore",
+    "README.md",
+    "VERIFICACION_ENTREGA.md",
+    "documento/Trabajo Final_Solari Pablo_CORRECCIONES_NOVIEMBRE_12-11-2026.docx",
+    "documento/Trabajo Final_Solari Pablo_CORRECCIONES_NOVIEMBRE_12-11-2026.pdf"
+  ],
+  "application_models_and_requirements_unchanged": true,
+  "passed": true
+}

@@ -1,0 +1,34 @@
+{
+  "source": "C:\\Tesis\\TPScouting\\docs\\revision_octubre_2026\\entrega_word_usuario_21-10-2026\\Trabajo Final_Solari Pablo_21-10-2026.docx",
+  "backup": "C:\\Tesis\\TPScouting\\docs\\revision_noviembre_2026\\correcciones_menores_2026-11-12\\BACKUP_Trabajo Final_Solari Pablo_21-10-2026.docx",
+  "docx": "C:\\Tesis\\TPScouting\\docs\\revision_noviembre_2026\\correcciones_menores_2026-11-12\\Trabajo Final_Solari Pablo_CORRECCIONES_NOVIEMBRE_12-11-2026.docx",
+  "pdf": "C:\\Tesis\\TPScouting\\docs\\revision_noviembre_2026\\correcciones_menores_2026-11-12\\Trabajo Final_Solari Pablo_CORRECCIONES_NOVIEMBRE_12-11-2026.pdf",
+  "docx_sha256": "C6BEB90582E818D371AC9CF96EBAB0C1A1DA025C6DE689DC2383EB606DBFDC79",
+  "pdf_sha256": "E43883FC89601B5E14B7144BA885BD6454C84C2FBCF0CC139B9DBC5621EAE5F0",
+  "pages": 97,
+  "counts": {
+    "tables": 19,
+    "images": 28,
+    "sections": 9,
+    "table_captions": 19,
+    "figure_and_table_list_entries": 44
+  },
+  "checks": {
+    "source_backup_and_public_word_unchanged": true,
+    "only_authorized_body_text_changes": true,
+    "body_paragraph_styles_unchanged": true,
+    "only_authorized_table_cell_change": true,
+    "chapter_headings_unchanged": true,
+    "media_unchanged": true,
+    "section_geometry_unchanged": true,
+    "all_word_fonts_arial": true,
+    "orphan_caption_removed": true,
+    "chapter4_table_numbers_contiguous": true,
+    "all_list_pages_current": true,
+    "structure_preserved": true,
+    "pdf_fonts_unchanged": true,
+    "no_broken_fields": true
+  },
+  "list_mismatches": [],
+  "passed": true
+}

@@ -1,0 +1,70 @@
+{
+  "source": "GitHub Actions dependency-audit",
+  "run_id": 43339674664,
+  "job_id": 131604539358,
+  "publication_commit": "84b6e0a30a269c6f6cb2ac6c1c1ceef148347793",
+  "url": "https://github.com/indio21/TPScouting-entrega/actions/runs/43339674664",
+  "findings": [
+    {
+      "package": "filelock",
+      "installed_version": "3.28.0",
+      "advisory": "CVE-2026-112940",
+      "fix_version_reported_by_audit": "4.2.1"
+    },
+    {
+      "package": "filelock",
+      "installed_version": "3.28.0",
+      "advisory": "CVE-2026-112913",
+      "fix_version_reported_by_audit": "4.2.1"
+    },
+    {
+      "package": "filelock",
+      "installed_version": "3.28.0",
+      "advisory": "CVE-2026-112907",
+      "fix_version_reported_by_audit": "4.2.1"
+    },
+    {
+      "package": "filelock",
+      "installed_version": "3.28.0",
+      "advisory": "CVE-2026-112936",
+      "fix_version_reported_by_audit": "4.0.9"
+    },
+    {
+      "package": "filelock",
+      "installed_version": "3.28.0",
+      "advisory": "CVE-2026-112910",
+      "fix_version_reported_by_audit": "4.2.1"
+    },
+    {
+      "package": "filelock",
+      "installed_version": "3.28.0",
+      "advisory": "CVE-2026-112909",
+      "fix_version_reported_by_audit": "4.2.1"
+    },
+    {
+      "package": "filelock",
+      "installed_version": "3.28.0",
+      "advisory": "CVE-2026-112939",
+      "fix_version_reported_by_audit": "4.2.1"
+    },
+    {
+      "package": "filelock",
+      "installed_version": "3.28.0",
+      "advisory": "CVE-2026-112915",
+      "fix_version_reported_by_audit": "4.2.1"
+    },
+    {
+      "package": "filelock",
+      "installed_version": "3.28.0",
+      "advisory": "CVE-2026-112935",
+      "fix_version_reported_by_audit": "4.2.1"
+    },
+    {
+      "package": "setuptools",
+      "installed_version": "83.0.0",
+      "advisory": "GHSA-xmj3-9gf7-h52w",
+      "fix_version_reported_by_audit": "84.1.0"
+    }
+  ],
+  "scope_note": "Observed CI output, not a new applicability/severity assessment. No code or dependency change authorized in this document-only task. Fix versions must be verified before use."
+}

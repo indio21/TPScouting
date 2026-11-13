@@ -1,0 +1,647 @@
+{
+  "headings_checked": 84,
+  "heading_sequence_issues": [],
+  "duplicate_heading_numbers": [],
+  "caption_count": 44,
+  "caption_sequence_issues": [],
+  "duplicate_caption_ids": [],
+  "table_associations": [
+    {
+      "table_body_index": 280,
+      "captions": [
+        "Tabla 3-1. Secuencia de actividades realizadas."
+      ],
+      "caption_body_indices": [
+        281
+      ]
+    },
+    {
+      "table_body_index": 302,
+      "captions": [
+        "Tabla 4-1. Capas y responsabilidades del MVP."
+      ],
+      "caption_body_indices": [
+        303
+      ]
+    },
+    {
+      "table_body_index": 325,
+      "captions": [
+        "Tabla 4-2. Dimensiones de evaluación deportiva."
+      ],
+      "caption_body_indices": [
+        326
+      ]
+    },
+    {
+      "table_body_index": 338,
+      "captions": [
+        "Tabla 4-3. Requisitos funcionales del sistema."
+      ],
+      "caption_body_indices": [
+        339
+      ]
+    },
+    {
+      "table_body_index": 342,
+      "captions": [
+        "Tabla 4-4. Entidades principales del modelo de datos."
+      ],
+      "caption_body_indices": [
+        343
+      ]
+    },
+    {
+      "table_body_index": 348,
+      "captions": [
+        "Tabla 4-5. Endpoints principales del MVP."
+      ],
+      "caption_body_indices": [
+        349
+      ]
+    },
+    {
+      "table_body_index": 351,
+      "captions": [
+        "Tabla 4-6. Decisiones tecnológicas."
+      ],
+      "caption_body_indices": [
+        352
+      ]
+    },
+    {
+      "table_body_index": 354,
+      "captions": [
+        "Tabla 4-7. Casos de uso principales."
+      ],
+      "caption_body_indices": [
+        355
+      ]
+    },
+    {
+      "table_body_index": 384,
+      "captions": [
+        "Tabla 5-1. Configuración verificada del modelo PlayerNet."
+      ],
+      "caption_body_indices": [
+        385
+      ]
+    },
+    {
+      "table_body_index": 399,
+      "captions": [
+        "Tabla 5-2. Estado del despliegue en Render."
+      ],
+      "caption_body_indices": [
+        400
+      ]
+    },
+    {
+      "table_body_index": 415,
+      "captions": [
+        "Tabla 6-1. Cobertura del plan de pruebas."
+      ],
+      "caption_body_indices": [
+        416
+      ]
+    },
+    {
+      "table_body_index": 420,
+      "captions": [
+        "Tabla 6-2. Resultados de validación automatizada y CI."
+      ],
+      "caption_body_indices": [
+        421
+      ]
+    },
+    {
+      "table_body_index": 425,
+      "captions": [
+        "Tabla 6-3. Métricas de PlayerNet calibrado y crudo en test."
+      ],
+      "caption_body_indices": [
+        426
+      ]
+    },
+    {
+      "table_body_index": 432,
+      "captions": [
+        "Tabla 6-4. Comparación con baselines."
+      ],
+      "caption_body_indices": [
+        433
+      ]
+    },
+    {
+      "table_body_index": 440,
+      "captions": [
+        "Tabla 6-5. Prueba real de disponibilidad del despliegue en Render."
+      ],
+      "caption_body_indices": [
+        441
+      ]
+    },
+    {
+      "table_body_index": 495,
+      "captions": [
+        "Tabla 7-1. Cumplimiento de objetivos."
+      ],
+      "caption_body_indices": [
+        496
+      ]
+    },
+    {
+      "table_body_index": 548,
+      "captions": [
+        "Tabla 9-1. Rutas principales."
+      ],
+      "caption_body_indices": [
+        549
+      ]
+    },
+    {
+      "table_body_index": 551,
+      "captions": [
+        "Tabla 9-2. Variables de entorno relevantes."
+      ],
+      "caption_body_indices": [
+        552
+      ]
+    },
+    {
+      "table_body_index": 554,
+      "captions": [
+        "Tabla 9-3. Glosario técnico."
+      ],
+      "caption_body_indices": [
+        555
+      ]
+    }
+  ],
+  "figure_associations": [
+    {
+      "caption": "Figura 4-1. Diagrama de componentes de TPScouting.",
+      "adjacent_image_blocks": [
+        297
+      ]
+    },
+    {
+      "caption": "Figura 4-2. Diagrama de clases del modelo de dominio.",
+      "adjacent_image_blocks": [
+        345
+      ]
+    },
+    {
+      "caption": "Figura 4-3. Diagrama de casos de uso general",
+      "adjacent_image_blocks": [
+        357
+      ]
+    },
+    {
+      "caption": "Figura 4-4. Diagrama de casos de uso de gestión de jugadores.",
+      "adjacent_image_blocks": [
+        360
+      ]
+    },
+    {
+      "caption": "Figura 4-5. Diagrama de casos de uso de análisis y decisión scout.",
+      "adjacent_image_blocks": [
+        363
+      ]
+    },
+    {
+      "caption": "Figura 5-1. Secuencia de inferencia: score operativo de interfaz y referencia calibrada.",
+      "adjacent_image_blocks": [
+        373
+      ]
+    },
+    {
+      "caption": "Figura 5-2. Secuencia de carga del panel general.",
+      "adjacent_image_blocks": [
+        378
+      ]
+    },
+    {
+      "caption": "Figura 5-3. Arquitectura de despliegue en Render y mecanismos operativos del MVP.",
+      "adjacent_image_blocks": [
+        403
+      ]
+    },
+    {
+      "caption": "Figura 6-1. Curva real de entrenamiento generada desde training_metadata.json.",
+      "adjacent_image_blocks": [
+        436
+      ]
+    },
+    {
+      "caption": "Figura 6-2. Login del MVP en la verificación local.",
+      "adjacent_image_blocks": [
+        445
+      ]
+    },
+    {
+      "caption": "Figura 6-3. Panel general con métricas por rol.",
+      "adjacent_image_blocks": [
+        449
+      ]
+    },
+    {
+      "caption": "Figura 6-4. Listado paginado de jugadores con edad, categoría y potencial.",
+      "adjacent_image_blocks": [
+        452
+      ]
+    },
+    {
+      "caption": "Figura 6-5. Ficha de jugador con historial, atributos y acciones CRUD en modales.",
+      "adjacent_image_blocks": []
+    },
+    {
+      "caption": "Figura 6-6. Vista de predicción con edad y ajuste combinado de historial y posición.",
+      "adjacent_image_blocks": [
+        463
+      ]
+    },
+    {
+      "caption": "Figura 6-7. Comparador múltiple de jugadores.",
+      "adjacent_image_blocks": [
+        466
+      ]
+    },
+    {
+      "caption": "Figura 6-8. Ejecución CI 38815440730 del paquete publicado en el repositorio de entrega.",
+      "adjacent_image_blocks": [
+        470
+      ]
+    },
+    {
+      "caption": "Figura 10-1. Vista ampliada de la ejecución CI 38815440730 del repositorio de entrega.",
+      "adjacent_image_blocks": [
+        599
+      ]
+    },
+    {
+      "caption": "Figura 10-2. Diagrama de componentes de TPScouting ampliado.",
+      "adjacent_image_blocks": [
+        609,
+        612
+      ]
+    },
+    {
+      "caption": "Figura 10-3. Diagrama de clases del modelo de dominio ampliado.",
+      "adjacent_image_blocks": [
+        612,
+        615
+      ]
+    },
+    {
+      "caption": "Figura 10-4. Diagrama de secuencia de inferencia ampliado.",
+      "adjacent_image_blocks": [
+        615,
+        618
+      ]
+    },
+    {
+      "caption": "Figura 10-5. Diagrama de secuencia del panel general ampliado.",
+      "adjacent_image_blocks": [
+        618,
+        621
+      ]
+    },
+    {
+      "caption": "Figura 10-6. Diagrama de despliegue en Render ampliado.",
+      "adjacent_image_blocks": [
+        621
+      ]
+    },
+    {
+      "caption": "Figura 10-7. Diagrama de casos de uso general ampliado.",
+      "adjacent_image_blocks": [
+        625,
+        628
+      ]
+    },
+    {
+      "caption": "Figura 10-8. Diagrama de casos de uso de gestión de jugadores ampliado.",
+      "adjacent_image_blocks": [
+        628,
+        630
+      ]
+    },
+    {
+      "caption": "Figura 10-9. Diagrama de casos de uso de análisis y decisión scout ampliado.",
+      "adjacent_image_blocks": [
+        630
+      ]
+    }
+  ],
+  "internal_hyperlink_anchors_checked": 88,
+  "missing_internal_anchors": [],
+  "urls_checked": 23,
+  "url_issues": [],
+  "url_occurrences": [
+    {
+      "part": "word/document.xml",
+      "paragraph": 654,
+      "url": "https://tpscouting-mvp.onrender.com"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 945,
+      "url": "https://doi.org/10.2165/00007256-200939030-00005"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 946,
+      "url": "https://doi.org/10.1145/3292500.3330758"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 948,
+      "url": "https://doi.org/10.1007/978-0-387-84858-7"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 949,
+      "url": "https://www.argentina.gob.ar/normativa/nacional/ley-25326-2000-64790"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 950,
+      "url": "https://www.hudl.com/products/wyscout"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 951,
+      "url": "https://doi.org/10.1145/2382577.2382579"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 952,
+      "url": "https://doi.org/10.48550/arXiv.2403.08835"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 953,
+      "url": "https://doi.org/10.1145/1102351.1102430"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 954,
+      "url": "https://owasp.org/Top10/"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 955,
+      "url": "https://flask.palletsprojects.com/"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 956,
+      "url": "https://doi.org/10.1145/3343172"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 957,
+      "url": "https://proceedings.neurips.cc/paper/2019/hash/bdbca288fee7f92f2bfa9f7012727740-Abstract.html"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 958,
+      "url": "https://www.jmlr.org/papers/v12/pedregosa11a.html"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 960,
+      "url": "https://docs.pytorch.org/docs/"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 961,
+      "url": "https://doi.org/10.1371/journal.pone.0118432"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 962,
+      "url": "https://scrumguides.org/docs/scrumguide/v2020/2020-Scrum-Guide-Spanish-Latin-South-American.pdf"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 964,
+      "url": "https://docs.sqlalchemy.org/"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 965,
+      "url": "https://doi.org/10.3390/app15168916"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 1065,
+      "url": "https://github.com/indio21/TPScouting-entrega"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 1091,
+      "url": "https://tpscouting-mvp.onrender.com"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 1091,
+      "url": "https://tpscouting-mvp.onrender.com"
+    },
+    {
+      "part": "word/document.xml",
+      "paragraph": 1095,
+      "url": "https://tpscouting-mvp.onrender.com"
+    }
+  ],
+  "figure_groups_verified": [
+    {
+      "caption": "Figura 4-1. Diagrama de componentes de TPScouting.",
+      "image_blocks": [
+        297
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 4-2. Diagrama de clases del modelo de dominio.",
+      "image_blocks": [
+        345
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 4-3. Diagrama de casos de uso general",
+      "image_blocks": [
+        357
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 4-4. Diagrama de casos de uso de gestión de jugadores.",
+      "image_blocks": [
+        360
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 4-5. Diagrama de casos de uso de análisis y decisión scout.",
+      "image_blocks": [
+        363
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 5-1. Secuencia de inferencia: score operativo de interfaz y referencia calibrada.",
+      "image_blocks": [
+        373
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 5-2. Secuencia de carga del panel general.",
+      "image_blocks": [
+        378
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 5-3. Arquitectura de despliegue en Render y mecanismos operativos del MVP.",
+      "image_blocks": [
+        403
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 6-1. Curva real de entrenamiento generada desde training_metadata.json.",
+      "image_blocks": [
+        436
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 6-2. Login del MVP en la verificación local.",
+      "image_blocks": [
+        445
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 6-3. Panel general con métricas por rol.",
+      "image_blocks": [
+        449
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 6-4. Listado paginado de jugadores con edad, categoría y potencial.",
+      "image_blocks": [
+        452
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 6-5. Ficha de jugador con historial, atributos y acciones CRUD en modales.",
+      "image_blocks": [
+        455,
+        457,
+        459
+      ],
+      "subcaptions": [
+        "a) Perfil, atributos y resumen de rendimiento.",
+        "b) Historiales, gráficos y evaluaciones periódicas.",
+        "c) Reportes, disponibilidad y acciones de mantenimiento."
+      ]
+    },
+    {
+      "caption": "Figura 6-6. Vista de predicción con edad y ajuste combinado de historial y posición.",
+      "image_blocks": [
+        463
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 6-7. Comparador múltiple de jugadores.",
+      "image_blocks": [
+        466
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 6-8. Ejecución CI 38815440730 del paquete publicado en el repositorio de entrega.",
+      "image_blocks": [
+        470
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 10-1. Vista ampliada de la ejecución CI 38815440730 del repositorio de entrega.",
+      "image_blocks": [
+        599
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 10-2. Diagrama de componentes de TPScouting ampliado.",
+      "image_blocks": [
+        609
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 10-3. Diagrama de clases del modelo de dominio ampliado.",
+      "image_blocks": [
+        612
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 10-4. Diagrama de secuencia de inferencia ampliado.",
+      "image_blocks": [
+        615
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 10-5. Diagrama de secuencia del panel general ampliado.",
+      "image_blocks": [
+        618
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 10-6. Diagrama de despliegue en Render ampliado.",
+      "image_blocks": [
+        621
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 10-7. Diagrama de casos de uso general ampliado.",
+      "image_blocks": [
+        625
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 10-8. Diagrama de casos de uso de gestión de jugadores ampliado.",
+      "image_blocks": [
+        628
+      ],
+      "subcaptions": []
+    },
+    {
+      "caption": "Figura 10-9. Diagrama de casos de uso de análisis y decisión scout ampliado.",
+      "image_blocks": [
+        630
+      ],
+      "subcaptions": []
+    }
+  ],
+  "figures_without_images": [],
+  "figure_captions_without_image_on_page": [],
+  "table_caption_association_issues": [],
+  "passed": true,
+  "external_hyperlink_targets_checked": 0,
+  "url_check_scope": "All Word XML paragraphs, including tables, headers and footers; external availability not tested."
+}

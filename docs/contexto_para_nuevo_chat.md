@@ -1,5 +1,17 @@
 # Contexto Para Nuevo Chat
 
+## Cierre aprobado de noviembre — 12/11/2026
+
+Leer primero [PUNTO_GUARDADO_NOVIEMBRE_2026-11-12.md](revision_noviembre_2026/PUNTO_GUARDADO_NOVIEMBRE_2026-11-12.md).
+El usuario aprobó las cuatro correcciones menores, el Word nuevo y su PDF,
+y autorizó su publicación. La entrega vigente es `84b6e0a30a269c6f6cb2ac6c1c1ceef148347793`.
+Los archivos contienen CORRECCIONES_NOVIEMBRE_12-11-2026 en el nombre.
+No se modificaron código ni dependencias. El original del 21/10 está preservado.
+La CI nueva aprobó las pruebas de Python 3.11/3.12, pero falló la auditoría por
+diez avisos en filelock/setuptools. Quedaron registrados para una revisión
+separada; no presentar esta publicación como una CI global aprobada.
+Las secciones de octubre siguientes son históricas.
+
 ## Punto de continuación vigente — 20/10/2026
 
 Leer primero [PUNTO_GUARDADO_ENVIO_FEEDBACK_2026-10-20.md](revision_octubre_2026/PUNTO_GUARDADO_ENVIO_FEEDBACK_2026-10-20.md).

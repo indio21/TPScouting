@@ -1,0 +1,269 @@
+{
+  "original_sha256": "81A743DF38FB32820EA7DC3BEC247F57CCE6F3F826510DFEA2ED9CF3D63A131C",
+  "new_sha256": "C6BEB90582E818D371AC9CF96EBAB0C1A1DA025C6DE689DC2383EB606DBFDC79",
+  "paragraph_differences": [
+    {
+      "type": "replace",
+      "old_indices": [
+        140,
+        147
+      ],
+      "new_indices": [
+        140,
+        146
+      ],
+      "old": [
+        "Tabla 4-2. Comparación entre motores relacionales.\t31",
+        "Tabla 4-3. Dimensiones de evaluación deportiva.\t33",
+        "Tabla 4-4. Requisitos funcionales del sistema.\t36",
+        "Tabla 4-5. Entidades principales del modelo de datos.\t37",
+        "Tabla 4-6. Endpoints principales del MVP.\t38",
+        "Tabla 4-7. Decisiones tecnológicas.\t39",
+        "Tabla 4-8. Casos de uso principales.\t39"
+      ],
+      "new": [
+        "Tabla 4-2. Dimensiones de evaluación deportiva.\t33",
+        "Tabla 4-3. Requisitos funcionales del sistema.\t36",
+        "Tabla 4-4. Entidades principales del modelo de datos.\t37",
+        "Tabla 4-5. Endpoints principales del MVP.\t38",
+        "Tabla 4-6. Decisiones tecnológicas.\t39",
+        "Tabla 4-7. Casos de uso principales.\t39"
+      ]
+    },
+    {
+      "type": "replace",
+      "old_indices": [
+        306,
+        308
+      ],
+      "new_indices": [
+        305,
+        306
+      ],
+      "old": [
+        "El modelo implementa once entidades: Player, Match, Coach, Director, User, PlayerStat, PlayerAttributeHistory, PlayerMatchParticipation, ScoutReport, PhysicalAssessment y PlayerAvailability. Sus responsabilidades se resumen en la Tabla 4-5.",
+        "Tabla 4-2. Comparación entre motores relacionales."
+      ],
+      "new": [
+        "El modelo implementa once entidades: Player, Match, Coach, Director, User, PlayerStat, PlayerAttributeHistory, PlayerMatchParticipation, ScoutReport, PhysicalAssessment y PlayerAvailability. Sus responsabilidades se resumen en la Tabla 4-4."
+      ]
+    },
+    {
+      "type": "replace",
+      "old_indices": [
+        325,
+        326
+      ],
+      "new_indices": [
+        323,
+        324
+      ],
+      "old": [
+        "Tabla 4-3. Dimensiones de evaluación deportiva."
+      ],
+      "new": [
+        "Tabla 4-2. Dimensiones de evaluación deportiva."
+      ]
+    },
+    {
+      "type": "replace",
+      "old_indices": [
+        335,
+        336
+      ],
+      "new_indices": [
+        333,
+        334
+      ],
+      "old": [
+        "El login aplica rate limiting local por nombre de usuario normalizado y no utiliza encabezados de IP controlables por el cliente para construir la clave. Esta mitigación fue verificada para una instancia, pero no sustituye un limitador distribuido en un despliegue multi-instancia."
+      ],
+      "new": [
+        "El login aplica rate limiting local por nombre de usuario normalizado y no utiliza encabezados de IP controlables por el cliente para construir la clave. Con la configuración predeterminada, cinco intentos fallidos en una ventana móvil de 15 minutos provocan el rechazo de los siguientes intentos con HTTP 429, incluso si las credenciales son correctas, hasta que venzan suficientes fallos de esa ventana. Un tercero que conozca el nombre de usuario puede agotar esa cuota e impedir temporalmente nuevos inicios de sesión en esa cuenta. El registro de intentos reside en memoria por proceso. Esta mitigación fue verificada para una instancia, pero no sustituye un limitador distribuido en un despliegue multi-instancia."
+      ]
+    },
+    {
+      "type": "replace",
+      "old_indices": [
+        337,
+        338
+      ],
+      "new_indices": [
+        335,
+        336
+      ],
+      "old": [
+        "Tabla 4-4. Requisitos funcionales del sistema."
+      ],
+      "new": [
+        "Tabla 4-3. Requisitos funcionales del sistema."
+      ]
+    },
+    {
+      "type": "replace",
+      "old_indices": [
+        340,
+        341
+      ],
+      "new_indices": [
+        338,
+        339
+      ],
+      "old": [
+        "Tabla 4-5. Entidades principales del modelo de datos."
+      ],
+      "new": [
+        "Tabla 4-4. Entidades principales del modelo de datos."
+      ]
+    },
+    {
+      "type": "replace",
+      "old_indices": [
+        345,
+        346
+      ],
+      "new_indices": [
+        343,
+        344
+      ],
+      "old": [
+        "Tabla 4-6. Endpoints principales del MVP."
+      ],
+      "new": [
+        "Tabla 4-5. Endpoints principales del MVP."
+      ]
+    },
+    {
+      "type": "replace",
+      "old_indices": [
+        347,
+        348
+      ],
+      "new_indices": [
+        345,
+        346
+      ],
+      "old": [
+        "Tabla 4-7. Decisiones tecnológicas."
+      ],
+      "new": [
+        "Tabla 4-6. Decisiones tecnológicas."
+      ]
+    },
+    {
+      "type": "replace",
+      "old_indices": [
+        349,
+        350
+      ],
+      "new_indices": [
+        347,
+        348
+      ],
+      "old": [
+        "Tabla 4-8. Casos de uso principales."
+      ],
+      "new": [
+        "Tabla 4-7. Casos de uso principales."
+      ]
+    },
+    {
+      "type": "replace",
+      "old_indices": [
+        567,
+        568
+      ],
+      "new_indices": [
+        565,
+        566
+      ],
+      "old": [
+        "Windows PowerShell:\n.\\.venv\\Scripts\\python.exe scripts\\smoke_render.py --base-url https://tpscouting-mvp.onrender.com\nLinux/macOS:\n.venv/bin/python scripts/smoke_render.py --base-url https://tpscouting-mvp.onrender.comhttps://tpscouting-mvp.onrender.com"
+      ],
+      "new": [
+        "Windows PowerShell:\n.\\.venv\\Scripts\\python.exe scripts\\smoke_render.py --base-url https://tpscouting-mvp.onrender.com\nLinux/macOS:\n.venv/bin/python scripts/smoke_render.py --base-url https://tpscouting-mvp.onrender.com"
+      ]
+    }
+  ],
+  "cell_differences": [
+    {
+      "table": 5,
+      "row": 14,
+      "column": 2,
+      "before": "Estado de servicio, base y calidad de datos.",
+      "after": "Comprobación mínima de disponibilidad del servicio y conectividad con la base de datos."
+    }
+  ],
+  "package_parts_changed": [
+    "word/document.xml",
+    "word/_rels/document.xml.rels",
+    "word/settings.xml",
+    "docProps/app.xml",
+    "docProps/core.xml"
+  ],
+  "styles_headers_footers_unchanged": true,
+  "images_unchanged": true,
+  "only_health_table_cell_changed": true,
+  "references_checked": 107,
+  "references_without_caption": [],
+  "pdf_pages_before": 97,
+  "pdf_pages_after": 97,
+  "changed_pdf_pages": [
+    {
+      "physical_page": 8,
+      "before": "LISTA DE TABLAS Tabla 3-1. Secuencia de actividades realizadas. ................................ 26 Tabla 4-1. Capas y responsabilidades del MVP. ................................ 30 Tabla 4-2. Comparación entre motores relacionales. ......................... 31 Tabla 4-3. Dimensiones de evaluación deportiva. .............................. 33 Tabla 4-4. Requisitos funcionales del sistema. ................................... 36 Tabla 4-5. Entidades principales del modelo de datos. ....................... 37 Tabla 4-6. Endpoints principales del MVP. ......................................... 38 Tabla 4-7. Decisiones tecnológicas. ................................................... 39 Tabla 4-8. Casos de uso principales. .................................................. 39 Tabla 5-1. Configuración verificada del modelo PlayerNet. ................ 46 Tabla 5-2. Estado del despliegue en Render. ..................................... 48 Tabla 6-1. Cobertura del plan de pruebas. ......................................... 51 Tabla 6-2. Resultados de validación automatizada y CI. .................... 53 Tabla 6-3. Métricas de PlayerNet calibrado y crudo en test. ............... 54 Tabla 6-4. Comparación con baselines. ............................................. 55 Tabla 6-5. Prueba real de disponibilidad del despliegue en Render. .. 56 Tabla 7-1. Cumplimiento de objetivos. ................................................ 72 Tabla 9-1. Rutas principales. .............................................................. 78 Tabla 9-2. Variables de entorno relevantes. ....................................... 78 Tabla 9-3. Glosario técnico. ................................................................ 80",
+      "after": "LISTA DE TABLAS Tabla 3-1. Secuencia de actividades realizadas. ................................ 26 Tabla 4-1. Capas y responsabilidades del MVP. ................................ 30 Tabla 4-2. Dimensiones de evaluación deportiva. .............................. 33 Tabla 4-3. Requisitos funcionales del sistema. ................................... 36 Tabla 4-4. Entidades principales del modelo de datos. ....................... 37 Tabla 4-5. Endpoints principales del MVP. ......................................... 38 Tabla 4-6. Decisiones tecnológicas. ................................................... 39 Tabla 4-7. Casos de uso principales. .................................................. 39 Tabla 5-1. Configuración verificada del modelo PlayerNet. ................ 46 Tabla 5-2. Estado del despliegue en Render. ..................................... 48 Tabla 6-1. Cobertura del plan de pruebas. ......................................... 51 Tabla 6-2. Resultados de validación automatizada y CI. .................... 53 Tabla 6-3. Métricas de PlayerNet calibrado y crudo en test. ............... 54 Tabla 6-4. Comparación con baselines. ............................................. 55 Tabla 6-5. Prueba real de disponibilidad del despliegue en Render. .. 56 Tabla 7-1. Cumplimiento de objetivos. ................................................ 72 Tabla 9-1. Rutas principales. .............................................................. 78 Tabla 9-2. Variables de entorno relevantes. ....................................... 78 Tabla 9-3. Glosario técnico. ................................................................ 80"
+    },
+    {
+      "physical_page": 32,
+      "before": "utiliza PostgreSQL administrado para conservar los datos fuera del sistema de archivos efímero del servicio. • SQLAlchemy permite mantener el mismo modelo de dominio en ambos entornos. • El modelo implementa once entidades: Player, Match, Coach, Director, User, PlayerStat, PlayerAttributeHistory, PlayerMatchParticipation, ScoutReport, PhysicalAssessment y PlayerAvailability. Sus responsabilidades se resumen en la Tabla 4-5. TABLA 4-2. COMPARACIÓN ENTRE MOTORES RELACIONALES. 4.1.3 Interfaz de usuario • La interfaz se implementó con Bootstrap, plantillas Jinja2, CSS propio y Chart.js. Se priorizaron formularios, tablas, modales y gráficos compatibles con el flujo server-side del MVP. • Una Landing Page con un login, que permite a los usuarios ingresar al sistema y acceder al panel de control donde pueden gestionar jugadores, ver estadísticas y generar proyecciones. • Panel de Jugadores: Donde los usuarios pueden ver la lista de jugadores y acceder a su información detallada, incluyendo sus atributos y sus evaluaciones. • Gráficos y Tablas: o Chart.js permite crear gráficos dinámicos e interactivos, visualizando la evolución de los atributos del jugador.",
+      "after": "utiliza PostgreSQL administrado para conservar los datos fuera del sistema de archivos efímero del servicio. • SQLAlchemy permite mantener el mismo modelo de dominio en ambos entornos. • El modelo implementa once entidades: Player, Match, Coach, Director, User, PlayerStat, PlayerAttributeHistory, PlayerMatchParticipation, ScoutReport, PhysicalAssessment y PlayerAvailability. Sus responsabilidades se resumen en la Tabla 4-4. 4.1.3 Interfaz de usuario • La interfaz se implementó con Bootstrap, plantillas Jinja2, CSS propio y Chart.js. Se priorizaron formularios, tablas, modales y gráficos compatibles con el flujo server-side del MVP. • Una Landing Page con un login, que permite a los usuarios ingresar al sistema y acceder al panel de control donde pueden gestionar jugadores, ver estadísticas y generar proyecciones. • Panel de Jugadores: Donde los usuarios pueden ver la lista de jugadores y acceder a su información detallada, incluyendo sus atributos y sus evaluaciones. • Gráficos y Tablas: o Chart.js permite crear gráficos dinámicos e interactivos, visualizando la evolución de los atributos del jugador. o Tablas HTML con filtros y paginación en backend para visualizar la información tabular de forma clara y operativa."
+    },
+    {
+      "physical_page": 33,
+      "before": "o Tablas HTML con filtros y paginación en backend para visualizar la información tabular de forma clara y operativa. 4.2 Funcionalidades y componentes 4.2.1 Módulos funcionales implementados • Autenticación, registro de usuarios y control básico por roles. • Gestión de jugadores, ficha completa, edición, baja y carga masiva CSV. • Historial de atributos, rendimiento, partidos, disponibilidad, evaluaciones físicas y reportes scout. • Panel general dinámico por rol: prioridades de scouting para scout/administrador y estado del plantel para director técnico. • Comparador 1v1 y comparador múltiple con métricas visuales. • Predicción de potencial y recomendaciones operativas en ficha de jugador. 4.2.2 Modelo de evaluación deportiva La evaluación del jugador combina datos cuantitativos y cualitativos. Los atributos principales se registran en escala 1-20 y se agrupan en dimensiones técnicas, físicas, mentales y defensivas. El sistema no reemplaza el criterio del scout; aporta orden, trazabilidad y comparación consistente entre jugadores.",
+      "after": "4.2 Funcionalidades y componentes 4.2.1 Módulos funcionales implementados • Autenticación, registro de usuarios y control básico por roles. • Gestión de jugadores, ficha completa, edición, baja y carga masiva CSV. • Historial de atributos, rendimiento, partidos, disponibilidad, evaluaciones físicas y reportes scout. • Panel general dinámico por rol: prioridades de scouting para scout/administrador y estado del plantel para director técnico. • Comparador 1v1 y comparador múltiple con métricas visuales. • Predicción de potencial y recomendaciones operativas en ficha de jugador. 4.2.2 Modelo de evaluación deportiva La evaluación del jugador combina datos cuantitativos y cualitativos. Los atributos principales se registran en escala 1-20 y se agrupan en dimensiones técnicas, físicas, mentales y defensivas. El sistema no reemplaza el criterio del scout; aporta orden, trazabilidad y comparación consistente entre jugadores. Dimensión Variables representativas Fuente / Tablas Técnica pace, shooting, passing, dribbling, technique, vision Player e historial de atributos"
+    },
+    {
+      "physical_page": 34,
+      "before": "Dimensión Variables representativas Fuente / Tablas Técnica pace, shooting, passing, dribbling, technique, vision Player e historial de atributos Física physical, estimated_speed, endurance, height_cm, weight_kg Player y PhysicalAssessment Defensiva defending, tackling Player e historial de atributos Mental determination, decision_making, tactical_reading, mental_profile, adaptability Player y ScoutReport Rendimiento minutes_played, goals, assists, pass_accuracy, shot_accuracy, duels_won_pct, final_score PlayerStat y participaciones TABLA 4-3. DIMENSIONES DE EVALUACIÓN DEPORTIVA. 4.2.3 Uso de PyTorch y Scikit-learn PyTorch se emplea para implementar PlayerNet (Paszke et al., 2019; PyTorch Foundation, s. f.). Scikit-learn aporta preprocesamiento,",
+      "after": "Dimensión Variables representativas Fuente / Tablas Física physical, estimated_speed, endurance, height_cm, weight_kg Player y PhysicalAssessment Defensiva defending, tackling Player e historial de atributos Mental determination, decision_making, tactical_reading, mental_profile, adaptability Player y ScoutReport Rendimiento minutes_played, goals, assists, pass_accuracy, shot_accuracy, duels_won_pct, final_score PlayerStat y participaciones TABLA 4-2. DIMENSIONES DE EVALUACIÓN DEPORTIVA. 4.2.3 Uso de PyTorch y Scikit-learn PyTorch se emplea para implementar PlayerNet (Paszke et al., 2019; PyTorch Foundation, s. f.). Scikit-learn aporta preprocesamiento, partición, métricas, regresión logística y calibración isotónica (Pedregosa et al., 2011). La inferencia web utiliza PlayerNet como modelo operativo; la regresión logística se conserva como referencia experimental."
+    },
+    {
+      "physical_page": 35,
+      "before": "partición, métricas, regresión logística y calibración isotónica (Pedregosa et al., 2011). La inferencia web utiliza PlayerNet como modelo operativo; la regresión logística se conserva como referencia experimental. 4.2.3.1 Síntesis explicativa del flujo predictivo En términos simples, PlayerNet es una red neuronal propia del proyecto que recibe 68 variables del jugador y devuelve una probabilidad cruda entre 0 y 1. Esa salida expresa el grado en que el caso se parece a los ejemplos positivos aprendidos durante el entrenamiento; no equivale, por sí sola, a una certeza deportiva. La probabilidad calibrada es un reajuste posterior de la salida cruda mediante regresión isotónica. Su objetivo es mejorar la interpretación numérica de la probabilidad, no garantizar mejores valores en todas las métricas. Por eso una versión calibrada puede ser más prudente y, al mismo tiempo, obtener un ROC-AUC, PR-AUC o F1 levemente inferior. La salida sigmoid cruda de PlayerNet es una probabilidad sin calibrar. La calibración isotónica produce otra probabilidad y utiliza un umbral de clasificación seleccionado en validation (0,25; 0,825 para la salida cruda). La interfaz presenta además un score combinado con información histórica y posicional; sus bandas visuales son bajo <0,60, medio 0,60–0,79 y alto ≥0,80. Esos límites visuales no son los umbrales usados para medir F1 en test. La regresión logística cumple el papel de modelo de referencia. En la corrida documentada, su desempeño fue muy similar al de PlayerNet: obtuvo valores levemente superiores en ROC-AUC y F1, mientras que PlayerNet crudo alcanzó el mayor PR-AUC. En consecuencia, el trabajo",
+      "after": "4.2.3.1 Síntesis explicativa del flujo predictivo En términos simples, PlayerNet es una red neuronal propia del proyecto que recibe 68 variables del jugador y devuelve una probabilidad cruda entre 0 y 1. Esa salida expresa el grado en que el caso se parece a los ejemplos positivos aprendidos durante el entrenamiento; no equivale, por sí sola, a una certeza deportiva. La probabilidad calibrada es un reajuste posterior de la salida cruda mediante regresión isotónica. Su objetivo es mejorar la interpretación numérica de la probabilidad, no garantizar mejores valores en todas las métricas. Por eso una versión calibrada puede ser más prudente y, al mismo tiempo, obtener un ROC-AUC, PR-AUC o F1 levemente inferior. La salida sigmoid cruda de PlayerNet es una probabilidad sin calibrar. La calibración isotónica produce otra probabilidad y utiliza un umbral de clasificación seleccionado en validation (0,25; 0,825 para la salida cruda). La interfaz presenta además un score combinado con información histórica y posicional; sus bandas visuales son bajo <0,60, medio 0,60–0,79 y alto ≥0,80. Esos límites visuales no son los umbrales usados para medir F1 en test. La regresión logística cumple el papel de modelo de referencia. En la corrida documentada, su desempeño fue muy similar al de PlayerNet: obtuvo valores levemente superiores en ROC-AUC y F1, mientras que PlayerNet crudo alcanzó el mayor PR-AUC. En consecuencia, el trabajo no sostiene una superioridad global de la red neuronal; la conclusión es que una arquitectura más compleja no garantiza mejores resultados y debe seleccionarse según evidencia."
+    },
+    {
+      "physical_page": 36,
+      "before": "no sostiene una superioridad global de la red neuronal; la conclusión es que una arquitectura más compleja no garantiza mejores resultados y debe seleccionarse según evidencia. 4.2.4 Seguridad y autenticación La autenticación se basa en sesiones, contraseñas hasheadas, protección CSRF y autorización por rol. Las medidas se contrastaron con riesgos de control de acceso, fallos criptográficos e inyección descritos por OWASP (2021), sin presentar esa referencia como una certificación de seguridad. El login aplica rate limiting local por nombre de usuario normalizado y no utiliza encabezados de IP controlables por el cliente para construir la clave. Esta mitigación fue verificada para una instancia, pero no sustituye un limitador distribuido en un despliegue multi-instancia. 4.3 Requisitos del sistema ID Requisito Estado RF-01 Autenticación por sesión para acceso a la aplicación. Implementado RF-02 Gestión de usuarios con roles administrador, scout y director. Implementado RF-03 Alta, edición y baja de jugadores. Implementado RF-04 Ficha de jugador con perfil, edad, categoría, atributos, historial y predicción. Implementado RF-05 Registro de atributos en escala 1-20 con historial. Implementado RF-06 Registro de rendimiento, partidos, disponibilidad, físico y reportes. Implementado RF-07 Cálculo de potencial con PlayerNet en PyTorch. Implementado",
+      "after": "4.2.4 Seguridad y autenticación La autenticación se basa en sesiones, contraseñas hasheadas, protección CSRF y autorización por rol. Las medidas se contrastaron con riesgos de control de acceso, fallos criptográficos e inyección descritos por OWASP (2021), sin presentar esa referencia como una certificación de seguridad. El login aplica rate limiting local por nombre de usuario normalizado y no utiliza encabezados de IP controlables por el cliente para construir la clave. Con la configuración predeterminada, cinco intentos fallidos en una ventana móvil de 15 minutos provocan el rechazo de los siguientes intentos con HTTP 429, incluso si las credenciales son correctas, hasta que venzan suficientes fallos de esa ventana. Un tercero que conozca el nombre de usuario puede agotar esa cuota e impedir temporalmente nuevos inicios de sesión en esa cuenta. El registro de intentos reside en memoria por proceso. Esta mitigación fue verificada para una instancia, pero no sustituye un limitador distribuido en un despliegue multi- instancia. 4.3 Requisitos del sistema ID Requisito Estado RF-01 Autenticación por sesión para acceso a la aplicación. Implementado RF-02 Gestión de usuarios con roles administrador, scout y director. Implementado RF-03 Alta, edición y baja de jugadores. Implementado RF-04 Ficha de jugador con perfil, edad, categoría, atributos, historial y predicción. Implementado RF-05 Registro de atributos en escala 1-20 con historial. Implementado"
+    },
+    {
+      "physical_page": 37,
+      "before": "ID Requisito Estado RF-08 Clasificación de potencial: bajo <60%, medio 60-79%, alto >=80%. Implementado RF-09 Carga masiva CSV compatible con Excel y validación por fila. Implementado RF-10 Panel general con métricas accionables por rol. Implementado RF-11 Comparadores 1v1 y múltiple. Implementado RF-12 Healthcheck y deploy en Render. Implementado TABLA 4-4. REQUISITOS FUNCIONALES DEL SISTEMA. 4.4 Modelo de datos El modelo de datos se implementa con SQLAlchemy. La entidad central es Player, vinculada a historiales de atributos, estadísticas, partidos, disponibilidad, evaluaciones físicas y reportes scout. Entidad Propósito Player Jugador, datos personales, posición, club, atributos base, birth_date, photo_url y potencial. Match Partido y contexto competitivo. Coach Entrenador registrado. Director Directivo registrado. User Cuenta, credenciales y rol de acceso. PlayerStat Estadísticas de rendimiento por fecha. PlayerAttributeHistory Historial de atributos técnicos, físicos y mentales.",
+      "after": "ID Requisito Estado RF-06 Registro de rendimiento, partidos, disponibilidad, físico y reportes. Implementado RF-07 Cálculo de potencial con PlayerNet en PyTorch. Implementado RF-08 Clasificación de potencial: bajo <60%, medio 60-79%, alto >=80%. Implementado RF-09 Carga masiva CSV compatible con Excel y validación por fila. Implementado RF-10 Panel general con métricas accionables por rol. Implementado RF-11 Comparadores 1v1 y múltiple. Implementado RF-12 Healthcheck y deploy en Render. Implementado TABLA 4-3. REQUISITOS FUNCIONALES DEL SISTEMA. 4.4 Modelo de datos El modelo de datos se implementa con SQLAlchemy. La entidad central es Player, vinculada a historiales de atributos, estadísticas, partidos, disponibilidad, evaluaciones físicas y reportes scout. Entidad Propósito Player Jugador, datos personales, posición, club, atributos base, birth_date, photo_url y potencial. Match Partido y contexto competitivo. Coach Entrenador registrado. Director Directivo registrado. User Cuenta, credenciales y rol de acceso. PlayerStat Estadísticas de rendimiento por fecha."
+    },
+    {
+      "physical_page": 38,
+      "before": "Entidad Propósito PlayerMatchParticipation Participación del jugador en un partido. ScoutReport Reporte cualitativo de scouting. PhysicalAssessment Evaluación física y mediciones. PlayerAvailability Disponibilidad, fatiga y estado físico. TABLA 4-5. ENTIDADES PRINCIPALES DEL MODELO DE DATOS. La Figura 4-2 muestra las clases principales del modelo de dominio persistido con SQLAlchemy y sus relaciones más relevantes. FIGURA 4-2. DIAGRAMA DE CLASES DEL MODELO DE DOMINIO. 4.5 Endpoints principales del MVP Método Ruta Propósito GET/POST /login Autenticación. POST /logout Cierre de sesión con CSRF. GET/POST /register Alta de usuarios según permisos. GET /dashboard Panel general dinámico por rol. GET /players Listado paginado y filtrable de jugadores.",
+      "after": "Entidad Propósito PlayerAttributeHistory Historial de atributos técnicos, físicos y mentales. PlayerMatchParticipation Participación del jugador en un partido. ScoutReport Reporte cualitativo de scouting. PhysicalAssessment Evaluación física y mediciones. PlayerAvailability Disponibilidad, fatiga y estado físico. TABLA 4-4. ENTIDADES PRINCIPALES DEL MODELO DE DATOS. La Figura 4-2 muestra las clases principales del modelo de dominio persistido con SQLAlchemy y sus relaciones más relevantes. FIGURA 4-2. DIAGRAMA DE CLASES DEL MODELO DE DOMINIO. 4.5 Endpoints principales del MVP Método Ruta Propósito GET/POST /login Autenticación. POST /logout Cierre de sesión con CSRF."
+    },
+    {
+      "physical_page": 39,
+      "before": "Método Ruta Propósito GET/POST /players/manage Alta individual de jugador. GET/POST /players/import Carga masiva CSV con previsualización. GET/POST /player/<id>/stats Visualización y carga de rendimiento. GET/POST /player/<id>/attributes Visualización y carga de atributos. GET /player/<id>/predict Vista de proyección de potencial. GET/POST /compare Comparador 1v1. GET/POST /compare/multi Comparador múltiple. GET/POST /settings Operaciones administrativas y pipeline. GET /health Estado de servicio, base y calidad de datos. TABLA 4-6. ENDPOINTS PRINCIPALES DEL MVP.",
+      "after": "Método Ruta Propósito GET/POST /register Alta de usuarios según permisos. GET /dashboard Panel general dinámico por rol. GET /players Listado paginado y filtrable de jugadores. GET/POST /players/manage Alta individual de jugador. GET/POST /players/import Carga masiva CSV con previsualización. GET/POST /player/<id>/stats Visualización y carga de rendimiento. GET/POST /player/<id>/attributes Visualización y carga de atributos. GET /player/<id>/predict Vista de proyección de potencial. GET/POST /compare Comparador 1v1. GET/POST /compare/multi Comparador múltiple. GET/POST /settings Operaciones administrativas y pipeline. GET /health Comprobación mínima de disponibilidad del servicio y conectividad con la base de datos. TABLA 4-5. ENDPOINTS PRINCIPALES DEL MVP."
+    },
+    {
+      "physical_page": 40,
+      "before": "4.6 Decisiones tecnológicas y alineación con el MVP Tecnología Justificación Flask Permite desarrollo web server-side simple, auditable y suficiente para un MVP académico. SQLAlchemy Abstrae SQLite local y PostgreSQL en Render sin reescribir las reglas del dominio. PyTorch Permite implementar PlayerNet y guardar checkpoints con metadatos de entrada. Scikit-learn Aporta métricas, partición, modelo de referencia y calibración. Bootstrap/Jinja2 Facilita una interfaz funcional y adaptable sin incorporar una SPA compleja. Chart.js Permite integrar visualizaciones ligeras en las vistas HTML. pytest/pytest-cov Proporciona validación automatizada y medición de cobertura en integración continua. Render/Gunicorn Permite un despliegue público para validación académica mediante HTTPS. TABLA 4-7. DECISIONES TECNOLÓGICAS. 4.7 Casos de uso ID Caso de uso Precondición Resultado CU-01 Iniciar sesión Usuario registrado Sesión activa y acceso según rol. CU-02 Registrar jugador Scout o administrador Jugador persistido con fecha de nacimiento, edad y categoría. CU-03 Cargar atributos Jugador existente Historial actualizado en escala 1-20. CU-04 Cargar rendimiento/reportes Jugador existente Datos operativos visibles en ficha y panel general. CU-05 Calcular potencial Modelo cargado y jugador con datos Probabilidad, categoría y sugerencias visibles. CU-06 Comparar jugadores Dos o más jugadores seleccionados Tabla/gráfico comparativo. CU-07 Revisar panel general Usuario autenticado KPIs y listas accionables por rol. TABLA 4-8. CASOS DE USO PRINCIPALES.",
+      "after": "4.6 Decisiones tecnológicas y alineación con el MVP Tecnología Justificación Flask Permite desarrollo web server-side simple, auditable y suficiente para un MVP académico. SQLAlchemy Abstrae SQLite local y PostgreSQL en Render sin reescribir las reglas del dominio. PyTorch Permite implementar PlayerNet y guardar checkpoints con metadatos de entrada. Scikit-learn Aporta métricas, partición, modelo de referencia y calibración. Bootstrap/Jinja2 Facilita una interfaz funcional y adaptable sin incorporar una SPA compleja. Chart.js Permite integrar visualizaciones ligeras en las vistas HTML. pytest/pytest-cov Proporciona validación automatizada y medición de cobertura en integración continua. Render/Gunicorn Permite un despliegue público para validación académica mediante HTTPS. TABLA 4-6. DECISIONES TECNOLÓGICAS. 4.7 Casos de uso ID Caso de uso Precondición Resultado CU-01 Iniciar sesión Usuario registrado Sesión activa y acceso según rol. CU-02 Registrar jugador Scout o administrador Jugador persistido con fecha de nacimiento, edad y categoría. CU-03 Cargar atributos Jugador existente Historial actualizado en escala 1-20. CU-04 Cargar rendimiento/reportes Jugador existente Datos operativos visibles en ficha y panel general. CU-05 Calcular potencial Modelo cargado y jugador con datos Probabilidad, categoría y sugerencias visibles. CU-06 Comparar jugadores Dos o más jugadores seleccionados Tabla/gráfico comparativo. CU-07 Revisar panel general Usuario autenticado KPIs y listas accionables por rol. TABLA 4-7. CASOS DE USO PRINCIPALES."
+    },
+    {
+      "physical_page": 84,
+      "before": "Windows PowerShell: ..\\.venv\\Scripts\\python.exe generate_data.py --num-players 20000 --db-url sqlite:///players_training.db --seed 42 --min-age 12 --max-age 18 --reset Linux/macOS: ../.venv/bin/python generate_data.py --num-players 20000 --db-url sqlite:///players_training.db -- seed 42 --min-age 12 --max-age 18 --reset Entrenar PlayerNet con la configuración documentada: Windows PowerShell: ..\\.venv\\Scripts\\python.exe train_model.py --db-url sqlite:///players_training.db --model-out model_candidate.pt --preprocessor-out preprocessor_candidate.joblib --calibrator-out probability_calibrator_candidate.joblib --metadata-out training_metadata_candidate.json -- splits-out training_splits_candidate.json --epochs 45 --lr 5e-4 --patience 10 Linux/macOS: ../.venv/bin/python train_model.py --db-url sqlite:///players_training.db --model-out model_candidate.pt --preprocessor-out preprocessor_candidate.joblib --calibrator-out probability_calibrator_candidate.joblib --metadata-out training_metadata_candidate.json -- splits-out training_splits_candidate.json --epochs 45 --lr 5e-4 --patience 10 Evaluar el modelo guardado: Windows PowerShell: ..\\.venv\\Scripts\\python.exe evaluate_saved_model.py --db-url sqlite:///players_training.db -- metadata-path training_metadata_candidate.json Linux/macOS: ../.venv/bin/python evaluate_saved_model.py --db-url sqlite:///players_training.db --metadata- path training_metadata_candidate.json Sincronizar la base operativa de demostración: Windows PowerShell: ..\\.venv\\Scripts\\python.exe sync_shortlist.py --src-db sqlite:///players_training.db --dst-db sqlite:///players_updated_v2.db --limit 100 --min-age 12 --max-age 18 --replace Linux/macOS: ../.venv/bin/python sync_shortlist.py --src-db sqlite:///players_training.db --dst-db sqlite:///players_updated_v2.db --limit 100 --min-age 12 --max-age 18 --replace Volver a la raíz del proyecto: Windows PowerShell: Set-Location .. Linux/macOS: cd .. Smoke del despliegue: Windows PowerShell: .\\.venv\\Scripts\\python.exe scripts\\smoke_render.py --base-url https://tpscouting- mvp.onrender.com Linux/macOS: .venv/bin/python scripts/smoke_render.py --base-url https://tpscouting- mvp.onrender.comhttps://tpscouting-mvp.onrender.com",
+      "after": "Windows PowerShell: ..\\.venv\\Scripts\\python.exe generate_data.py --num-players 20000 --db-url sqlite:///players_training.db --seed 42 --min-age 12 --max-age 18 --reset Linux/macOS: ../.venv/bin/python generate_data.py --num-players 20000 --db-url sqlite:///players_training.db -- seed 42 --min-age 12 --max-age 18 --reset Entrenar PlayerNet con la configuración documentada: Windows PowerShell: ..\\.venv\\Scripts\\python.exe train_model.py --db-url sqlite:///players_training.db --model-out model_candidate.pt --preprocessor-out preprocessor_candidate.joblib --calibrator-out probability_calibrator_candidate.joblib --metadata-out training_metadata_candidate.json -- splits-out training_splits_candidate.json --epochs 45 --lr 5e-4 --patience 10 Linux/macOS: ../.venv/bin/python train_model.py --db-url sqlite:///players_training.db --model-out model_candidate.pt --preprocessor-out preprocessor_candidate.joblib --calibrator-out probability_calibrator_candidate.joblib --metadata-out training_metadata_candidate.json -- splits-out training_splits_candidate.json --epochs 45 --lr 5e-4 --patience 10 Evaluar el modelo guardado: Windows PowerShell: ..\\.venv\\Scripts\\python.exe evaluate_saved_model.py --db-url sqlite:///players_training.db -- metadata-path training_metadata_candidate.json Linux/macOS: ../.venv/bin/python evaluate_saved_model.py --db-url sqlite:///players_training.db --metadata- path training_metadata_candidate.json Sincronizar la base operativa de demostración: Windows PowerShell: ..\\.venv\\Scripts\\python.exe sync_shortlist.py --src-db sqlite:///players_training.db --dst-db sqlite:///players_updated_v2.db --limit 100 --min-age 12 --max-age 18 --replace Linux/macOS: ../.venv/bin/python sync_shortlist.py --src-db sqlite:///players_training.db --dst-db sqlite:///players_updated_v2.db --limit 100 --min-age 12 --max-age 18 --replace Volver a la raíz del proyecto: Windows PowerShell: Set-Location .. Linux/macOS: cd .. Smoke del despliegue: Windows PowerShell: .\\.venv\\Scripts\\python.exe scripts\\smoke_render.py --base-url https://tpscouting- mvp.onrender.com Linux/macOS: .venv/bin/python scripts/smoke_render.py --base-url https://tpscouting-mvp.onrender.com"
+    }
+  ],
+  "unchanged_pdf_text_pages": 86
+}

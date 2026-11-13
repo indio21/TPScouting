@@ -1,6 +1,6 @@
 # TPScouting - Scouting inteligente aplicado al fútbol juvenil mediante Machine Learning
 
-Documento final: [Word](<docs/revision_octubre_2026/entrega_word_usuario_21-10-2026/Trabajo Final_Solari Pablo_21-10-2026.docx>) | [PDF](<docs/revision_octubre_2026/entrega_word_usuario_21-10-2026/Trabajo Final_Solari Pablo_21-10-2026.pdf>).
+Documento final: [Word](<docs/revision_noviembre_2026/correcciones_menores_2026-11-12/Trabajo Final_Solari Pablo_CORRECCIONES_NOVIEMBRE_12-11-2026.docx>) | [PDF](<docs/revision_noviembre_2026/correcciones_menores_2026-11-12/Trabajo Final_Solari Pablo_CORRECCIONES_NOVIEMBRE_12-11-2026.pdf>).
 
 [![CI](https://github.com/indio21/TPScouting/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/indio21/TPScouting/actions/workflows/ci.yml)
 
